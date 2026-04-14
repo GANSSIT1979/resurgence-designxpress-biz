@@ -58,7 +58,7 @@ export default async function CashierReceiptsPage() {
         ]}
         fields={[
           { name: "number", label: "Receipt Number" },
-          { name: "invoiceId", label: "Invoice ID" },
+          { name: "invoiceId", label: "Invoice ID", required: true },
           { name: "amount", label: "Amount", type: "number", required: true },
           { name: "issuedAt", label: "Issued At", type: "date" },
           { name: "notes", label: "Notes", type: "textarea" },

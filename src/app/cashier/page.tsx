@@ -35,21 +35,14 @@ export default async function CashierPage() {
     );
   }
 
-  const outstanding = snapshot.invoices.reduce((sum, invoice: any) => {
-    const balance = Number(invoice.balance ?? invoice.totalAmount ?? 0);
+  const outstanding = snapshot.invoices.reduce((sum, invoice) => {
+    const balance = Number(invoice.balanceDue ?? 0);
     return sum + (Number.isFinite(balance) ? balance : 0);
   }, 0);
 
   const collected = snapshot.transactions
-    .filter((item: any) => String(item.type || "").toUpperCase() === "COLLECTION")
-    .reduce((sum: number, item: any) => sum + Number(item.amount ?? 0), 0);
-
-  const tabs = [
-    { href: "/cashier", label: "Overview", exact: true },
-    { href: "/cashier/invoices", label: "Invoices", count: snapshot.invoices.length },
-    { href: "/cashier/transactions", label: "Transactions", count: snapshot.transactions.length },
-    { href: "/cashier/receipts", label: "Receipts", count: snapshot.receipts.length },
-  ];
+    .filter((item) => String(item.type || "").toUpperCase() === "COLLECTION")
+    .reduce((sum, item) => sum + Number(item.amount ?? 0), 0);
 
   const chartData = [
     { label: "Invoices", value: snapshot.invoices.length },
@@ -62,7 +55,12 @@ export default async function CashierPage() {
       eyebrow="Finance Operations"
       title="Cash collections and billing visibility"
       subtitle="Track invoice movement, transaction records, receipts, and collection health from one finance-ready workspace."
-      tabs={tabs}
+      tabs={[
+        { href: "/cashier", label: "Overview", exact: true },
+        { href: "/cashier/invoices", label: "Invoices", count: snapshot.invoices.length },
+        { href: "/cashier/receipts", label: "Receipts", count: snapshot.receipts.length },
+        { href: "/cashier/reports", label: "Reports" },
+      ]}
       actions={
         <>
           <Link href="/cashier/invoices" className="button button-secondary button-small">
@@ -108,15 +106,15 @@ export default async function CashierPage() {
           <div className="card-title">Recent receipts</div>
           {snapshot.receipts.length ? (
             <div className="list-stack">
-              {snapshot.receipts.slice(0, 5).map((receipt: any) => (
+              {snapshot.receipts.slice(0, 5).map((receipt) => (
                 <div key={receipt.id} className="list-item">
                   <div>
                     <strong style={{ display: "block", marginBottom: 6 }}>
-                      {receipt.receiptNumber || "Receipt"}
+                      {receipt.number || "Receipt"}
                     </strong>
-                    <div className="muted">{currencyPHP(receipt.amount ?? 0)}</div>
+                    <div className="muted">{currencyPHP(String(receipt.amount ?? 0))}</div>
                   </div>
-                  <StatusBadge label="Issued" tone="success" />
+                  <StatusBadge label="ISSUED" tone="success" />
                 </div>
               ))}
             </div>
@@ -143,19 +141,19 @@ export default async function CashierPage() {
                 </tr>
               </thead>
               <tbody>
-                {snapshot.invoices.slice(0, 6).map((invoice: any) => (
+                {snapshot.invoices.slice(0, 6).map((invoice) => (
                   <tr key={invoice.id}>
-                    <td>{invoice.invoiceNumber || "—"}</td>
-                    <td>{invoice.customerName || invoice.clientName || "—"}</td>
-                    <td>{currencyPHP(invoice.totalAmount ?? invoice.total ?? 0)}</td>
+                    <td>{invoice.number || "—"}</td>
+                    <td>{invoice.customerName || "—"}</td>
+                    <td>{currencyPHP(String(invoice.totalAmount ?? 0))}</td>
                     <td>
                       <StatusBadge
                         label={
-                          Number(invoice.balance ?? 0) > 0
-                            ? `Due ${currencyPHP(invoice.balance ?? 0)}`
-                            : "Paid"
+                          Number(invoice.balanceDue ?? 0) > 0
+                            ? `DUE ${currencyPHP(String(invoice.balanceDue ?? 0))}`
+                            : "PAID"
                         }
-                        tone={Number(invoice.balance ?? 0) > 0 ? "warning" : "success"}
+                        tone={Number(invoice.balanceDue ?? 0) > 0 ? "warning" : "success"}
                       />
                     </td>
                   </tr>

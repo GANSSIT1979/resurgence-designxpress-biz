@@ -22,8 +22,8 @@ export default async function AdminGalleryPage() {
       tabs={[
         { href: "/admin", label: "Overview" },
         { href: "/admin/gallery", label: "Gallery", exact: true, count: media.length },
-        { href: "/admin/creator-network", label: "Creators" },
-        { href: "/admin/products-services", label: "Products" },
+        { href: "/admin/sponsor-submissions", label: "Applications" },
+        { href: "/admin/inquiries", label: "Inquiries" },
       ]}
       actions={
         <Link href="/admin" className="button button-secondary button-small">
@@ -64,12 +64,7 @@ export default async function AdminGalleryPage() {
           { name: "caption", label: "Caption" },
           { name: "description", label: "Description", type: "textarea" },
           { name: "image", label: "Image", type: "image" },
-          {
-            name: "featured",
-            label: "Featured",
-            type: "select",
-            options: ["true", "false"],
-          },
+          { name: "featured", label: "Featured", type: "select", options: ["true", "false"] },
         ]}
         emptyMessage="No gallery media is available yet."
       />

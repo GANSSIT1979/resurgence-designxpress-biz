@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { currencyPHP } from "@/lib/format";
 import { DashboardPageOrchestrator } from "@/components/dashboard-page-orchestrator";
 import { EmptyStatePanel } from "@/components/empty-state-panel";
 import { StatusBadge } from "@/components/status-badge";
@@ -98,7 +99,7 @@ export default async function SponsorBillingPage() {
                 <div key={invoice.id} className="list-item">
                   <div>
                     <strong style={{ display: "block", marginBottom: 6 }}>{invoice.number}</strong>
-                    <div className="muted">{invoice.customerName}</div>
+                    <div className="muted">{currencyPHP(String(invoice.balanceDue ?? 0))} balance due</div>
                   </div>
                   <StatusBadge label={String(invoice.status || "OPEN")} />
                 </div>

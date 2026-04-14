@@ -20,24 +20,24 @@ export default async function AdminSponsorSubmissionsPage() {
   return (
     <DashboardPageOrchestrator
       eyebrow="Submission Review"
-      title="Sponsor submissions queue"
-      subtitle="Review incoming sponsor applications, update statuses, and keep the admin approval pipeline visible."
+      title="Sponsor applications queue"
+      subtitle="Review incoming sponsor applications, update statuses, and keep the approval pipeline visible."
       tabs={[
         { href: "/admin", label: "Overview" },
-        { href: "/admin/sponsor-submissions", label: "Submissions", exact: true, count: items.length },
-        { href: "/admin/sponsors", label: "Sponsors" },
+        { href: "/admin/sponsor-submissions", label: "Applications", exact: true, count: items.length },
+        { href: "/admin/gallery", label: "Gallery" },
         { href: "/admin/inquiries", label: "Inquiries" },
       ]}
       actions={
-        <Link href="/admin/sponsors" className="button button-small">
-          Sponsor Records
+        <Link href="/admin" className="button button-small">
+          Back to Admin
         </Link>
       }
       metrics={
         <div className="grid-4">
           <div className="dashboard-stat-card">
             <div className="dashboard-stat-value">{items.length}</div>
-            <div className="dashboard-stat-label">Total submissions</div>
+            <div className="dashboard-stat-label">Total applications</div>
           </div>
           <div className="dashboard-stat-card">
             <div className="dashboard-stat-value">{reviewCount}</div>

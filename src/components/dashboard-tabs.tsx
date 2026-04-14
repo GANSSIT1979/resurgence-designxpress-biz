@@ -30,9 +30,7 @@ export function DashboardTabs({ tabs }: DashboardTabsProps) {
             aria-current={active ? "page" : undefined}
           >
             <span>{tab.label}</span>
-            {tab.count !== undefined ? (
-              <span className="dashboard-tab-count">{tab.count}</span>
-            ) : null}
+            {tab.count !== undefined ? <span className="dashboard-tab-count">{tab.count}</span> : null}
           </Link>
         );
       })}

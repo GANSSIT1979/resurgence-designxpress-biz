@@ -10,22 +10,19 @@ export const dynamic = "force-dynamic";
 async function getSponsorSnapshot() {
   const user = await getCurrentUser();
 
-  if (!user?.sponsorId) {
-    return null;
-  }
+  if (!user?.sponsorId) return null;
 
   try {
-    const sponsor = await db.sponsor.findUnique({
+    return await db.sponsor.findUnique({
       where: { id: user.sponsorId },
       include: {
         deliverables: true,
         applications: true,
         package: true,
         profile: true,
+        invoices: true,
       },
     });
-
-    return sponsor;
   } catch (error) {
     console.error("Sponsor snapshot load failed:", error);
     return null;
@@ -40,32 +37,24 @@ export default async function SponsorDashboardPage() {
       <EmptyStatePanel
         title="Sponsor account not linked yet"
         description="This sponsor login is active, but no sponsor record is currently attached to the account."
-        actions={
-          <Link href="/contact" className="button">
-            Contact Team
-          </Link>
-        }
+        actions={<Link href="/contact" className="button">Contact Team</Link>}
       />
     );
   }
 
-  const tabs = [
-    { href: "/sponsor/dashboard", label: "Overview", exact: true },
-    { href: "/sponsor/dashboard/applications", label: "Applications", count: sponsor.applications.length },
-    { href: "/sponsor/dashboard/deliverables", label: "Deliverables", count: sponsor.deliverables.length },
-    { href: "/sponsor/dashboard/profile", label: "Profile" },
-  ];
-
-  const pendingDeliverables = sponsor.deliverables.filter(
-    (item: any) => String(item.status || "").toUpperCase() === "PENDING"
-  ).length;
+  const pendingDeliverables = sponsor.deliverables.filter((item) => String(item.status || "").toUpperCase() === "PENDING").length;
 
   return (
     <DashboardPageOrchestrator
       eyebrow="Partner Workspace"
       title={sponsor.name || "Sponsor Dashboard"}
-      subtitle="Track brand package details, partner deliverables, application history, and profile readiness in a cleaner sponsor-facing workspace."
-      tabs={tabs}
+      subtitle="Track brand package details, partner deliverables, application history, invoice references, and profile readiness in a cleaner sponsor-facing workspace."
+      tabs={[
+        { href: "/sponsor/dashboard", label: "Overview", exact: true },
+        { href: "/sponsor/dashboard/applications", label: "Applications", count: sponsor.applications.length },
+        { href: "/sponsor/dashboard/deliverables", label: "Deliverables", count: sponsor.deliverables.length },
+        { href: "/sponsor/dashboard/billing", label: "Billing", count: sponsor.invoices.length },
+      ]}
       actions={
         <>
           <Link href="/sponsor/dashboard/profile" className="button button-secondary button-small">
@@ -113,7 +102,7 @@ export default async function SponsorDashboardPage() {
                 <strong style={{ display: "block", marginBottom: 6 }}>Package</strong>
                 <div className="muted">{sponsor.package?.title || "No package assigned"}</div>
               </div>
-              <StatusBadge label={sponsor.package?.status || "Active"} />
+              <StatusBadge label={sponsor.package?.status || "ACTIVE"} />
             </div>
           </div>
         </section>
@@ -122,7 +111,7 @@ export default async function SponsorDashboardPage() {
           <div className="card-title">Deliverables overview</div>
           {sponsor.deliverables.length ? (
             <div className="list-stack">
-              {sponsor.deliverables.slice(0, 5).map((item: any) => (
+              {sponsor.deliverables.slice(0, 5).map((item) => (
                 <div key={item.id} className="list-item">
                   <div>
                     <strong style={{ display: "block", marginBottom: 6 }}>
@@ -130,7 +119,7 @@ export default async function SponsorDashboardPage() {
                     </strong>
                     <div className="muted">{item.description || "No description available"}</div>
                   </div>
-                  <StatusBadge label={String(item.status || "Pending")} />
+                  <StatusBadge label={String(item.status || "PENDING")} />
                 </div>
               ))}
             </div>
@@ -150,18 +139,20 @@ export default async function SponsorDashboardPage() {
             <table className="table">
               <thead>
                 <tr>
-                  <th>Application</th>
-                  <th>Package</th>
+                  <th>Sponsor Name</th>
+                  <th>Company</th>
+                  <th>Package Interest</th>
                   <th>Status</th>
                 </tr>
               </thead>
               <tbody>
-                {sponsor.applications.slice(0, 6).map((item: any) => (
+                {sponsor.applications.slice(0, 6).map((item) => (
                   <tr key={item.id}>
-                    <td>{item.companyName || item.contactName || "Application"}</td>
-                    <td>{item.packageTitle || sponsor.package?.title || "—"}</td>
+                    <td>{item.sponsorName || item.contactName || "Application"}</td>
+                    <td>{item.company || "—"}</td>
+                    <td>{item.packageInterest || sponsor.package?.title || "—"}</td>
                     <td>
-                      <StatusBadge label={String(item.status || "Pending")} />
+                      <StatusBadge label={String(item.status || "NEW")} />
                     </td>
                   </tr>
                 ))}

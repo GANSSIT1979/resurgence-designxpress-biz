@@ -10,14 +10,7 @@ export const dynamic = "force-dynamic";
 
 async function getAdminSnapshot() {
   try {
-    const [
-      inquiries,
-      sponsors,
-      sponsorApplications,
-      creators,
-      partners,
-      gallery,
-    ] = await Promise.all([
+    const [inquiries, sponsors, sponsorApplications, creators, partners, gallery] = await Promise.all([
       db.inquiry.findMany({ take: 8, orderBy: { createdAt: "desc" } }),
       db.sponsor.findMany({ take: 50, orderBy: { createdAt: "desc" } }),
       db.sponsorApplication.findMany({ take: 50, orderBy: { createdAt: "desc" } }),
@@ -58,20 +51,17 @@ export default async function AdminPage() {
     { label: "Inquiries", value: snapshot.inquiries.length },
   ];
 
-  const tabs = [
-    { href: "/admin", label: "Overview", exact: true },
-    { href: "/admin/sponsor-submissions", label: "Submissions", count: pendingApplications },
-    { href: "/admin/sponsors", label: "Sponsors", count: snapshot.sponsors.length },
-    { href: "/admin/creator-network", label: "Creators", count: snapshot.creators.length },
-    { href: "/admin/inquiries", label: "Inquiries", count: snapshot.inquiries.length },
-  ];
-
   return (
     <DashboardPageOrchestrator
       eyebrow="Executive Overview"
       title="Business control center"
       subtitle="Monitor sponsor growth, creator operations, inquiry flow, and content readiness across the RESURGENCE platform."
-      tabs={tabs}
+      tabs={[
+        { href: "/admin", label: "Overview", exact: true },
+        { href: "/admin/sponsor-submissions", label: "Applications", count: pendingApplications },
+        { href: "/admin/gallery", label: "Gallery", count: snapshot.gallery.length },
+        { href: "/admin/inquiries", label: "Inquiries", count: snapshot.inquiries.length },
+      ]}
       actions={
         <>
           <Link href="/admin/sponsor-submissions" className="button button-secondary button-small">

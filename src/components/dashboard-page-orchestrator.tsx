@@ -36,11 +36,8 @@ export function DashboardPageOrchestrator({
           <div>
             <div className="eyebrow">{eyebrow}</div>
             <h2 className="dashboard-section-title">{title}</h2>
-            {subtitle ? (
-              <p className="dashboard-section-subtitle">{subtitle}</p>
-            ) : null}
+            {subtitle ? <p className="dashboard-section-subtitle">{subtitle}</p> : null}
           </div>
-
           {actions ? <div className="dashboard-filters-actions">{actions}</div> : null}
         </div>
       </section>

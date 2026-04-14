@@ -88,9 +88,7 @@ export function ImageUploadField({
           ) : (
             <div className="upload-placeholder">
               <strong>{loading ? "Uploading..." : "Click to upload image"}</strong>
-              <span className="muted">
-                Drag-and-drop styling ready. Current mode uses click upload.
-              </span>
+              <span className="muted">Drag-and-drop styling ready. Current mode uses click upload.</span>
             </div>
           )}
         </div>
@@ -102,9 +100,7 @@ export function ImageUploadField({
           hidden
           onChange={(e) => {
             const file = e.target.files?.[0];
-            if (file) {
-              upload(file);
-            }
+            if (file) upload(file);
           }}
         />
 

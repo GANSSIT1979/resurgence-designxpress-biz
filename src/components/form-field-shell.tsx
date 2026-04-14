@@ -27,9 +27,7 @@ export function FormFieldShell({
       </div>
 
       {hint ? <div className="field-hint">{hint}</div> : null}
-
       <div className="field-control">{children}</div>
-
       {error ? <div className="field-error">{error}</div> : null}
     </div>
   );

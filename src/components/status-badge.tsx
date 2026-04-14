@@ -1,5 +1,3 @@
-import type { ReactNode } from "react";
-
 type StatusTone =
   | "neutral"
   | "info"
@@ -11,22 +9,21 @@ type StatusTone =
 type StatusBadgeProps = {
   label: string;
   tone?: StatusTone;
-  icon?: ReactNode;
   soft?: boolean;
 };
 
 function normalizeTone(input: string): StatusTone {
   const value = input.trim().toUpperCase();
 
-  if (["ACTIVE", "APPROVED", "PAID", "COMPLETED", "SUCCESS", "ENABLED"].includes(value)) {
+  if (["ACTIVE", "APPROVED", "PAID", "COMPLETED", "SUCCESS", "ENABLED", "DELIVERED", "REVIEWED"].includes(value)) {
     return "success";
   }
 
-  if (["PENDING", "DRAFT", "REVIEW", "PROCESSING", "NEW"].includes(value)) {
+  if (["PENDING", "DRAFT", "NEW", "UNDER_REVIEW", "OPEN", "PARTIALLY_PAID", "IN_PROGRESS", "OVERDUE"].includes(value)) {
     return "warning";
   }
 
-  if (["FAILED", "REJECTED", "INACTIVE", "VOID", "OVERDUE", "DISABLED"].includes(value)) {
+  if (["FAILED", "REJECTED", "DECLINED", "INACTIVE", "VOID", "DISABLED", "CLOSED"].includes(value)) {
     return "danger";
   }
 
@@ -34,26 +31,18 @@ function normalizeTone(input: string): StatusTone {
     return "accent";
   }
 
-  if (["INFO", "OPEN"].includes(value)) {
+  if (["INFO"].includes(value)) {
     return "info";
   }
 
   return "neutral";
 }
 
-export function StatusBadge({
-  label,
-  tone,
-  icon,
-  soft = true,
-}: StatusBadgeProps) {
+export function StatusBadge({ label, tone, soft = true }: StatusBadgeProps) {
   const resolvedTone = tone || normalizeTone(label);
 
   return (
-    <span
-      className={`status-badge status-badge-${resolvedTone}${soft ? " status-badge-soft" : ""}`}
-    >
-      {icon ? <span className="status-badge-icon">{icon}</span> : null}
+    <span className={`status-badge status-badge-${resolvedTone}${soft ? " status-badge-soft" : ""}`}>
       <span>{label}</span>
     </span>
   );

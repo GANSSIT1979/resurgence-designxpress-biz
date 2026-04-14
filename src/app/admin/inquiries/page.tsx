@@ -22,8 +22,8 @@ export default async function AdminInquiriesPage() {
       tabs={[
         { href: "/admin", label: "Overview" },
         { href: "/admin/inquiries", label: "Inquiries", exact: true, count: inquiries.length },
-        { href: "/admin/sponsor-submissions", label: "Submissions" },
-        { href: "/admin/users", label: "Users" },
+        { href: "/admin/sponsor-submissions", label: "Applications" },
+        { href: "/admin/gallery", label: "Gallery" },
       ]}
       actions={
         <Link href="/support" className="button button-small">
@@ -60,12 +60,12 @@ export default async function AdminInquiriesPage() {
           { key: "status", label: "Status" },
         ]}
         fields={[
-          { name: "name", label: "Name" },
-          { name: "email", label: "Email", type: "email" },
+          { name: "name", label: "Name", required: true },
+          { name: "email", label: "Email", type: "email", required: true },
           { name: "company", label: "Company" },
           { name: "phone", label: "Phone" },
-          { name: "subject", label: "Subject" },
-          { name: "message", label: "Message", type: "textarea" },
+          { name: "subject", label: "Subject", required: true },
+          { name: "message", label: "Message", type: "textarea", required: true },
           {
             name: "status",
             label: "Status",

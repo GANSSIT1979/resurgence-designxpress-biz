@@ -19,7 +19,6 @@ export default async function CashierInvoicesPage() {
       tabs={[
         { href: "/cashier", label: "Overview" },
         { href: "/cashier/invoices", label: "Invoices", exact: true, count: invoices.length },
-        { href: "/cashier/transactions", label: "Transactions" },
         { href: "/cashier/receipts", label: "Receipts" },
         { href: "/cashier/reports", label: "Reports" },
       ]}
@@ -62,8 +61,11 @@ export default async function CashierInvoicesPage() {
         fields={[
           { name: "number", label: "Invoice Number" },
           { name: "customerName", label: "Customer Name", required: true },
+          { name: "sponsorId", label: "Sponsor ID" },
           { name: "totalAmount", label: "Total Amount", type: "number", required: true },
           { name: "balanceDue", label: "Balance Due", type: "number" },
+          { name: "issuedAt", label: "Issued At", type: "date" },
+          { name: "dueDate", label: "Due Date", type: "date" },
           { name: "status", label: "Status", type: "select", options: ["DRAFT", "OPEN", "PARTIALLY_PAID", "PAID", "VOID"] },
           { name: "notes", label: "Notes", type: "textarea" },
         ]}

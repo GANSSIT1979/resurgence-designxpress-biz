@@ -26,9 +26,7 @@ export function DashboardShell({
           <div className="dashboard-sidebar-card">
             <div className="sidebar-brand-row">
               <div className="sidebar-brand">RESURGENCE</div>
-              <div className="sidebar-subtitle">
-                {subtitle || "Role-based dashboard"}
-              </div>
+              <div className="sidebar-subtitle">{subtitle || "Role-based dashboard"}</div>
             </div>
 
             <nav className="sidebar-nav" aria-label={`${title} navigation`}>
@@ -46,9 +44,7 @@ export function DashboardShell({
             <div>
               <div className="eyebrow">Dashboard Workspace</div>
               <h1 className="dashboard-page-title">{title}</h1>
-              {subtitle ? (
-                <p className="dashboard-page-subtitle">{subtitle}</p>
-              ) : null}
+              {subtitle ? <p className="dashboard-page-subtitle">{subtitle}</p> : null}
             </div>
 
             <div className="dashboard-hero-actions">

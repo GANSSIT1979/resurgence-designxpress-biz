@@ -22,7 +22,6 @@ export function FormSection({
         <h2 className="form-section-title">{title}</h2>
         {subtitle ? <p className="form-section-subtitle">{subtitle}</p> : null}
       </div>
-
       <div className="form-section-body">{children}</div>
     </section>
   );

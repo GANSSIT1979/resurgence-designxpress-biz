@@ -1,0 +1,20 @@
+/// Add this relation field inside your existing User model:
+///
+/// savedViews SavedView[]
+
+model SavedView {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scope       String
+  name        String
+  search      String?
+  status      String?
+  filtersJson String?
+  sortJson    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId, scope])
+  @@unique([userId, scope, name])
+}

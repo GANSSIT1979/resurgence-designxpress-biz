@@ -4,13 +4,12 @@ export function currencyPHP(value: string | number | null | undefined) {
   return new Intl.NumberFormat("en-PH", {
     style: "currency",
     currency: "PHP",
-    maximumFractionDigits: 0,
+    maximumFractionDigits: 2,
   }).format(Number.isFinite(numeric) ? numeric : 0);
 }
 
 export function parseJsonSafely<T>(value: string | null | undefined, fallback: T): T {
   if (!value) return fallback;
-
   try {
     return JSON.parse(value) as T;
   } catch {
