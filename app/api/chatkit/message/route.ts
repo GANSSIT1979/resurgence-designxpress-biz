@@ -1,87 +1,82 @@
-import { NextRequest } from "next/server";
-import { z } from "zod";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { ensureChatConversation } from "@/lib/chat";
-import { fail, ok } from "@/lib/api-utils";
+import { runResurgenceAgent } from "@/lib/ai/resurgence-agent";
+import { PrismaSession } from "@/lib/ai/prisma-session";
 
-const schema = z.object({
-  conversationId: z.string().min(1),
-  message: z.string().min(1).max(4000)
-});
+export const runtime = "nodejs";
 
-export async function POST(request: NextRequest) {
-  let parsedBody: unknown;
+export async function POST(req: NextRequest) {
   try {
-    parsedBody = await request.json();
-  } catch {
-    return fail("Invalid JSON body", 400);
-  }
+    const body = await req.json();
+    const conversationId = String(body?.conversationId || "").trim();
+    const message = String(body?.message || "").trim();
 
-  const parsed = schema.safeParse(parsedBody);
-  if (!parsed.success) {
-    return fail(parsed.error.issues[0]?.message || "Invalid request", 400);
-  }
+    if (!conversationId || !message) {
+      return NextResponse.json(
+        { error: "Missing conversationId or message." },
+        { status: 400 }
+      );
+    }
 
-  const { conversationId, message } = parsed.data;
-  const conversation = await ensureChatConversation(conversationId);
+    let conversation = await db.chatConversation.findUnique({
+      where: { conversationId },
+    });
 
-  let runSupportAgent: ((input: {
-    conversationId: string;
-    message: string;
-    context: {
-      leadCaptured: boolean;
-      visitorName?: string | null;
-      organization?: string | null;
-      email?: string | null;
-      mobile?: string | null;
-    };
-  }) => Promise<string>) | null = null;
+    if (!conversation) {
+      conversation = await db.chatConversation.create({
+        data: { conversationId },
+      });
+    }
 
-  try {
-    const mod = await import("@/lib/ai/resurgence-agent");
-    runSupportAgent = mod.runSupportAgent;
-  } catch (error) {
-    const detail = error instanceof Error ? error.message : "Unknown error";
-    return fail(
-      `AI support is disabled because the OpenAI Agents SDK is not installed or failed to load. Install @openai/agents and zod, then restart the app. Detail: ${detail}`,
-      503
-    );
-  }
+    await db.chatMessage.create({
+      data: {
+        conversationId,
+        role: "user",
+        content: message,
+      },
+    });
 
-  let output: string;
-  try {
-    output = await runSupportAgent({
-      conversationId,
+    const session = new PrismaSession(conversationId);
+    const result = await runResurgenceAgent({
       message,
-      context: {
-        leadCaptured: conversation.leadCaptured,
-        visitorName: conversation.visitorName,
-        organization: conversation.organization,
-        email: conversation.email,
-        mobile: conversation.mobile
-      }
+      leadCaptured: conversation.leadCaptured,
+      session,
+    });
+
+    if (!result.ok) {
+      return NextResponse.json(
+        {
+          ok: false,
+          aiEnabled: false,
+          error: result.error,
+        },
+        { status: result.status }
+      );
+    }
+
+    await db.chatMessage.create({
+      data: {
+        conversationId,
+        role: "assistant",
+        content: result.output,
+      },
+    });
+
+    return NextResponse.json({
+      ok: true,
+      aiEnabled: true,
+      output: result.output,
+      leadCaptured: conversation.leadCaptured,
     });
   } catch (error) {
-    const detail = error instanceof Error ? error.message : "Unknown error";
-    return fail(`AI support is unavailable right now. ${detail}`, 503);
+    console.error("Chatkit message route error:", error);
+
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "Unable to process support message right now.",
+      },
+      { status: 500 }
+    );
   }
-
-  const refreshed = await db.chatConversation.findUnique({
-    where: { conversationId },
-    select: {
-      leadCaptured: true,
-      visitorName: true,
-      organization: true,
-      email: true,
-      mobile: true,
-      summary: true
-    }
-  });
-
-  return ok({
-    conversationId,
-    output,
-    leadCaptured: refreshed?.leadCaptured ?? false,
-    lead: refreshed
-  });
 }

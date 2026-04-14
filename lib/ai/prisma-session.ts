@@ -6,27 +6,44 @@ type AgentInputItem = Record<string, unknown>;
 
 function textFromUnknown(value: unknown): string {
   if (typeof value === "string") return value;
-  if (Array.isArray(value)) return value.map(textFromUnknown).filter(Boolean).join("\n").trim();
+
+  if (Array.isArray(value)) {
+    return value
+      .map(textFromUnknown)
+      .filter(Boolean)
+      .join("\n")
+      .trim();
+  }
+
   if (!value || typeof value !== "object") return "";
 
   const record = value as Record<string, unknown>;
+
   if (typeof record.text === "string") return record.text;
   if (typeof record.value === "string") return record.value;
   if (typeof record.output_text === "string") return record.output_text;
   if (typeof record.input_text === "string") return record.input_text;
   if ("content" in record) return textFromUnknown(record.content);
   if ("summary" in record) return textFromUnknown(record.summary);
+
   return "";
 }
 
 function inferRole(item: AgentInputItem): string {
   const candidate = item as Record<string, unknown>;
+
   if (typeof candidate.role === "string") return candidate.role;
+
   if (typeof candidate.type === "string") {
     if (candidate.type.includes("input")) return "user";
     if (candidate.type.includes("output")) return "assistant";
   }
+
   return "assistant";
+}
+
+function toJsonValue(item: AgentInputItem): Prisma.InputJsonValue {
+  return JSON.parse(JSON.stringify(item)) as Prisma.InputJsonValue;
 }
 
 export class PrismaSession {
@@ -43,12 +60,12 @@ export class PrismaSession {
     const rows = limit
       ? await db.chatMessage.findMany({
           where: { conversationId: this.conversationId },
-          orderBy: { createdAt: "desc" },
-          take: limit
+          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+          take: limit,
         })
       : await db.chatMessage.findMany({
           where: { conversationId: this.conversationId },
-          orderBy: { createdAt: "asc" }
+          orderBy: [{ createdAt: "asc" }, { id: "asc" }],
         });
 
     const ordered = limit ? [...rows].reverse() : rows;
@@ -68,8 +85,8 @@ export class PrismaSession {
         conversationId: this.conversationId,
         role: inferRole(item),
         content: textFromUnknown(item),
-        rawItem: JSON.parse(JSON.stringify(item)) as Prisma.InputJsonValue
-      }))
+        rawItem: toJsonValue(item),
+      })),
     });
   }
 
@@ -78,17 +95,23 @@ export class PrismaSession {
 
     const latest = await db.chatMessage.findFirst({
       where: { conversationId: this.conversationId },
-      orderBy: { createdAt: "desc" }
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     });
 
     if (!latest) return undefined;
 
-    await db.chatMessage.delete({ where: { id: latest.id } });
+    await db.chatMessage.delete({
+      where: { id: latest.id },
+    });
+
     return (latest.rawItem as AgentInputItem | null) ?? undefined;
   }
 
   async clearSession(): Promise<void> {
     await ensureChatConversation(this.conversationId);
-    await db.chatMessage.deleteMany({ where: { conversationId: this.conversationId } });
+
+    await db.chatMessage.deleteMany({
+      where: { conversationId: this.conversationId },
+    });
   }
 }

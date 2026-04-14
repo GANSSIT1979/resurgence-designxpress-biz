@@ -2,37 +2,58 @@ import Link from "next/link";
 import { getCurrentUser, getDashboardPath } from "@/lib/auth";
 
 export async function SiteHeader() {
-  const user = await getCurrentUser();
+  let user = null as Awaited<ReturnType<typeof getCurrentUser>> | null;
+
+  try {
+    user = await getCurrentUser();
+  } catch (error) {
+    console.error("SiteHeader auth fallback:", error);
+    user = null;
+  }
+
+  const primaryLinks = [
+    { href: "/", label: "Home" },
+    { href: "/about", label: "About" },
+    { href: "/services", label: "Services" },
+    { href: "/sponsors", label: "Sponsors" },
+    { href: "/sponsor/apply", label: "Sponsor Apply" },
+    { href: "/contact", label: "Contact" },
+  ];
+
+  const dashboardHref = user ? getDashboardPath(user.role) : "/login";
+  const dashboardLabel = user ? "Dashboard" : "Login";
 
   return (
     <header className="site-header">
       <div className="container header-inner">
-        <Link href="/" className="brand">
-          <img src="/uploads/resurgence-logo.jpg" alt="RESURGENCE" className="brand-logo" />
+        <Link href="/" className="brand" aria-label="Go to homepage">
+          <img
+            src="/uploads/resurgence-logo.jpg"
+            alt="RESURGENCE"
+            className="brand-logo"
+          />
           <div>
             <div className="brand-title">RESURGENCE</div>
             <div className="brand-subtitle">Powered by DesignXpress</div>
           </div>
         </Link>
 
-        <nav className="nav">
-          <Link href="/">Home</Link>
-          <Link href="/about">About</Link>
-          <Link href="/services">Services</Link>
-          <Link href="/sponsors">Sponsors</Link>
-          <Link href="/sponsor/apply">Sponsor Apply</Link>
-          <Link href="/contact">Contact</Link>
-          <Link href="/support">Support</Link>
-          {user ? (
-            <Link href={getDashboardPath(user.role)} className="button button-small">
-              Dashboard
+        <nav className="nav" aria-label="Primary navigation">
+          {primaryLinks.map((link) => (
+            <Link key={link.href} href={link.href}>
+              {link.label}
             </Link>
-          ) : (
-            <Link href="/login" className="button button-small">
-              Login
-            </Link>
-          )}
+          ))}
         </nav>
+
+        <div className="inline-actions" aria-label="Quick actions">
+          <Link href="/support" className="button button-secondary button-small">
+            Support
+          </Link>
+          <Link href={dashboardHref} className="button button-small">
+            {dashboardLabel}
+          </Link>
+        </div>
       </div>
     </header>
   );
