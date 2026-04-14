@@ -1,8 +1,8 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { SiteHeader } from "@/components/site-header";
-import { SiteFooter } from "@/components/site-footer";
+import { SiteHeader } from "../components/site-header";
+import { SiteFooter } from "../components/site-footer";
 
 const metadataBase = process.env.NEXT_PUBLIC_SITE_URL
   ? new URL(process.env.NEXT_PUBLIC_SITE_URL)
@@ -14,7 +14,8 @@ export const metadata: Metadata = {
     default: "RESURGENCE Powered by DesignXpress",
     template: "%s | RESURGENCE Powered by DesignXpress",
   },
-  description: "Deployable full-stack sponsorship, creator network, gallery, sponsor inventory, and cashier platform.",
+  description:
+    "Deployable full-stack sponsorship, creator network, gallery, sponsor inventory, and cashier platform.",
   applicationName: "RESURGENCE Powered by DesignXpress",
   keywords: [
     "Resurgence",
@@ -30,13 +31,16 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "RESURGENCE Powered by DesignXpress",
-    description: "Premium sports-business platform for sponsorships, creator activations, gallery storytelling, and operations.",
+    description:
+      "Premium sports-business platform for sponsorships, creator activations, gallery storytelling, and operations.",
     images: ["/uploads/resurgence-logo.jpg"],
     type: "website",
   },
 };
 
-export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
+export default function RootLayout({
+  children,
+}: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body>

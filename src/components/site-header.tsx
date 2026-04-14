@@ -1,15 +1,8 @@
 import Link from "next/link";
-import { getCurrentUser, getDashboardPath } from "@/lib/auth";
+import { getCurrentUser, getDashboardPath } from "../lib/auth";
 
 export async function SiteHeader() {
-  let user = null as Awaited<ReturnType<typeof getCurrentUser>> | null;
-
-  try {
-    user = await getCurrentUser();
-  } catch (error) {
-    console.error("SiteHeader auth fallback:", error);
-    user = null;
-  }
+  const user = await getCurrentUser();
 
   const primaryLinks = [
     { href: "/", label: "Home" },
@@ -19,9 +12,6 @@ export async function SiteHeader() {
     { href: "/sponsor/apply", label: "Sponsor Apply" },
     { href: "/contact", label: "Contact" },
   ];
-
-  const dashboardHref = user ? getDashboardPath(user.role) : "/login";
-  const dashboardLabel = user ? "Dashboard" : "Login";
 
   return (
     <header className="site-header">
@@ -50,9 +40,27 @@ export async function SiteHeader() {
           <Link href="/support" className="button button-secondary button-small">
             Support
           </Link>
-          <Link href={dashboardHref} className="button button-small">
-            {dashboardLabel}
-          </Link>
+
+          {user ? (
+            <>
+              <Link
+                href={getDashboardPath(user.role)}
+                className="button button-secondary button-small"
+              >
+                Dashboard
+              </Link>
+
+              <form action="/api/auth/logout" method="POST">
+                <button type="submit" className="button button-small">
+                  Logout
+                </button>
+              </form>
+            </>
+          ) : (
+            <Link href="/login" className="button button-small">
+              Login
+            </Link>
+          )}
         </div>
       </div>
     </header>

@@ -7,324 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id            String         @id @default(cuid())
-  name          String
-  email         String         @unique
-  passwordHash  String
-  role          Role
-  status        UserStatus     @default("ACTIVE")
-  sponsorId     String?
-  partnerId     String?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  notifications Notification[]
-  partner       Partner?       @relation(fields: [partnerId], references: [id])
-  sponsor       Sponsor?       @relation(fields: [sponsorId], references: [id])
-}
-
-model Counter {
-  id        String   @id @default(cuid())
-  scope     String   @unique
-  value     Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Setting {
-  id        String   @id @default(cuid())
-  key       String   @unique
-  value     Json
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model ContentSection {
-  id        String   @id @default(cuid())
-  key       String   @unique
-  title     String
-  subtitle  String?
-  body      String
-  ctaLabel  String?
-  ctaHref   String?
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model ProductService {
-  id          String   @id @default(cuid())
-  title       String
-  slug        String   @unique
-  description String
-  image       String?
-  featured    Boolean  @default(false)
-  priceLabel  String?
-  active      Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model Inquiry {
-  id        String        @id @default(cuid())
-  name      String
-  email     String
-  phone     String?
-  company   String?
-  subject   String
-  message   String
-  status    InquiryStatus @default("NEW")
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-}
-
-model SponsorPackage {
-  id                String               @id @default(cuid())
-  title             String               @unique
-  priceRange        String
-  description       String
-  benefits          Json
-  deliverables      Json
-  status            PackageStatus        @default("ACTIVE")
-  featured          Boolean              @default(false)
-  sortOrder         Int                  @default(0)
-  createdAt         DateTime             @default(now())
-  updatedAt         DateTime             @updatedAt
-  sponsors          Sponsor[]
-  sponsorDeliveries SponsorDeliverable[]
-  sponsorProfiles   SponsorProfile[]
-}
-
-model Sponsor {
-  id           String               @id @default(cuid())
-  name         String
-  slug         String               @unique
-  description  String
-  website      String?
-  logo         String?
-  status       SponsorStatus        @default("ACTIVE")
-  packageId    String?
-  createdAt    DateTime             @default(now())
-  updatedAt    DateTime             @updatedAt
-  invoices     Invoice[]
-  package      SponsorPackage?      @relation(fields: [packageId], references: [id])
-  applications SponsorApplication[]
-  deliverables SponsorDeliverable[]
-  profile      SponsorProfile?
-  users        User[]
-}
-
-model SponsorProfile {
-  id           String          @id @default(cuid())
-  sponsorId    String          @unique
-  packageId    String?
-  headline     String?
-  description  String
-  contactName  String
-  contactEmail String
-  logo         String?
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
-  package      SponsorPackage? @relation(fields: [packageId], references: [id])
-  sponsor      Sponsor         @relation(fields: [sponsorId], references: [id])
-}
-
-model SponsorApplication {
-  id              String           @id @default(cuid())
-  sponsorName     String
-  contactName     String
-  email           String
-  phone           String?
-  company         String?
-  packageInterest String
-  message         String
-  status          SubmissionStatus @default("NEW")
-  sponsorId       String?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  sponsor         Sponsor?         @relation(fields: [sponsorId], references: [id])
-}
-
-model SponsorDeliverable {
-  id          String            @id @default(cuid())
-  sponsorId   String
-  packageId   String?
-  title       String
-  description String
-  dueDate     DateTime?
-  status      DeliverableStatus @default("PENDING")
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
-  package     SponsorPackage?   @relation(fields: [packageId], references: [id])
-  sponsor     Sponsor           @relation(fields: [sponsorId], references: [id])
-}
-
-model Partner {
-  id          String        @id @default(cuid())
-  name        String
-  slug        String        @unique
-  description String
-  website     String?
-  logo        String?
-  status      PartnerStatus @default("ACTIVE")
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  users       User[]
-}
-
-model CreatorProfile {
-  id              String   @id @default(cuid())
-  fullName        String
-  biography       String
-  journeyStory    String
-  pointsPerGame   Float
-  assistsPerGame  Float
-  reboundsPerGame Float
-  image           String?
-  slug            String   @unique
-  socialLinks     Json
-  featured        Boolean  @default(false)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-}
-
-model MediaEvent {
-  id          String         @id @default(cuid())
-  title       String
-  slug        String         @unique
-  description String?
-  featured    Boolean        @default(false)
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-  media       GalleryMedia[]
-}
-
-model GalleryMedia {
-  id          String      @id @default(cuid())
-  title       String
-  caption     String?
-  description String?
-  image       String
-  featured    Boolean     @default(false)
-  eventId     String?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  event       MediaEvent? @relation(fields: [eventId], references: [id])
-}
-
-model SponsorInventoryItem {
-  id                   String   @id @default(cuid())
-  title                String
-  category             String
-  description          String
-  value                Decimal
-  image                String?
-  packageApplicability Json
-  active               Boolean  @default(true)
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
-}
-
-model Invoice {
-  id           String               @id @default(cuid())
-  number       String               @unique
-  sponsorId    String?
-  customerName String
-  issuedAt     DateTime             @default(now())
-  dueDate      DateTime?
-  totalAmount  Decimal
-  balanceDue   Decimal
-  status       InvoiceStatus        @default("OPEN")
-  notes        String?
-  createdAt    DateTime             @default(now())
-  updatedAt    DateTime             @updatedAt
-  transactions CashierTransaction[]
-  sponsor      Sponsor?             @relation(fields: [sponsorId], references: [id])
-  receipts     Receipt[]
-}
-
-model CashierTransaction {
-  id        String          @id @default(cuid())
-  invoiceId String
-  type      TransactionType
-  amount    Decimal
-  reference String?
-  notes     String?
-  createdAt DateTime        @default(now())
-  updatedAt DateTime        @updatedAt
-  invoice   Invoice         @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-}
-
-model Receipt {
-  id        String   @id @default(cuid())
-  number    String   @unique
-  invoiceId String
-  amount    Decimal
-  issuedAt  DateTime @default(now())
-  notes     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  invoice   Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-}
-
-model ReportSnapshot {
-  id        String   @id @default(cuid())
-  type      String
-  name      String
-  payload   Json
-  createdAt DateTime @default(now())
-}
-
-model Notification {
-  id        String   @id @default(cuid())
-  userId    String?
-  title     String
-  message   String
-  read      Boolean  @default(false)
-  createdAt DateTime @default(now())
-  user      User?    @relation(fields: [userId], references: [id])
-}
-
-model EmailQueue {
-  id        String           @id @default(cuid())
-  toEmail   String
-  subject   String
-  template  String?
-  payload   Json?
-  status    EmailQueueStatus @default("PENDING")
-  attempts  Int              @default(0)
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
-}
-
-model ChatConversation {
-  id             String        @id @default(cuid())
-  conversationId String        @unique
-  visitorName    String?
-  email          String?
-  mobile         String?
-  organization   String?
-  summary        String?
-  leadCaptured   Boolean       @default(false)
-  leadCapturedAt DateTime?
-  lastIntent     String?
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  messages       ChatMessage[]
-}
-
-model ChatMessage {
-  id             String           @id @default(cuid())
-  conversationId String
-  role           String
-  content        String
-  rawItem        Json?
-  createdAt      DateTime         @default(now())
-  conversation   ChatConversation @relation(fields: [conversationId], references: [conversationId], onDelete: Cascade)
-
-  @@index([conversationId, createdAt])
-}
-
 enum Role {
   SYSTEM_ADMIN
   CASHIER
@@ -394,3 +76,337 @@ enum EmailQueueStatus {
   SENT
   FAILED
 }
+
+model User {
+  id           String     @id @default(cuid())
+  name         String
+  email        String     @unique
+  passwordHash String
+  role         Role
+  status       UserStatus @default(ACTIVE)
+  sponsorId    String?
+  partnerId    String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  sponsor       Sponsor?        @relation(fields: [sponsorId], references: [id])
+  partner       Partner?        @relation(fields: [partnerId], references: [id])
+  notifications Notification[]
+}
+
+model Counter {
+  id        String   @id @default(cuid())
+  scope     String   @unique
+  value     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Setting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ContentSection {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  title     String
+  subtitle  String?
+  body      String
+  ctaLabel  String?
+  ctaHref   String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ProductService {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  description String
+  image       String?
+  featured    Boolean  @default(false)
+  priceLabel  String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Inquiry {
+  id        String        @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  company   String?
+  subject   String
+  message   String
+  status    InquiryStatus @default(NEW)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+model SponsorPackage {
+  id           String        @id @default(cuid())
+  title        String        @unique
+  priceRange   String
+  description  String
+  benefits     Json
+  deliverables Json
+  status       PackageStatus @default(ACTIVE)
+  featured     Boolean       @default(false)
+  sortOrder    Int           @default(0)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  sponsors          Sponsor[]
+  sponsorProfiles   SponsorProfile[]
+  sponsorDeliveries SponsorDeliverable[]
+}
+
+model Sponsor {
+  id                String              @id @default(cuid())
+  name              String
+  slug              String              @unique
+  description       String
+  website           String?
+  logo              String?
+  status            SponsorStatus       @default(ACTIVE)
+  packageId         String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  package           SponsorPackage?     @relation(fields: [packageId], references: [id])
+  profile           SponsorProfile?
+  deliverables      SponsorDeliverable[]
+  invoices          Invoice[]
+  users             User[]
+  applications      SponsorApplication[]
+}
+
+model SponsorProfile {
+  id           String   @id @default(cuid())
+  sponsorId    String   @unique
+  packageId    String?
+  headline     String?
+  description  String
+  contactName  String
+  contactEmail String
+  logo         String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  sponsor Sponsor        @relation(fields: [sponsorId], references: [id])
+  package SponsorPackage? @relation(fields: [packageId], references: [id])
+}
+
+model SponsorApplication {
+  id               String           @id @default(cuid())
+  sponsorName      String
+  contactName      String
+  email            String
+  phone            String?
+  company          String?
+  packageInterest  String
+  message          String
+  status           SubmissionStatus @default(NEW)
+  sponsorId        String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  sponsor Sponsor? @relation(fields: [sponsorId], references: [id])
+}
+
+model SponsorDeliverable {
+  id          String            @id @default(cuid())
+  sponsorId   String
+  packageId   String?
+  title       String
+  description String
+  dueDate     DateTime?
+  status      DeliverableStatus @default(PENDING)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  sponsor Sponsor         @relation(fields: [sponsorId], references: [id])
+  package SponsorPackage? @relation(fields: [packageId], references: [id])
+}
+
+model Partner {
+  id          String        @id @default(cuid())
+  name        String
+  slug        String        @unique
+  description String
+  website     String?
+  logo        String?
+  status      PartnerStatus @default(ACTIVE)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  users User[]
+}
+
+model CreatorProfile {
+  id              String   @id @default(cuid())
+  fullName        String
+  biography       String
+  journeyStory    String
+  pointsPerGame   Float
+  assistsPerGame  Float
+  reboundsPerGame Float
+  image           String?
+  slug            String   @unique
+  socialLinks     Json
+  featured        Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model MediaEvent {
+  id          String         @id @default(cuid())
+  title       String
+  slug        String         @unique
+  description String?
+  featured    Boolean        @default(false)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  media GalleryMedia[]
+}
+
+model GalleryMedia {
+  id          String   @id @default(cuid())
+  title       String
+  caption     String?
+  description String?
+  image       String
+  featured    Boolean  @default(false)
+  eventId     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  event MediaEvent? @relation(fields: [eventId], references: [id])
+}
+
+model SponsorInventoryItem {
+  id                  String   @id @default(cuid())
+  title               String
+  category            String
+  description         String
+  value               Decimal 
+  image               String?
+  packageApplicability Json
+  active              Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model Invoice {
+  id          String        @id @default(cuid())
+  number      String        @unique
+  sponsorId   String?
+  customerName String
+  issuedAt    DateTime      @default(now())
+  dueDate     DateTime?
+  totalAmount Decimal      
+  balanceDue  Decimal      
+  status      InvoiceStatus @default(OPEN)
+  notes       String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  sponsor      Sponsor?             @relation(fields: [sponsorId], references: [id])
+  transactions CashierTransaction[]
+  receipts     Receipt[]
+}
+
+model CashierTransaction {
+  id        String          @id @default(cuid())
+  invoiceId String
+  type      TransactionType
+  amount    Decimal        
+  reference String?
+  notes     String?
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+}
+
+model Receipt {
+  id        String   @id @default(cuid())
+  number    String   @unique
+  invoiceId String
+  amount    Decimal 
+  issuedAt  DateTime @default(now())
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+}
+
+model ReportSnapshot {
+  id        String   @id @default(cuid())
+  type      String
+  name      String
+  payload   Json
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String?
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+}
+
+model EmailQueue {
+  id        String           @id @default(cuid())
+  toEmail   String
+  subject   String
+  template  String?
+  payload   Json?
+  status    EmailQueueStatus @default(PENDING)
+  attempts  Int              @default(0)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+}
+
+model ChatConversation {
+  id             String   @id @default(cuid())
+  conversationId String   @unique
+  visitorName    String?
+  email          String?
+  mobile         String?
+  organization   String?
+  summary        String?
+  leadCaptured   Boolean  @default(false)
+  leadCapturedAt DateTime?
+  lastIntent     String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  messages       ChatMessage[]
+}
+
+model ChatMessage {
+  id             String   @id @default(cuid())
+  conversationId String
+  role           String
+  content        String
+  rawItem        Json?
+  createdAt      DateTime @default(now())
+
+  conversation ChatConversation @relation(fields: [conversationId], references: [conversationId], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+}
+

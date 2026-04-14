@@ -1,19 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { runResurgenceAgent } from "@/lib/ai/resurgence-agent";
-import { PrismaSession } from "@/lib/ai/prisma-session";
 
 export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    const body = await req.json().catch(() => ({}));
     const conversationId = String(body?.conversationId || "").trim();
     const message = String(body?.message || "").trim();
 
     if (!conversationId || !message) {
       return NextResponse.json(
-        { error: "Missing conversationId or message." },
+        { ok: false, error: "Missing conversationId or message." },
         { status: 400 }
       );
     }
@@ -36,11 +35,10 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    const session = new PrismaSession(conversationId);
     const result = await runResurgenceAgent({
+      conversationId,
       message,
       leadCaptured: conversation.leadCaptured,
-      session,
     });
 
     if (!result.ok) {

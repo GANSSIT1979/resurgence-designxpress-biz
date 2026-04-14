@@ -22,21 +22,11 @@ export function SiteFooter() {
         <div>
           <h4>Quick Links</h4>
           <ul className="plain-list">
-            <li>
-              <Link href="/">Home</Link>
-            </li>
-            <li>
-              <Link href="/sponsors">Sponsors</Link>
-            </li>
-            <li>
-              <Link href="/sponsor/apply">Sponsor Apply</Link>
-            </li>
-            <li>
-              <Link href="/contact">Contact</Link>
-            </li>
-            <li>
-              <Link href="/support">Support</Link>
-            </li>
+            <li><Link href="/">Home</Link></li>
+            <li><Link href="/sponsors">Sponsors</Link></li>
+            <li><Link href="/sponsor/apply">Sponsor Apply</Link></li>
+            <li><Link href="/contact">Contact</Link></li>
+            <li><Link href="/support">Support</Link></li>
           </ul>
         </div>
 

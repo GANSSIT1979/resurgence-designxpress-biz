@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { authenticateUser, getDashboardPath, SESSION_COOKIE, signSession } from "@/lib/auth";
+import {
+  authenticateUser,
+  getDashboardPath,
+  SESSION_COOKIE,
+  signSession,
+} from "../../../../lib/auth";
 
 function safeRedirectTarget(nextValue: string | null, role: string) {
   if (!nextValue || !nextValue.startsWith("/")) {
