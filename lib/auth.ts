@@ -1,7 +1,4 @@
-import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
-import bcrypt from "bcryptjs";
-import { db } from "@/lib/db";
 
 export const SESSION_COOKIE = "resurgence_session";
 
@@ -70,6 +67,13 @@ export function verifySession(token: string): JwtPayload | null {
 export async function authenticateUser(email: string, password: string) {
   const normalizedEmail = email.trim().toLowerCase();
 
+  const [{ db }, bcryptModule] = await Promise.all([
+    import("@/lib/db"),
+    import("bcryptjs"),
+  ]);
+
+  const bcrypt = bcryptModule.default;
+
   const user = await db.user.findUnique({
     where: { email: normalizedEmail },
   });
@@ -99,6 +103,11 @@ export async function authenticateUser(email: string, password: string) {
 }
 
 export async function getCurrentUser() {
+  const [{ cookies }, { db }] = await Promise.all([
+    import("next/headers"),
+    import("@/lib/db"),
+  ]);
+
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
   if (!token) return null;
 

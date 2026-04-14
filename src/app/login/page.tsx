@@ -1,11 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { FormEvent, useMemo, useState } from "react";
 
 export default function LoginPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   const nextTarget = useMemo(() => {
@@ -20,6 +19,8 @@ export default function LoginPage() {
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (loading) return;
+
     setLoading(true);
     setError("");
 
@@ -40,14 +41,14 @@ export default function LoginPage() {
 
       if (!res.ok || !json?.ok) {
         setError(json?.error || "Unable to login.");
+        setLoading(false);
         return;
       }
 
-      router.replace(json.redirectTo || "/");
-      router.refresh();
+      window.location.assign(json.redirectTo || "/");
+      return;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to login.");
-    } finally {
       setLoading(false);
     }
   }
