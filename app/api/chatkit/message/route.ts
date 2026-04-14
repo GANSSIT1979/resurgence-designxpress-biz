@@ -3,7 +3,6 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { ensureChatConversation } from "@/lib/chat";
 import { fail, ok } from "@/lib/api-utils";
-import { runSupportAgent } from "@/lib/ai/resurgence-agent";
 
 const schema = z.object({
   conversationId: z.string().min(1),
@@ -11,10 +10,6 @@ const schema = z.object({
 });
 
 export async function POST(request: NextRequest) {
-  if (!process.env.OPENAI_API_KEY) {
-    return fail("AI support is not configured yet. Add OPENAI_API_KEY in your environment.", 503);
-  }
-
   let parsedBody: unknown;
   try {
     parsedBody = await request.json();
@@ -30,17 +25,46 @@ export async function POST(request: NextRequest) {
   const { conversationId, message } = parsed.data;
   const conversation = await ensureChatConversation(conversationId);
 
-  const output = await runSupportAgent({
-    conversationId,
-    message,
+  let runSupportAgent: ((input: {
+    conversationId: string;
+    message: string;
     context: {
-      leadCaptured: conversation.leadCaptured,
-      visitorName: conversation.visitorName,
-      organization: conversation.organization,
-      email: conversation.email,
-      mobile: conversation.mobile
-    }
-  });
+      leadCaptured: boolean;
+      visitorName?: string | null;
+      organization?: string | null;
+      email?: string | null;
+      mobile?: string | null;
+    };
+  }) => Promise<string>) | null = null;
+
+  try {
+    const mod = await import("@/lib/ai/resurgence-agent");
+    runSupportAgent = mod.runSupportAgent;
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : "Unknown error";
+    return fail(
+      `AI support is disabled because the OpenAI Agents SDK is not installed or failed to load. Install @openai/agents and zod, then restart the app. Detail: ${detail}`,
+      503
+    );
+  }
+
+  let output: string;
+  try {
+    output = await runSupportAgent({
+      conversationId,
+      message,
+      context: {
+        leadCaptured: conversation.leadCaptured,
+        visitorName: conversation.visitorName,
+        organization: conversation.organization,
+        email: conversation.email,
+        mobile: conversation.mobile
+      }
+    });
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : "Unknown error";
+    return fail(`AI support is unavailable right now. ${detail}`, 503);
+  }
 
   const refreshed = await db.chatConversation.findUnique({
     where: { conversationId },

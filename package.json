@@ -4,18 +4,16 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "next dev",
-    "predev": "npm run doctor && npm run prisma:generate",
-    "build": "next build",
-    "prebuild": "npm run doctor && npm run prisma:generate",
+    "predev": "npm run prisma:generate",
+    "build": "npm run prisma:generate && npx prisma migrate deploy && next build",
     "start": "next start",
-    "prestart": "npm run doctor && npm run prisma:generate",
     "lint": "next lint",
     "prisma:prepare": "node scripts/prepare-prisma.mjs",
-    "prisma:generate": "npm run prisma:prepare && prisma generate",
-    "db:push": "npm run prisma:prepare && prisma db push",
-    "db:migrate": "npm run prisma:prepare && prisma migrate dev",
-    "db:seed": "npm run prisma:prepare && tsx prisma/seed.ts",
-    "db:reset": "npm run prisma:prepare && prisma db push --force-reset && tsx prisma/seed.ts",
+    "prisma:generate": "npm run prisma:prepare && npx prisma generate",
+    "db:push": "npm run prisma:prepare && npx prisma db push",
+    "db:migrate": "npm run prisma:prepare && npx prisma migrate dev",
+    "db:seed": "npm run prisma:prepare && npx tsx prisma/seed.ts",
+    "db:reset": "npm run prisma:prepare && npx prisma db push --force-reset && npx tsx prisma/seed.ts",
     "postinstall": "npm run prisma:generate",
     "doctor": "node scripts/local-preflight.mjs",
     "setup:windows": "node scripts/windows-setup.mjs"
@@ -24,28 +22,28 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
-    "@prisma/client": "^6.6.0",
+    "@prisma/client": "^6.19.3",
     "bcryptjs": "^2.4.3",
     "clsx": "^2.1.1",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.503.0",
-    "next": "^15.2.4",
+    "next": "^15.5.15",
+    "openai": "^5.19.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "recharts": "^2.15.1",
-    "zod": "^3.24.2",
-    "@openai/agents": "latest"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "^22.13.14",
     "@types/react": "^19.0.12",
     "@types/react-dom": "^19.0.4",
-    "prisma": "^6.6.0",
+    "prisma": "^6.19.3",
     "tsx": "^4.19.3",
     "typescript": "^5.8.2"
   },
   "engines": {
-    "node": ">=20.11.0"
+    "node": "20.x"
   }
 }

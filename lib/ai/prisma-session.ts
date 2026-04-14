@@ -1,7 +1,8 @@
-import type { AgentInputItem, Session } from "@openai/agents";
 import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { ensureChatConversation } from "@/lib/chat";
+
+type AgentInputItem = Record<string, unknown>;
 
 function textFromUnknown(value: unknown): string {
   if (typeof value === "string") return value;
@@ -28,7 +29,7 @@ function inferRole(item: AgentInputItem): string {
   return "assistant";
 }
 
-export class PrismaSession implements Session {
+export class PrismaSession {
   constructor(private readonly conversationId: string) {}
 
   async getSessionId(): Promise<string> {

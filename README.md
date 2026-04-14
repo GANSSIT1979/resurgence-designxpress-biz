@@ -50,7 +50,7 @@ Deployable full-stack sponsorship, creator-network, gallery/media, sponsor inven
 - Cashier invoices, transactions, receipts, summary endpoint
 - Sponsor portal applications, deliverables, billing, and profile
 - Upload route for `/public/uploads`
-- Future AI support placeholders
+- Optional AI support placeholders
 
 ## Demo users
 
@@ -104,50 +104,61 @@ resurgence-fullstack/
 ├─ lib/
 ├─ prisma/
 │  ├─ schema.prisma
+│  ├─ schema.template.prisma
 │  └─ seed.ts
 ├─ public/uploads/
+├─ scripts/
 ├─ Dockerfile
 ├─ docker-compose.yml
 ├─ middleware.ts
 ├─ package.json
-└─ .env.example
+├─ .env.example
+├─ LOCAL_SETUP.md
+└─ DEPLOYMENT.md
 ```
 
-## Local setup
+## Version notes
 
-1. Copy environment values.
+- The current project setup is aligned to **Prisma 6.x**
+- The base project install is aligned to **Node 20.x**
+- If you use **Node 24**, npm may show an `EBADENGINE` warning, but the app can still install and run locally
+- The base build is designed to work **without** `@openai/agents`
 
-```bash
-cp .env.example .env
+## Quick start (Windows PowerShell)
+
+1. Copy the environment file.
+
+```powershell
+Copy-Item .env.example .env
 ```
 
-2. Install packages.
+2. Install dependencies.
 
-```bash
+```powershell
 npm install
 ```
 
-3. Generate Prisma client.
+3. Generate Prisma Client.
 
-```bash
+```powershell
 npm run prisma:generate
 ```
 
-4. Create the local database.
+4. Push the local database schema.
 
-```bash
+```powershell
 npm run db:push
 ```
 
 5. Seed demo data.
 
-```bash
+```powershell
 npm run db:seed
 ```
 
-6. Start development.
+6. Start the development server.
 
-```bash
+```powershell
 npm run dev
 ```
 
@@ -155,6 +166,29 @@ npm run dev
 
 ```text
 http://localhost:3000
+```
+
+## Quick start (macOS / Linux / Git Bash)
+
+```bash
+cp .env.example .env
+npm install
+npm run prisma:generate
+npm run db:push
+npm run db:seed
+npm run dev
+```
+
+## Recommended local verification
+
+After startup, verify:
+
+```text
+http://localhost:3000
+http://localhost:3000/login
+http://localhost:3000/sponsor/apply
+http://localhost:3000/contact
+http://localhost:3000/api/health
 ```
 
 ## Environment variables
@@ -172,7 +206,7 @@ OPENAI_WEBHOOK_SECRET=""
 
 ## Provider switching
 
-This project is **provider-aware** through Prisma environment variables.
+This project is **provider-aware** through the Prisma prepare script.
 
 ### Local SQLite
 ```env
@@ -201,6 +235,7 @@ npm run db:seed
 - Middleware-protected dashboard routes
 - API role checks on protected endpoints
 - Sponsor portal is sponsor-scoped through `sponsorId`
+- Broken or stale session cookies should be cleared automatically by the middleware/auth flow
 
 ## Upload handling
 
@@ -265,12 +300,25 @@ Invoice and receipt numbers are generated through a dedicated `Counter` model, s
 - `GET /api/admin/reports/export?dataset=inquiries&format=csv`
 - `GET /api/admin/reports/export?dataset=sponsors&format=json`
 
-## AI support readiness
+## AI support status
 
-Prepared routes:
+The app includes `/support` and AI-related placeholders, but the **base install is intentionally non-AI-first** so the project can build cleanly without the OpenAI Agents SDK.
+
+### Available in the base build
 - `/support`
 - `POST /api/chatkit/session`
-- `POST /api/openai/webhook`
+- AI environment placeholders in `.env`
+
+### Current behavior
+- If optional AI packages are not installed, AI-specific routes should fail gracefully instead of breaking the whole app
+- The base install does **not** require `@openai/agents`
+
+### Important dependency note
+The current base project uses:
+- `openai` with **Zod 3**
+- Prisma 6.x
+
+If you plan to enable an Agents SDK implementation later, do it in a controlled pass because newer `@openai/agents` releases may require dependency versions that differ from the base project setup.
 
 ## Deployment
 
@@ -278,37 +326,49 @@ See:
 - `LOCAL_SETUP.md`
 - `DEPLOYMENT.md`
 
-## Notes
+## Troubleshooting
 
-- This scaffold is modular and extendable.
-- The admin CRUD pages are intentionally generic so new modules can be added quickly.
-- For production, use PostgreSQL and set a strong `AUTH_SECRET`.
-- For Vercel deployments, use a persistent PostgreSQL database and avoid ephemeral file uploads unless paired with object storage later.
+### 1. `@prisma/client did not initialize yet`
+Run:
 
+```powershell
+npm run prisma:generate
+```
 
-## AI Support Desk
+Then restart the dev server.
 
-This project includes a persistent RESURGENCE support desk at `/support`.
+### 2. `'prisma' is not recognized as an internal or external command`
+Make sure `npm install` finished successfully first. This project uses `npx prisma ...` in scripts, so Prisma must exist in local dependencies.
 
-What it does:
-- generates or reuses a browser-stable `conversationId`
-- stores conversation state in Prisma with `ChatConversation` and `ChatMessage`
-- keeps `leadCaptured` in the database so the assistant does not repeatedly ask for the same business details
-- exposes APIs at `/api/chatkit/session`, `/api/chatkit/message`, and `/api/chatkit/lead`
-- routes first-time captured leads into `Inquiry`, `EmailQueue`, and admin `Notification` records
+### 3. Prisma 7 schema errors mentioning `prisma.config.ts`
+This project is currently aligned to **Prisma 6.x**. If `npm install` failed and `npx` downloaded Prisma 7 temporarily, fix the install first, then rerun:
 
-Setup after pulling this patch:
-
-```bash
+```powershell
 npm install
 npm run prisma:generate
-npm run db:push
-npm run db:seed
-npm run dev
 ```
 
-Required environment variable for live AI replies:
+### 4. `tsx is not recognized`
+This usually means `npm install` did not complete, so `tsx` was never installed.
 
-```env
-OPENAI_API_KEY="your-api-key"
+### 5. Login button keeps sending you to the wrong state
+Clear cookies for `localhost:3000` once, then refresh the page.
+
+### 6. Sponsor or contact form throws a form reset error
+Update to the patched build that captures the form element before async submission. If you are on the latest patched project, restart the dev server and retest.
+
+### 7. Node version warning
+If you see:
+
+```text
+npm warn EBADENGINE Unsupported engine
 ```
+
+the recommended fix is to switch to **Node 20 LTS**. The app may still run on newer Node versions, but Node 20.x is the supported target for this project.
+
+## Notes
+
+- This scaffold is modular and extendable
+- The admin CRUD pages are intentionally generic so new modules can be added quickly
+- For production, use PostgreSQL and set a strong `AUTH_SECRET`
+- For Vercel deployments, use a persistent PostgreSQL database and avoid relying on local file storage for long-term uploads unless you add object storage later
