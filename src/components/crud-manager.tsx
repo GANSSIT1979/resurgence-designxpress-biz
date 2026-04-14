@@ -1,6 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { FormActions } from "./form-actions";
+import { FormFieldShell } from "./form-field-shell";
+import { FormSection } from "./form-section";
+import { ImageUploadField } from "./image-upload-field";
 
 type ColumnDef = {
   key?: string;
@@ -19,6 +23,7 @@ type FieldDef = {
   required?: boolean;
   options?: Array<{ label: string; value: string }> | string[];
   rows?: number;
+  hint?: string;
 };
 
 type CrudManagerProps = {
@@ -179,7 +184,7 @@ export function CrudManager(props: CrudManagerProps) {
       }
 
       setDone(isEditing ? "Record updated successfully." : "Record created successfully.");
-      resetForm()
+      resetForm();
       await loadItems();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to save record.");
@@ -223,27 +228,53 @@ export function CrudManager(props: CrudManagerProps) {
     const value = form[name];
     const stringValue = getTextValue(value);
 
+    if (type === "image") {
+      return (
+        <ImageUploadField
+          key={name}
+          label={label}
+          value={stringValue}
+          hint={field.hint}
+          required={field.required}
+          name={name}
+          onChange={(nextValue) => setForm((current) => ({ ...current, [name]: nextValue }))}
+        />
+      );
+    }
+
     if (type === "textarea") {
       return (
-        <div key={name}>
-          <label>{label}</label>
+        <FormFieldShell
+          key={name}
+          label={label}
+          htmlFor={name}
+          hint={field.hint}
+          required={field.required}
+        >
           <textarea
+            id={name}
             rows={field.rows || 5}
             placeholder={field.placeholder || ""}
             value={stringValue}
             onChange={(e) => setForm((current) => ({ ...current, [name]: e.target.value }))}
             required={field.required}
           />
-        </div>
+        </FormFieldShell>
       );
     }
 
     if (type === "select") {
       const options = Array.isArray(field.options) ? field.options : [];
       return (
-        <div key={name}>
-          <label>{label}</label>
+        <FormFieldShell
+          key={name}
+          label={label}
+          htmlFor={name}
+          hint={field.hint}
+          required={field.required}
+        >
           <select
+            id={name}
             value={stringValue}
             onChange={(e) => setForm((current) => ({ ...current, [name]: e.target.value }))}
             required={field.required}
@@ -261,14 +292,20 @@ export function CrudManager(props: CrudManagerProps) {
               );
             })}
           </select>
-        </div>
+        </FormFieldShell>
       );
     }
 
     return (
-      <div key={name}>
-        <label>{label}</label>
+      <FormFieldShell
+        key={name}
+        label={label}
+        htmlFor={name}
+        hint={field.hint}
+        required={field.required}
+      >
         <input
+          id={name}
           type={type === "number" ? "number" : type}
           placeholder={field.placeholder || ""}
           value={stringValue}
@@ -280,56 +317,73 @@ export function CrudManager(props: CrudManagerProps) {
           }
           required={field.required}
         />
-      </div>
+      </FormFieldShell>
     );
   }
 
   return (
     <div className="dashboard-content-stack">
-      <section className="dashboard-surface" style={{ padding: 24 }}>
+      <FormSection
+        eyebrow="Module Manager"
+        title={title}
+        subtitle={subtitle}
+        compact
+      >
         <div className="dashboard-toolbar">
-          <div>
-            <div className="eyebrow">Content Manager</div>
-            <h2 className="dashboard-section-title">{title}</h2>
-            <p className="dashboard-section-subtitle">{subtitle}</p>
-          </div>
           <div className="dashboard-chip">
             {items.length} {items.length === 1 ? "record" : "records"}
           </div>
+          <div className="dashboard-chip">
+            {selectedId ? "Editing existing record" : "Creating new record"}
+          </div>
         </div>
-      </section>
+      </FormSection>
 
       <section className="crud-layout">
-        <div className="card">
-          <div className="dashboard-toolbar" style={{ marginBottom: 12 }}>
-            <div className="card-title">
-              {selectedId ? "Edit Record" : "Create Record"}
-            </div>
-            <button type="button" className="button button-secondary button-small" onClick={resetForm}>
-              Reset
-            </button>
-          </div>
-
-          {error ? <div className="error-text" style={{ marginBottom: 12 }}>{error}</div> : null}
-          {done ? <div className="success-text" style={{ marginBottom: 12 }}>{done}</div> : null}
+        <FormSection
+          eyebrow="Form Workspace"
+          title={selectedId ? "Edit Record" : "Create Record"}
+          subtitle="Use the structured form fields below to keep content complete and consistent."
+        >
+          {error ? <div className="field-error">{error}</div> : null}
+          {done ? <div className="success-text">{done}</div> : null}
 
           {fields.length ? (
             <form className="crud-form" onSubmit={save}>
-              {fields.map(renderField)}
-              <button className="button" type="submit" disabled={saving || !hasEndpoint}>
-                {saving ? "Saving..." : selectedId ? "Update Record" : "Create Record"}
-              </button>
+              <div className="form-grid">
+                {fields.map(renderField)}
+              </div>
+
+              <FormActions align="between">
+                <button
+                  type="button"
+                  className="button button-secondary button-small"
+                  onClick={resetForm}
+                >
+                  Reset
+                </button>
+
+                <button className="button" type="submit" disabled={saving || !hasEndpoint}>
+                  {saving ? "Saving..." : selectedId ? "Update Record" : "Create Record"}
+                </button>
+              </FormActions>
             </form>
           ) : (
             <div className="empty-state">
               No form fields are configured for this module yet.
             </div>
           )}
-        </div>
+        </FormSection>
 
-        <div className="card">
-          <div className="dashboard-toolbar" style={{ marginBottom: 12 }}>
-            <div className="card-title">Records</div>
+        <FormSection
+          eyebrow="Records Table"
+          title="Existing Records"
+          subtitle="Review, edit, and remove records while keeping the module history visible."
+        >
+          <div className="dashboard-toolbar">
+            <div className="dashboard-chip">
+              API: {hasEndpoint ? endpoint : "Not configured"}
+            </div>
             <button
               type="button"
               className="button button-secondary button-small"
@@ -392,7 +446,7 @@ export function CrudManager(props: CrudManagerProps) {
               </table>
             </div>
           )}
-        </div>
+        </FormSection>
       </section>
     </div>
   );

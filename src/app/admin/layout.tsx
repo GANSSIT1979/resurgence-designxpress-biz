@@ -1,23 +1,26 @@
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 import { DashboardShell } from "@/components/dashboard-shell";
 
 const links = [
   { href: "/admin", label: "Overview" },
-  { href: "/admin/sponsor-submissions", label: "Sponsor Submissions" },
-  { href: "/admin/sponsor-packages", label: "Sponsor Packages" },
-  { href: "/admin/creator-network", label: "Creator Network" },
-  { href: "/admin/sponsor-inventory", label: "Sponsor Inventory" },
+  { href: "/admin/sponsor-submissions", label: "Submissions" },
   { href: "/admin/sponsors", label: "Sponsors" },
-  { href: "/admin/partners", label: "Partners" },
-  { href: "/admin/inquiries", label: "Inquiries" },
-  { href: "/admin/content", label: "Content CMS" },
-  { href: "/admin/products-services", label: "Product and Services" },
+  { href: "/admin/creator-network", label: "Creators" },
   { href: "/admin/gallery", label: "Gallery" },
-  { href: "/admin/users", label: "Users and Roles" },
-  { href: "/admin/reports", label: "Reports" },
-  { href: "/admin/settings", label: "Settings" }
+  { href: "/admin/products-services", label: "Products & Services" },
+  { href: "/admin/inquiries", label: "Inquiries" },
+  { href: "/admin/users", label: "Users" },
+  { href: "/admin/settings", label: "Settings" },
 ];
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
-  return <DashboardShell title="System Admin" links={links}>{children}</DashboardShell>;
+  return (
+    <DashboardShell
+      title="System Admin Dashboard"
+      subtitle="Oversee sponsorship operations, content modules, creator assets, user access, and business workflows from one command surface."
+      links={links}
+    >
+      {children}
+    </DashboardShell>
+  );
 }
