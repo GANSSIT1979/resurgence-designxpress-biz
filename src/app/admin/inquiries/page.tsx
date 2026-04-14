@@ -1,11 +1,80 @@
+import Link from "next/link";
+import { db } from "@/lib/db";
 import { CrudManager } from "@/components/crud-manager";
+import { DashboardPageOrchestrator } from "@/components/dashboard-page-orchestrator";
+import { StatusBadge } from "@/components/status-badge";
 
-export default function Page() {
+export const dynamic = "force-dynamic";
+
+export default async function AdminInquiriesPage() {
+  const inquiries = await db.inquiry.findMany({
+    take: 100,
+    orderBy: { createdAt: "desc" },
+  });
+
+  const newCount = inquiries.filter((item) => String(item.status || "").toUpperCase() === "NEW").length;
+
   return (
-    <CrudManager
-      title="Inquiries"
-      endpoint="/api/admin/inquiries"
-      fields={[{"key": "name", "label": "Name", "type": "text", "required": true}, {"key": "email", "label": "Email", "type": "text", "required": true}, {"key": "phone", "label": "Phone", "type": "text"}, {"key": "company", "label": "Company", "type": "text"}, {"key": "subject", "label": "Subject", "type": "text", "required": true}, {"key": "message", "label": "Message", "type": "textarea", "required": true}, {"key": "status", "label": "Status", "type": "text"}]}
-    />
+    <DashboardPageOrchestrator
+      eyebrow="Contact Pipeline"
+      title="Inquiry management"
+      subtitle="Track incoming contact requests, support messages, and business follow-up activity from one review surface."
+      tabs={[
+        { href: "/admin", label: "Overview" },
+        { href: "/admin/inquiries", label: "Inquiries", exact: true, count: inquiries.length },
+        { href: "/admin/sponsor-submissions", label: "Submissions" },
+        { href: "/admin/users", label: "Users" },
+      ]}
+      actions={
+        <Link href="/support" className="button button-small">
+          Support Desk
+        </Link>
+      }
+      metrics={
+        <div className="grid-3">
+          <div className="dashboard-stat-card">
+            <div className="dashboard-stat-value">{inquiries.length}</div>
+            <div className="dashboard-stat-label">Inquiry records</div>
+          </div>
+          <div className="dashboard-stat-card">
+            <div className="dashboard-stat-value">{newCount}</div>
+            <div className="dashboard-stat-label">New inquiries</div>
+          </div>
+          <div className="dashboard-stat-card">
+            <div className="dashboard-stat-value">
+              <StatusBadge label={newCount ? "Needs Response" : "Clear"} />
+            </div>
+            <div className="dashboard-stat-label">Response queue</div>
+          </div>
+        </div>
+      }
+    >
+      <CrudManager
+        title="Inquiries"
+        subtitle="Update inquiry statuses and maintain follow-up visibility for contact and support workflows."
+        endpoint="/api/admin/inquiries"
+        columns={[
+          { key: "name", label: "Name" },
+          { key: "email", label: "Email" },
+          { key: "subject", label: "Subject" },
+          { key: "status", label: "Status" },
+        ]}
+        fields={[
+          { name: "name", label: "Name" },
+          { name: "email", label: "Email", type: "email" },
+          { name: "company", label: "Company" },
+          { name: "phone", label: "Phone" },
+          { name: "subject", label: "Subject" },
+          { name: "message", label: "Message", type: "textarea" },
+          {
+            name: "status",
+            label: "Status",
+            type: "select",
+            options: ["NEW", "REVIEWED", "CLOSED"],
+          },
+        ]}
+        emptyMessage="No inquiry records are available yet."
+      />
+    </DashboardPageOrchestrator>
   );
 }

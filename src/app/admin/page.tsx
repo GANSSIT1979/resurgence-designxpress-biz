@@ -13,20 +13,20 @@ async function getAdminSnapshot() {
     const [
       inquiries,
       sponsors,
-      sponsorSubmissions,
+      sponsorApplications,
       creators,
       partners,
       gallery,
     ] = await Promise.all([
       db.inquiry.findMany({ take: 8, orderBy: { createdAt: "desc" } }),
       db.sponsor.findMany({ take: 50, orderBy: { createdAt: "desc" } }),
-      db.sponsorSubmission.findMany({ take: 50, orderBy: { createdAt: "desc" } }),
+      db.sponsorApplication.findMany({ take: 50, orderBy: { createdAt: "desc" } }),
       db.creatorProfile.findMany({ take: 50, orderBy: { createdAt: "desc" } }),
       db.partner.findMany({ take: 50, orderBy: { createdAt: "desc" } }),
       db.galleryMedia.findMany({ take: 50, orderBy: { createdAt: "desc" } }),
     ]);
 
-    return { inquiries, sponsors, sponsorSubmissions, creators, partners, gallery };
+    return { inquiries, sponsors, sponsorApplications, creators, partners, gallery };
   } catch (error) {
     console.error("Admin snapshot load failed:", error);
     return null;
@@ -45,13 +45,13 @@ export default async function AdminPage() {
     );
   }
 
-  const pendingSubmissions = snapshot.sponsorSubmissions.filter(
-    (item) => String(item.status || "").toUpperCase() === "PENDING"
+  const pendingApplications = snapshot.sponsorApplications.filter((item) =>
+    ["NEW", "UNDER_REVIEW"].includes(String(item.status || "").toUpperCase())
   ).length;
 
   const chartData = [
     { label: "Sponsors", value: snapshot.sponsors.length },
-    { label: "Submissions", value: snapshot.sponsorSubmissions.length },
+    { label: "Applications", value: snapshot.sponsorApplications.length },
     { label: "Creators", value: snapshot.creators.length },
     { label: "Partners", value: snapshot.partners.length },
     { label: "Gallery", value: snapshot.gallery.length },
@@ -60,7 +60,7 @@ export default async function AdminPage() {
 
   const tabs = [
     { href: "/admin", label: "Overview", exact: true },
-    { href: "/admin/sponsor-submissions", label: "Submissions", count: pendingSubmissions },
+    { href: "/admin/sponsor-submissions", label: "Submissions", count: pendingApplications },
     { href: "/admin/sponsors", label: "Sponsors", count: snapshot.sponsors.length },
     { href: "/admin/creator-network", label: "Creators", count: snapshot.creators.length },
     { href: "/admin/inquiries", label: "Inquiries", count: snapshot.inquiries.length },
@@ -89,8 +89,8 @@ export default async function AdminPage() {
             <div className="dashboard-stat-label">Active sponsors</div>
           </div>
           <div className="dashboard-stat-card">
-            <div className="dashboard-stat-value">{pendingSubmissions}</div>
-            <div className="dashboard-stat-label">Pending submissions</div>
+            <div className="dashboard-stat-value">{pendingApplications}</div>
+            <div className="dashboard-stat-label">Applications in review</div>
           </div>
           <div className="dashboard-stat-card">
             <div className="dashboard-stat-value">{snapshot.creators.length}</div>
@@ -114,24 +114,24 @@ export default async function AdminPage() {
         />
 
         <section className="card">
-          <div className="card-title">Recent sponsor submissions</div>
-          {snapshot.sponsorSubmissions.length ? (
+          <div className="card-title">Recent sponsor applications</div>
+          {snapshot.sponsorApplications.length ? (
             <div className="list-stack">
-              {snapshot.sponsorSubmissions.slice(0, 5).map((item) => (
+              {snapshot.sponsorApplications.slice(0, 5).map((item) => (
                 <div key={item.id} className="list-item">
                   <div>
                     <strong style={{ display: "block", marginBottom: 6 }}>
-                      {item.companyName || item.contactName || "Sponsor submission"}
+                      {item.sponsorName || item.contactName || "Sponsor application"}
                     </strong>
                     <div className="muted">{item.email || "No email provided"}</div>
                   </div>
-                  <StatusBadge label={String(item.status || "Pending")} />
+                  <StatusBadge label={String(item.status || "NEW")} />
                 </div>
               ))}
             </div>
           ) : (
             <EmptyStatePanel
-              title="No sponsor submissions yet"
+              title="No sponsor applications yet"
               description="Incoming sponsor applications will appear here for admin review."
             />
           )}
@@ -158,7 +158,7 @@ export default async function AdminPage() {
                     <td>{item.email || "—"}</td>
                     <td>{item.subject || "General inquiry"}</td>
                     <td>
-                      <StatusBadge label={String(item.status || "New")} />
+                      <StatusBadge label={String(item.status || "NEW")} />
                     </td>
                   </tr>
                 ))}
