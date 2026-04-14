@@ -1,71 +1,111 @@
+"use client";
+
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { getCurrentUser, getDashboardPath } from "@/lib/auth";
+import { useRouter, useSearchParams } from "next/navigation";
+import { FormEvent, useMemo, useState } from "react";
 
-export default async function LoginPage({
-  searchParams
-}: {
-  searchParams: Promise<{ next?: string; error?: string }>;
-}) {
-  const user = await getCurrentUser();
+export default function LoginPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-  if (user) {
-    redirect(getDashboardPath(user.role));
+  const nextTarget = useMemo(() => {
+    const raw = searchParams.get("next");
+    return raw && raw.startsWith("/") ? raw : "";
+  }, [searchParams]);
+
+  const [email, setEmail] = useState("sponsor@resurgence.local");
+  const [password, setPassword] = useState("Sponsor123!");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function submit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          next: nextTarget || undefined,
+        }),
+      });
+
+      const json = await res.json().catch(() => null);
+
+      if (!res.ok || !json?.ok) {
+        setError(json?.error || "Unable to login.");
+        return;
+      }
+
+      router.replace(json.redirectTo || "/");
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to login.");
+    } finally {
+      setLoading(false);
+    }
   }
-
-  const params = await searchParams;
-  const next = params.next || "";
-  const error = params.error === "invalid" ? "Invalid email or password." : "";
-  const action = next ? `/api/auth/login?next=${encodeURIComponent(next)}` : "/api/auth/login";
 
   return (
     <div className="page-shell">
-      <div className="container" style={{ maxWidth: 560 }}>
-        <div className="card">
+      <div className="container" style={{ display: "grid", placeItems: "center" }}>
+        <div className="card" style={{ width: "min(100%, 480px)" }}>
           <div className="eyebrow">Secure Access</div>
-          <h1>Login</h1>
-          <p className="muted" style={{ marginTop: 8 }}>
+          <h1 style={{ marginTop: 0 }}>Login</h1>
+          <p className="muted">
             Sign in to open your assigned RESURGENCE dashboard.
           </p>
 
-          {error ? (
-            <div
-              style={{
-                marginTop: 16,
-                marginBottom: 8,
-                padding: "12px 14px",
-                borderRadius: 12,
-                border: "1px solid rgba(255,255,255,0.15)",
-                background: "rgba(220, 38, 38, 0.15)",
-                color: "#fecaca"
-              }}
-            >
-              {error}
+          <form className="form-card" onSubmit={submit}>
+            <div>
+              <label htmlFor="email">Email</label>
+              <input
+                id="email"
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
             </div>
-          ) : null}
 
-          <form className="form-card" method="post" action={action}>
-            <input name="email" type="email" placeholder="Email" autoComplete="email" required />
-            <input name="password" type="password" placeholder="Password" autoComplete="current-password" required />
-            <button className="button" type="submit">
-              Login
+            <div>
+              <label htmlFor="password">Password</label>
+              <input
+                id="password"
+                type="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+
+            {error ? <div className="error-text">{error}</div> : null}
+
+            <button className="button" type="submit" disabled={loading}>
+              {loading ? "Signing in..." : "Login"}
             </button>
           </form>
 
-          <div className="muted" style={{ marginTop: 16 }}>
-            Demo users are seeded. See the README for the demo credentials.
-          </div>
-
-          {next ? (
-            <div className="muted" style={{ marginTop: 8 }}>
-              After login you will continue to: <code>{next}</code>
+          <div className="site-section-stack" style={{ marginTop: 16 }}>
+            <div className="muted">
+              Demo users are seeded. See the README for credentials.
             </div>
-          ) : null}
-
-          <div style={{ marginTop: 18 }}>
-            <Link href="/" className="button button-secondary">
-              Back to homepage
-            </Link>
+            <div className="muted">
+              After login you will continue to: <code>{nextTarget || "/dashboard by role"}</code>
+            </div>
+            <div className="inline-actions">
+              <Link href="/" className="button button-secondary button-small">
+                Back to homepage
+              </Link>
+            </div>
           </div>
         </div>
       </div>

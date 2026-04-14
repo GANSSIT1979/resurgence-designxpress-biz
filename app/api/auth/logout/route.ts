@@ -1,11 +1,16 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { SESSION_COOKIE } from "@/lib/auth";
 
-export async function POST(request: NextRequest) {
-  const response = NextResponse.redirect(new URL("/login", request.url));
-  response.cookies.set(SESSION_COOKIE, "", {
+export async function POST() {
+  const res = NextResponse.json({ ok: true });
+  res.cookies.set({
+    name: SESSION_COOKIE,
+    value: "",
     path: "/",
-    expires: new Date(0)
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 0,
   });
-  return response;
+  return res;
 }
