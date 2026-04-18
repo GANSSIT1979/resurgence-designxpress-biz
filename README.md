@@ -15,12 +15,17 @@ RESURGENCE Powered by DesignXpress is a Next.js 15 + Prisma platform for public 
 
 ## Product Areas
 
-- Public pages: `/`, `/about`, `/services`, `/sponsors`, `/creator/[slug]`, `/contact`, `/support`, `/shop`, `/cart`, `/checkout`, `/sponsor/apply`
+- Public pages: `/`, `/about`, `/services`, `/sponsors`, `/creator/[slug]`, `/contact`, `/support`, `/shop`, `/cart`, `/checkout`, `/account/orders`, `/sponsor/apply`
 - Protected dashboards: `/admin`, `/cashier`, `/sponsor/dashboard`, `/staff`, `/partner`
 - Sponsor portal pages: `/sponsor/applications`, `/sponsor/packages`, `/sponsor/deliverables`, `/sponsor/billing`, `/sponsor/profile`
 - Support APIs: `/api/chatkit/session`, `/api/chatkit/message`, `/api/chatkit/lead`, `/api/openai/webhook`
 - Commerce and finance APIs: shop products, checkout, invoices, transactions, receipts, reports
 - Admin CMS and operations APIs: users, sponsors, packages, submissions, creator network, gallery media, reports, settings, shop data
+
+Commerce note:
+
+- the cart is client-side in the current app
+- `/account/orders` is an email-based order lookup page, not a signed-in customer dashboard
 
 ## Quick Start
 
@@ -81,6 +86,7 @@ Recommended references:
 - [`docs/INSTALL.md`](./docs/INSTALL.md)
 - [`docs/QUICKSTART.md`](./docs/QUICKSTART.md)
 - [`docs/API.md`](./docs/API.md)
+- [`docs/SHOP_MODULE.md`](./docs/SHOP_MODULE.md)
 - [`docs/DATABASE.md`](./docs/DATABASE.md)
 - [`docs/AI_SUPPORT_PRODUCTION.md`](./docs/AI_SUPPORT_PRODUCTION.md)
 - [`docs/TROUBLESHOOTING.md`](./docs/TROUBLESHOOTING.md)

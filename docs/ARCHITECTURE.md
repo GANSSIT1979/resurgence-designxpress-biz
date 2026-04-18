@@ -24,6 +24,7 @@ Public routes include:
 - `/shop`
 - `/cart`
 - `/checkout`
+- `/account/orders`
 - `/creator/[slug]`
 
 Protected dashboard entry points:
@@ -35,6 +36,8 @@ Protected dashboard entry points:
 - `/partner`
 
 The current app does not have a dedicated creator login or creator dashboard. Creator records are public profile content managed by admin tools.
+
+The shop also uses a public customer flow today. Order review happens on `/account/orders` through checkout email lookup rather than a signed-in customer account session.
 
 ## Auth And Permissions
 
@@ -57,6 +60,8 @@ The route handlers in `src/app/api` cover:
 - admin CRUD modules
 - sponsor, partner, staff, and cashier workflows
 - uploads, notifications, and health checks
+
+For commerce specifically, product browsing is backed by public shop APIs, checkout posts to `/api/checkout`, and cart state is stored client-side in the browser rather than in a dedicated server-side cart service.
 
 ## Data Layer
 

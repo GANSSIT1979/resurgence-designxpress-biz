@@ -20,6 +20,11 @@ Important behavior note:
 - `GET /api/shop/products/[slug]`
 - `POST /api/checkout`
 
+Commerce behavior note:
+
+- the current cart is stored client-side and does not have a dedicated `/api/cart` route
+- `/account/orders` is a page-level email lookup flow, not an API resource
+
 ## Auth And Shared Protected Routes
 
 - `POST /api/auth/login`
@@ -99,3 +104,12 @@ Admin module routes exist for:
 - users
 
 Some admin modules expose collection and item endpoints that are thin form-backed CRUD handlers rather than a fully uniform REST surface.
+
+Shop admin endpoints specifically include:
+
+- `GET /api/admin/shop-products`
+- `POST /api/admin/shop-products`
+- `PUT /api/admin/shop-products/[id]`
+- `DELETE /api/admin/shop-products/[id]`
+- `GET /api/admin/shop-orders`
+- `PUT /api/admin/shop-orders/[id]`
