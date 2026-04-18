@@ -1,16 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { FormEvent, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
+import type { FormEvent } from "react";
 
 export default function LoginPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
 
-  const nextTarget = useMemo(() => {
-    const raw = searchParams.get("next");
-    return raw && raw.startsWith("/") ? raw : "";
-  }, [searchParams]);
+  const rawNext = searchParams.get("next") || "";
+  const nextTarget = rawNext.startsWith("/") ? rawNext : "";
 
   const [email, setEmail] = useState("sponsor@resurgence.local");
   const [password, setPassword] = useState("Sponsor123!");
@@ -19,8 +19,6 @@ export default function LoginPage() {
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (loading) return;
-
     setLoading(true);
     setError("");
 
@@ -37,18 +35,19 @@ export default function LoginPage() {
         }),
       });
 
-      const json = await res.json().catch(() => null);
+      const text = await res.text();
+      const json = text ? JSON.parse(text) : null;
 
       if (!res.ok || !json?.ok) {
         setError(json?.error || "Unable to login.");
-        setLoading(false);
         return;
       }
 
-      window.location.assign(json.redirectTo || "/");
-      return;
+      router.replace(json.redirectTo || "/");
+      router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to login.");
+    } finally {
       setLoading(false);
     }
   }

@@ -2,9 +2,11 @@ import { NextRequest } from "next/server";
 import { Role, InquiryStatus, InvoiceStatus, SubmissionStatus } from "@prisma/client";
 import { db } from "@/lib/db";
 import { fail, ok, parseBoolean, requireApiRole } from "@/lib/api-utils";
+import { logActivity } from "@/lib/activity-log";
 
 type ResourceConfig = {
   roles: Role[];
+  resourceLabel: string;
   deleteMany: (ids: string[]) => Promise<unknown>;
   updateMany?: (ids: string[], value: string) => Promise<unknown>;
 };
@@ -12,6 +14,7 @@ type ResourceConfig = {
 const resources: Record<string, ResourceConfig> = {
   "sponsor-applications": {
     roles: [Role.SYSTEM_ADMIN],
+    resourceLabel: "sponsor-application",
     deleteMany: (ids) => db.sponsorApplication.deleteMany({ where: { id: { in: ids } } }),
     updateMany: (ids, value) =>
       Object.values(SubmissionStatus).includes(value as SubmissionStatus)
@@ -23,6 +26,7 @@ const resources: Record<string, ResourceConfig> = {
   },
   "admin-inquiries": {
     roles: [Role.SYSTEM_ADMIN],
+    resourceLabel: "inquiry",
     deleteMany: (ids) => db.inquiry.deleteMany({ where: { id: { in: ids } } }),
     updateMany: (ids, value) =>
       Object.values(InquiryStatus).includes(value as InquiryStatus)
@@ -34,6 +38,7 @@ const resources: Record<string, ResourceConfig> = {
   },
   "admin-gallery": {
     roles: [Role.SYSTEM_ADMIN],
+    resourceLabel: "gallery-media",
     deleteMany: (ids) => db.galleryMedia.deleteMany({ where: { id: { in: ids } } }),
     updateMany: (ids, value) =>
       db.galleryMedia.updateMany({
@@ -43,6 +48,7 @@ const resources: Record<string, ResourceConfig> = {
   },
   "cashier-invoices": {
     roles: [Role.SYSTEM_ADMIN, Role.CASHIER],
+    resourceLabel: "invoice",
     deleteMany: (ids) => db.invoice.deleteMany({ where: { id: { in: ids } } }),
     updateMany: (ids, value) =>
       Object.values(InvoiceStatus).includes(value as InvoiceStatus)
@@ -54,11 +60,14 @@ const resources: Record<string, ResourceConfig> = {
   },
   "cashier-receipts": {
     roles: [Role.SYSTEM_ADMIN, Role.CASHIER],
+    resourceLabel: "receipt",
     deleteMany: (ids) => db.receipt.deleteMany({ where: { id: { in: ids } } }),
   },
 };
 
-export async function POST(request: NextRequest, { params }: { params: Promise<{ resource: string }> }) {
+type Params = { params: Promise<{ resource: string }> };
+
+export async function POST(request: NextRequest, { params }: Params) {
   const { resource } = await params;
   const config = resources[resource];
   if (!config) return fail("Unsupported bulk resource.", 404);
@@ -78,12 +87,41 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   try {
     if (action === "delete") {
       await config.deleteMany(ids);
+
+      await logActivity(db, {
+        actorId: auth.user!.id,
+        actorRole: auth.user!.role,
+        action: "BULK_DELETE",
+        resource: config.resourceLabel,
+        scope: resource,
+        metadata: {
+          ids,
+          count: ids.length,
+        },
+        request,
+      });
+
       return ok({ deleted: ids.length });
     }
 
     if (action === "status") {
       if (!config.updateMany) return fail("Bulk status update is not supported for this resource.", 400);
       await config.updateMany(ids, value);
+
+      await logActivity(db, {
+        actorId: auth.user!.id,
+        actorRole: auth.user!.role,
+        action: "BULK_STATUS_UPDATE",
+        resource: config.resourceLabel,
+        scope: resource,
+        metadata: {
+          ids,
+          count: ids.length,
+          value,
+        },
+        request,
+      });
+
       return ok({ updated: ids.length, value });
     }
 

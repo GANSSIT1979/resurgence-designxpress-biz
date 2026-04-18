@@ -47,6 +47,7 @@ type CrudManagerProps = {
   formFields?: FieldDef[];
   initialValues?: Record<string, unknown>;
   defaultValues?: Record<string, unknown>;
+  initialItems?: Record<string, unknown>[];
   emptyMessage?: string;
   statusField?: string;
   duplicateSanitizeKeys?: string[];
@@ -111,36 +112,38 @@ function inferBulkEndpoint(endpoint: string) {
 
 export function CrudManager(props: CrudManagerProps) {
   const title = props.title || props.resourceName || props.entityName || "Manager";
-  const subtitle =
-    props.subtitle ||
-    "Manage records, update content, and keep the dashboard data organized.";
-  const endpoint = props.endpoint || props.apiEndpoint || "";
-  const bulkEndpoint = props.bulkEndpoint || inferBulkEndpoint(endpoint);
-  const savedViewScope = props.savedViewScope || endpoint || title;
-  const columns = props.columns || props.tableColumns || [];
-  const fields = props.fields || props.formFields || [];
-  const baseValues = props.initialValues || props.defaultValues || {};
-  const emptyMessage = props.emptyMessage || "No records available yet.";
-  const statusField = props.statusField || "status";
-  const duplicateSanitizeKeys = props.duplicateSanitizeKeys || [
-    "id",
-    "createdAt",
-    "updatedAt",
-  ];
+const subtitle =
+  props.subtitle ||
+  "Manage records, update content, and keep the dashboard data organized.";
+const endpoint = props.endpoint || props.apiEndpoint || "";
+const bulkEndpoint = props.bulkEndpoint || inferBulkEndpoint(endpoint);
+const savedViewScope = props.savedViewScope || endpoint || title;
+const columns = props.columns || props.tableColumns || [];
+const fields = props.fields || props.formFields || [];
+const baseValues = props.initialValues || props.defaultValues || {};
+const emptyMessage = props.emptyMessage || "No records available yet.";
+const statusField = props.statusField || "status";
+const duplicateSanitizeKeys = props.duplicateSanitizeKeys || [
+  "id",
+  "createdAt",
+  "updatedAt",
+];
 
-  const [items, setItems] = useState<Record<string, unknown>[]>([]);
-  const [form, setForm] = useState<Record<string, unknown>>(baseValues);
-  const [selectedId, setSelectedId] = useState<string>("");
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-  const [done, setDone] = useState("");
+const hasEndpoint = Boolean(endpoint);
+const hasInitialItems = props.initialItems !== undefined;
 
-  const hasEndpoint = Boolean(endpoint);
-  const serverViews = useServerSavedViews(savedViewScope, { search, status });
+const [items, setItems] = useState<Record<string, unknown>[]>(props.initialItems || []);
+const [form, setForm] = useState<Record<string, unknown>>(baseValues);
+const [selectedId, setSelectedId] = useState<string>("");
+const [selectedIds, setSelectedIds] = useState<string[]>([]);
+const [search, setSearch] = useState("");
+const [status, setStatus] = useState("");
+const [loading, setLoading] = useState(hasEndpoint && !hasInitialItems);
+const [saving, setSaving] = useState(false);
+const [error, setError] = useState("");
+const [done, setDone] = useState("");
+
+const serverViews = useServerSavedViews(savedViewScope, { search, status });
 
   const normalizedColumns = useMemo(() => {
     if (columns.length) return columns;
@@ -214,8 +217,14 @@ export function CrudManager(props: CrudManagerProps) {
   }
 
   useEffect(() => {
-    loadItems();
-  }, [endpoint]);
+  if (hasInitialItems) {
+    setItems(props.initialItems || []);
+    setLoading(false);
+    return;
+  }
+
+  loadItems();
+}, [endpoint, hasInitialItems, props.initialItems]);
 
   useEffect(() => {
     setSelectedIds((current) =>

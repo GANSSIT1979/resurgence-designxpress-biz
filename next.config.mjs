@@ -1,10 +1,2 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  experimental: {
-    serverActions: {
-      bodySizeLimit: "10mb"
-    }
-  }
-};
-
+const nextConfig = { images: { unoptimized: true } };
 export default nextConfig;
