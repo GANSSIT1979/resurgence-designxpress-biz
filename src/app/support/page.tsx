@@ -1,5 +1,5 @@
 import { InquiryForm } from '@/components/forms/inquiry-form';
-import { ResurgenceSupportBot } from '@/components/resurgence-support-bot';
+import { SupportChatWidget } from '@/components/support-chat-widget';
 import { getContentMap } from '@/lib/site';
 import { getPublicSettings } from '@/lib/settings';
 
@@ -21,7 +21,7 @@ export default async function SupportPage() {
 
       <div className="container split" style={{ marginTop: 32, alignItems: 'stretch' }}>
         <div>
-          <ResurgenceSupportBot />
+          <SupportChatWidget />
         </div>
 
         <div className="card">

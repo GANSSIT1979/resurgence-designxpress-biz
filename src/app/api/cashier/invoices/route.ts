@@ -1,42 +1,56 @@
-import { NextRequest } from "next/server";
-import { InvoiceStatus, Role } from "@prisma/client";
-import { db } from "@/lib/db";
-import { fail, ok, parseNumber, parseOptionalDate, requireApiRole } from "@/lib/api-utils";
+import { NextRequest } from 'next/server';
+import { UserRole } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
+import { fail, ok, requireApiRole } from '@/lib/api-utils';
+import { generateDocumentNumber } from '@/lib/cashier-server';
+import { invoiceSchema } from '@/lib/validation';
+
+function serializeInvoice(item: Awaited<ReturnType<typeof prisma.invoice.findFirstOrThrow>>) {
+  return {
+    ...item,
+    issueDate: item.issueDate.toISOString(),
+    dueDate: item.dueDate?.toISOString() ?? null,
+    contactName: item.contactName ?? null,
+    email: item.email ?? null,
+    tier: item.tier ?? null,
+    notes: item.notes ?? null,
+    sponsorId: item.sponsorId ?? null,
+  };
+}
 
 export async function GET(request: NextRequest) {
-  const auth = await requireApiRole(request, [Role.CASHIER, Role.SYSTEM_ADMIN]);
+  const auth = await requireApiRole(request, [UserRole.CASHIER, UserRole.SYSTEM_ADMIN]);
   if (auth.error) return auth.error;
 
-  const items = await db.invoice.findMany({
-    orderBy: { createdAt: "desc" },
-  });
-
-  return ok({ items });
+  const items = await prisma.invoice.findMany({ orderBy: [{ issueDate: 'desc' }, { createdAt: 'desc' }] });
+  return ok({ items: items.map(serializeInvoice) });
 }
 
 export async function POST(request: NextRequest) {
-  const auth = await requireApiRole(request, [Role.CASHIER, Role.SYSTEM_ADMIN]);
+  const auth = await requireApiRole(request, [UserRole.CASHIER, UserRole.SYSTEM_ADMIN]);
   if (auth.error) return auth.error;
 
   const body = await request.json().catch(() => null);
-  if (!body || typeof body !== "object") return fail("Invalid request body.", 400);
+  const parsed = invoiceSchema.safeParse(body);
+  if (!parsed.success) return fail('Invalid invoice payload.', 400);
 
-  const customerName = String(body.customerName || "").trim();
-  if (!customerName) return fail("Customer name is required.", 400);
-
-  const item = await db.invoice.create({
+  const item = await prisma.invoice.create({
     data: {
-      number: body.number ? String(body.number) : null,
-      sponsorId: body.sponsorId ? String(body.sponsorId) : null,
-      customerName,
-      issuedAt: parseOptionalDate(body.issuedAt) || new Date(),
-      dueDate: parseOptionalDate(body.dueDate),
-      totalAmount: parseNumber(body.totalAmount, 0),
-      balanceDue: parseNumber(body.balanceDue, parseNumber(body.totalAmount, 0)),
-      status: body.status && Object.values(InvoiceStatus).includes(body.status) ? body.status : InvoiceStatus.OPEN,
-      notes: body.notes ? String(body.notes) : null,
+      invoiceNumber: parsed.data.invoiceNumber || (await generateDocumentNumber('INV')),
+      companyName: parsed.data.companyName,
+      contactName: parsed.data.contactName || null,
+      email: parsed.data.email || null,
+      tier: parsed.data.tier || null,
+      description: parsed.data.description,
+      amount: parsed.data.amount,
+      balanceAmount: parsed.data.balanceAmount ?? parsed.data.amount,
+      status: parsed.data.status,
+      issueDate: new Date(parsed.data.issueDate),
+      dueDate: parsed.data.dueDate ? new Date(parsed.data.dueDate) : null,
+      notes: parsed.data.notes || null,
+      sponsorId: parsed.data.sponsorId || null,
     },
   });
 
-  return ok({ item }, 201);
+  return ok({ item: serializeInvoice(item) }, 201);
 }

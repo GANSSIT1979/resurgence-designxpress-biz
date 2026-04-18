@@ -1,81 +1,51 @@
-import { NextRequest } from "next/server";
-import { Role } from "@prisma/client";
-import { db } from "@/lib/db";
-import { fail, ok, requireApiRole } from "@/lib/api-utils";
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { getCurrentSponsorContext } from '@/lib/sponsor-server';
+import { sponsorProfileSchema } from '@/lib/validation';
 
-function resolveSponsorId(request: NextRequest, authUser?: { role?: Role; sponsorId?: string | null }) {
-  if (authUser?.role === Role.SYSTEM_ADMIN) {
-    const sponsorIdFromQuery = request.nextUrl.searchParams.get("sponsorId");
-    return sponsorIdFromQuery || authUser.sponsorId || null;
-  }
-
-  return authUser?.sponsorId || null;
+function serializeProfile(item: Awaited<ReturnType<typeof prisma.sponsorProfile.findFirstOrThrow>>) {
+  return {
+    ...item,
+    sponsorId: item.sponsorId ?? null,
+    preferredPackageId: item.preferredPackageId ?? null,
+    phone: item.phone ?? null,
+    websiteUrl: item.websiteUrl ?? null,
+    address: item.address ?? null,
+    brandSummary: item.brandSummary ?? null,
+    assetLink: item.assetLink ?? null,
+  };
 }
 
-export async function GET(request: NextRequest) {
-  const auth = await requireApiRole(request, [Role.SPONSOR, Role.SYSTEM_ADMIN]);
-  if (auth.error) return auth.error;
+export async function GET() {
+  const context = await getCurrentSponsorContext();
+  if (!context) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const sponsorId = resolveSponsorId(request, auth.user);
-  if (!sponsorId) return fail("Sponsor profile is not linked.", 400);
-
-  const sponsor = await db.sponsor.findUnique({
-    where: { id: sponsorId },
-    include: { profile: true },
-  });
-
-  if (!sponsor) return fail("Sponsor record not found.", 404);
-
-  return ok({
-    item: sponsor.profile
-      ? sponsor.profile
-      : {
-          sponsorId: sponsor.id,
-          packageId: sponsor.packageId,
-          headline: null,
-          description: sponsor.description || "",
-          contactName: "Sponsor Contact",
-          contactEmail: "sponsor@example.com",
-          logo: sponsor.logo || null,
-        },
-  });
+  return NextResponse.json({ item: serializeProfile(context.sponsorProfile) });
 }
 
-export async function POST(request: NextRequest) {
-  const auth = await requireApiRole(request, [Role.SPONSOR, Role.SYSTEM_ADMIN]);
-  if (auth.error) return auth.error;
-
-  const sponsorId = resolveSponsorId(request, auth.user);
-  if (!sponsorId) return fail("Sponsor profile is not linked.", 400);
+export async function PUT(request: Request) {
+  const context = await getCurrentSponsorContext();
+  if (!context) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = await request.json().catch(() => null);
-  if (!body || typeof body !== "object") return fail("Invalid request body.", 400);
+  const parsed = sponsorProfileSchema.safeParse(body);
+  if (!parsed.success) return NextResponse.json({ error: 'Invalid sponsor profile payload.' }, { status: 400 });
 
-  const sponsor = await db.sponsor.findUnique({
-    where: { id: sponsorId },
-  });
-
-  if (!sponsor) return fail("Sponsor record not found.", 404);
-
-  const item = await db.sponsorProfile.upsert({
-    where: { sponsorId: sponsor.id },
-    update: {
-      headline: typeof body.headline === "string" ? body.headline : null,
-      description: typeof body.description === "string" && body.description.trim() ? body.description : sponsor.description || "",
-      contactName: typeof body.contactName === "string" && body.contactName.trim() ? body.contactName : "Sponsor Contact",
-      contactEmail: typeof body.contactEmail === "string" && body.contactEmail.trim() ? body.contactEmail : "sponsor@example.com",
-      logo: typeof body.logo === "string" && body.logo.trim() ? body.logo : null,
-    },
-    create: {
-      sponsorId: sponsor.id,
-      packageId: sponsor.packageId,
-      headline: typeof body.headline === "string" ? body.headline : null,
-      description: typeof body.description === "string" && body.description.trim() ? body.description : sponsor.description || "",
-      contactName: typeof body.contactName === "string" && body.contactName.trim() ? body.contactName : "Sponsor Contact",
-      contactEmail: typeof body.contactEmail === "string" && body.contactEmail.trim() ? body.contactEmail : "sponsor@example.com",
-      logo: typeof body.logo === "string" && body.logo.trim() ? body.logo : sponsor.logo || null,
+  const item = await prisma.sponsorProfile.update({
+    where: { id: context.sponsorProfile.id },
+    data: {
+      sponsorId: parsed.data.sponsorId || null,
+      preferredPackageId: parsed.data.preferredPackageId || null,
+      companyName: parsed.data.companyName,
+      contactName: parsed.data.contactName,
+      contactEmail: parsed.data.contactEmail,
+      phone: parsed.data.phone || null,
+      websiteUrl: parsed.data.websiteUrl || null,
+      address: parsed.data.address || null,
+      brandSummary: parsed.data.brandSummary || null,
+      assetLink: parsed.data.assetLink || null,
     },
   });
 
-  return ok({ item });
+  return NextResponse.json({ item: serializeProfile(item) });
 }

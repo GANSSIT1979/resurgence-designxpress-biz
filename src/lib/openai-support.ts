@@ -81,6 +81,28 @@ export function getSupportRouteStatus() {
   };
 }
 
+export function getSupportCategory(key?: string | null) {
+  return supportCategories.find((item) => item.key === key) || supportCategories[0];
+}
+
+export function inferSupportCategory(message: string): SupportCategory['key'] {
+  const normalized = message.toLowerCase();
+
+  if (/(uniform|jersey|apparel|merch|merchandise|printing|sublimation|dtf)/.test(normalized)) {
+    return 'custom-apparel';
+  }
+
+  if (/(event|league|tournament|booking|activation|venue|clinic)/.test(normalized)) {
+    return 'events';
+  }
+
+  if (/(partner|partnership|media|collaboration|co-brand|alliance)/.test(normalized)) {
+    return 'partnerships';
+  }
+
+  return 'sponsorships';
+}
+
 export function buildSupportWorkflowStateVariables(settings: PublicSettings) {
   return {
     company_name: 'RESURGENCE Powered by DesignXpress',
@@ -95,4 +117,3 @@ export function buildSupportWorkflowStateVariables(settings: PublicSettings) {
     route_partnerships: supportCategories[3].routeLabel,
   };
 }
-

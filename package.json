@@ -4,12 +4,14 @@
   "private": true,
   "scripts": {
     "prisma:prepare": "node scripts/prepare-prisma-schema.mjs",
+    "prisma:generate": "npm run prisma:prepare && prisma generate",
     "dev": "npm run prisma:prepare && next dev",
-    "build": "npm run prisma:prepare && prisma generate && next build",
+    "build": "npm run prisma:generate && next build",
     "start": "next start",
     "db:push": "npm run prisma:prepare && prisma db push",
     "db:seed": "npm run prisma:prepare && tsx prisma/seed.ts",
     "db:migrate": "npm run prisma:prepare && prisma migrate dev",
+    "support:verify": "node scripts/verify-support-routes.mjs",
     "postinstall": "npm run prisma:prepare && prisma generate"
   },
   "dependencies": {

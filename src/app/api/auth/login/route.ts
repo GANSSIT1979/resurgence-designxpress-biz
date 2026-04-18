@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     displayName: user.displayName,
   });
 
-  const response = NextResponse.json({ success: true, redirectTo: user.redirectTo, role: user.role });
+  const response = NextResponse.json({ ok: true, redirectTo: user.redirectTo, role: user.role });
   setSessionCookie(response, token);
   return response;
 }

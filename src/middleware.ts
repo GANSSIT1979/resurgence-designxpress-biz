@@ -3,11 +3,11 @@ import { COOKIE_NAME, getLoginRedirect, isPathAllowedForRole, verifySession } fr
 import { getRequiredPermission } from '@/lib/permissions';
 
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname, search } = request.nextUrl;
   const token = request.cookies.get(COOKIE_NAME)?.value;
   const requiredPermission = getRequiredPermission(pathname, request.method);
 
-  if (pathname === '/admin/login') {
+  if (pathname === '/login') {
     const payload = await verifySession(token);
     if (payload) {
       return NextResponse.redirect(new URL(getLoginRedirect(payload.role), request.url));
@@ -22,7 +22,9 @@ export async function middleware(request: NextRequest) {
       if (pathname.startsWith('/api/')) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
-      return NextResponse.redirect(new URL('/admin/login', request.url));
+      const loginUrl = new URL('/login', request.url);
+      loginUrl.searchParams.set('next', `${pathname}${search}`);
+      return NextResponse.redirect(loginUrl);
     }
 
     if (!isPathAllowedForRole(pathname, payload.role, request.method)) {
@@ -38,6 +40,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    '/login',
     '/admin/:path*',
     '/cashier/:path*',
     '/staff/:path*',

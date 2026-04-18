@@ -1,12 +1,11 @@
-import { NextRequest } from "next/server";
-import { db } from "@/lib/db";
-import { ok } from "@/lib/api-utils";
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 
-export async function GET(_request: NextRequest) {
-  const items = await db.sponsorPackage.findMany({
-    where: { status: "ACTIVE" },
-    orderBy: { sortOrder: "asc" }
+export async function GET() {
+  const items = await prisma.sponsorPackageTemplate.findMany({
+    where: { isActive: true },
+    orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
   });
 
-  return ok({ items });
+  return NextResponse.json({ items });
 }

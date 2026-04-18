@@ -4,6 +4,7 @@ import { AppRole, roleMeta, rolePrefixes } from '@/lib/resurgence';
 import { getRequiredPermission, hasPermission } from '@/lib/permissions';
 
 export const COOKIE_NAME = 'resurgence_admin_session';
+export const SESSION_COOKIE = COOKIE_NAME;
 
 type SessionPayload = {
   email: string;
@@ -101,4 +102,8 @@ export function isPathAllowedForRole(pathname: string, role: AppRole, method = '
 
 export function getLoginRedirect(role: AppRole) {
   return roleMeta[role].defaultRoute;
+}
+
+export function getDashboardPath(role: AppRole) {
+  return getLoginRedirect(role);
 }

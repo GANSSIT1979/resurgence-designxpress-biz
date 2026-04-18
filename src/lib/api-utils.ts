@@ -1,6 +1,6 @@
-import { Role } from "@prisma/client";
+import { UserRole } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
-import { getApiUser } from "@/lib/auth";
+import { getApiUser } from "@/lib/auth-server";
 
 function normalizeValue(value: unknown): unknown {
   if (value instanceof Date) return value.toISOString();
@@ -33,14 +33,14 @@ export function fail(error: string, status = 400) {
   return NextResponse.json({ ok: false, error }, { status });
 }
 
-export async function requireApiRole(request: NextRequest, roles: Role[]) {
+export async function requireApiRole(request: NextRequest, roles: UserRole[]) {
   const user = await getApiUser(request);
 
   if (!user) {
     return { error: fail("Unauthorized.", 401), user: null };
   }
 
-  if (!roles.includes(user.role as Role)) {
+  if (!roles.includes(user.role as UserRole)) {
     return { error: fail("Forbidden.", 403), user };
   }
 

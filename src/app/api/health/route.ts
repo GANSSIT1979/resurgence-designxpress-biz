@@ -6,7 +6,7 @@ export async function GET() {
   const [userCount, sponsorCount, packageCount] = await Promise.all([
     db.user.count(),
     db.sponsor.count(),
-    db.sponsorPackage.count()
+    db.sponsorPackageTemplate.count()
   ]);
   const support = getSupportRouteStatus();
 

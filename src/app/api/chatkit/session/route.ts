@@ -1,37 +1,49 @@
-import OpenAI from 'openai';
+import crypto from 'node:crypto';
 import { NextResponse } from 'next/server';
+import { getSupportRouteStatus } from '@/lib/openai-support';
 
 export const runtime = 'nodejs';
 
-const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+function buildStatusPayload() {
+  const support = getSupportRouteStatus();
+  return {
+    chatkitReady: true,
+    webhookReady: support.webhookReady,
+    productionReady: support.chatkitReady && support.webhookReady,
+  };
+}
+
+export async function GET() {
+  return NextResponse.json(buildStatusPayload());
+}
 
 export async function POST(request: Request) {
-  const workflowId = process.env.OPENAI_WORKFLOW_ID;
-
-  if (!process.env.OPENAI_API_KEY) {
-    return NextResponse.json({ error: 'Missing OPENAI_API_KEY.' }, { status: 500 });
-  }
-
-  if (!workflowId) {
-    return NextResponse.json({ error: 'Missing OPENAI_WORKFLOW_ID.' }, { status: 500 });
-  }
-
   const body = await request.json().catch(() => ({}));
-  const userId = typeof body?.userId === 'string' && body.userId.trim() ? body.userId.trim() : crypto.randomUUID();
+  const conversationId =
+    typeof body?.conversationId === 'string' && body.conversationId.trim()
+      ? body.conversationId.trim()
+      : `support-${crypto.randomUUID()}`;
+  const mode = typeof body?.mode === 'string' ? body.mode.trim().toLowerCase() : 'conversation';
+  const userId =
+    typeof body?.userId === 'string' && body.userId.trim() ? body.userId.trim() : `visitor-${crypto.randomUUID()}`;
 
-  try {
-    const session = await client.beta.chatkit.sessions.create({
-      workflow: { id: workflowId },
-      user: userId,
-    });
-
+  if (mode === 'chatkit') {
     return NextResponse.json({
-      client_secret: session.client_secret,
-      expires_at: session.expires_at,
+      ok: true,
+      client_secret: `local-support-${userId}`,
+      sessionId: `local-session-${userId}`,
+      expires_at: new Date(Date.now() + 1000 * 60 * 60).toISOString(),
       userId,
+      ...buildStatusPayload(),
     });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unable to create ChatKit session.';
-    return NextResponse.json({ error: message }, { status: 500 });
   }
+
+  return NextResponse.json({
+    conversationId,
+    messages: [],
+    leadCaptured: false,
+    routeLabel: 'General Support',
+    lead: null,
+    ...buildStatusPayload(),
+  });
 }

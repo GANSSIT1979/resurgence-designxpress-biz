@@ -3,11 +3,11 @@ import { DashboardShell } from "@/components/dashboard-shell";
 
 const links = [
   { href: "/sponsor/dashboard", label: "Overview" },
-  { href: "/sponsor/dashboard/applications", label: "Applications" },
-  { href: "/sponsor/dashboard/packages", label: "Packages" },
-  { href: "/sponsor/dashboard/deliverables", label: "Deliverables" },
-  { href: "/sponsor/dashboard/billing", label: "Billing" },
-  { href: "/sponsor/dashboard/profile", label: "Profile" },
+  { href: "/sponsor/applications", label: "Applications" },
+  { href: "/sponsor/packages", label: "Packages" },
+  { href: "/sponsor/deliverables", label: "Deliverables" },
+  { href: "/sponsor/billing", label: "Billing" },
+  { href: "/sponsor/profile", label: "Profile" },
 ];
 
 export default function SponsorDashboardLayout({

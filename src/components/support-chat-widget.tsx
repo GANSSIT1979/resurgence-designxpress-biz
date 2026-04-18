@@ -246,10 +246,10 @@ export function SupportChatWidget() {
 
       <div className="muted" style={{ marginBottom: 14 }}>
         {supportStatus.productionReady
-          ? "OpenAI workflow and webhook are configured for production verification."
+          ? "The support desk and webhook verification are configured for production use."
           : supportStatus.chatkitReady
-            ? "OpenAI workflow is configured. Finish webhook setup to complete production readiness."
-            : "OpenAI workflow publishing is still pending. The support desk can still capture leads while configuration is completed."}
+            ? "The support desk is live. Finish webhook setup to complete signed-event verification."
+            : "The support desk is loading in fallback mode. Leads can still be captured while configuration is completed."}
       </div>
 
       {booting ? <div className="muted">Loading support desk...</div> : null}

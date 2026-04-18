@@ -1,20 +1,28 @@
-import { NextRequest } from "next/server";
-import { Role } from "@prisma/client";
-import { db } from "@/lib/db";
-import { ok, requireApiRole } from "@/lib/api-utils";
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { buildSponsorInvoiceWhere, getCurrentSponsorContext } from '@/lib/sponsor-server';
 
-export async function GET(request: NextRequest) {
-  const auth = await requireApiRole(request, [Role.SPONSOR, Role.SYSTEM_ADMIN]);
-  if (auth.error) return auth.error;
+function serializeInvoice(item: Awaited<ReturnType<typeof prisma.invoice.findFirstOrThrow>>) {
+  return {
+    ...item,
+    issueDate: item.issueDate.toISOString(),
+    dueDate: item.dueDate?.toISOString() ?? null,
+    contactName: item.contactName ?? null,
+    email: item.email ?? null,
+    tier: item.tier ?? null,
+    notes: item.notes ?? null,
+    sponsorId: item.sponsorId ?? null,
+  };
+}
 
-  const sponsorId = auth.user?.sponsorId;
-  const where =
-    auth.user?.role === Role.SYSTEM_ADMIN ? {} : { sponsorId: sponsorId || "__none__" };
+export async function GET() {
+  const context = await getCurrentSponsorContext();
+  if (!context) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const items = await db.invoice.findMany({
-    where,
-    orderBy: { createdAt: "desc" }
+  const items = await prisma.invoice.findMany({
+    where: buildSponsorInvoiceWhere(context.sponsorProfile),
+    orderBy: [{ issueDate: 'desc' }, { createdAt: 'desc' }],
   });
 
-  return ok({ items });
+  return NextResponse.json({ items: items.map(serializeInvoice) });
 }

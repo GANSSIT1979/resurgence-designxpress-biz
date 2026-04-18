@@ -1,104 +1,94 @@
-import { NextRequest } from "next/server";
-import { z } from "zod";
-import { db } from "@/lib/db";
-import { ensureChatConversation, getAdminRoutingEmail } from "@/lib/chat";
-import { fail, ok } from "@/lib/api-utils";
+import { NextRequest } from 'next/server';
+import { z } from 'zod';
+import { NextResponse } from 'next/server';
+import { createWorkflowAutomation } from '@/lib/notifications';
+import { prisma } from '@/lib/prisma';
+import { getPublicSettings } from '@/lib/settings';
 
 const schema = z.object({
   conversationId: z.string().min(1),
   fullName: z.string().min(2).max(120),
-  organization: z.string().max(160).optional().or(z.literal("")),
+  organization: z.string().max(160).optional().or(z.literal('')),
   email: z.string().email(),
   mobile: z.string().min(7).max(40),
   summary: z.string().min(5).max(2000)
 });
 
 export async function POST(request: NextRequest) {
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return fail("Invalid JSON body", 400);
-  }
+  const body = await request.json().catch(() => null);
 
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
-    return fail(parsed.error.issues[0]?.message || "Invalid lead payload", 400);
+    return NextResponse.json({ ok: false, error: parsed.error.issues[0]?.message || 'Invalid lead payload' }, { status: 400 });
   }
 
   const { conversationId, fullName, organization, email, mobile, summary } = parsed.data;
-  const existing = await ensureChatConversation(conversationId);
+  const [settings, inquiry] = await Promise.all([
+    getPublicSettings(),
+    prisma.inquiry.create({
+      data: {
+        name: fullName,
+        organization: organization || null,
+        email,
+        phone: mobile,
+        inquiryType: 'AI Support Lead',
+        message: `${summary}\n\nConversation ID: ${conversationId}`,
+        status: 'NEW',
+      },
+    }),
+  ]);
 
-  const updatedConversation = await db.chatConversation.update({
-    where: { conversationId },
-    data: {
+  await createWorkflowAutomation({
+    notifications: [
+      {
+        recipientRole: 'SYSTEM_ADMIN',
+        title: `New AI support lead: ${fullName}`,
+        message: `${organization || 'Independent contact'} submitted business details through the support desk.`,
+        level: 'SUCCESS',
+        href: '/admin/inquiries',
+        metadata: { inquiryId: inquiry.id, conversationId },
+      },
+      {
+        recipientRole: 'STAFF',
+        title: 'AI support lead ready for follow-up',
+        message: `${fullName} is waiting for a business response from RESURGENCE.`,
+        level: 'WARNING',
+        href: '/staff/inquiries',
+        metadata: { inquiryId: inquiry.id, conversationId },
+      },
+    ],
+    emails: [
+      {
+        recipientRole: 'SYSTEM_ADMIN',
+        toEmail: process.env.ADMIN_EMAIL || settings.contactEmail,
+        subject: `New RESURGENCE AI lead: ${fullName}`,
+        bodyText: `Conversation ID: ${conversationId}\nName: ${fullName}\nOrganization: ${organization || 'N/A'}\nEmail: ${email}\nMobile: ${mobile}\n\nSummary:\n${summary}`,
+        eventKey: 'support.lead.admin',
+        relatedType: 'Inquiry',
+        relatedId: inquiry.id,
+      },
+      {
+        toEmail: email,
+        toName: fullName,
+        subject: 'We received your RESURGENCE support details',
+        bodyText: `Hi ${fullName},\n\nThanks for sharing your business details with RESURGENCE Powered by DesignXpress. Our team has your inquiry and will follow up using the contact information you provided.`,
+        eventKey: 'support.lead.contact',
+        relatedType: 'Inquiry',
+        relatedId: inquiry.id,
+      },
+    ],
+  });
+
+  return NextResponse.json({
+    ok: true,
+    leadCaptured: true,
+    conversationId,
+    lead: {
       visitorName: fullName,
       organization: organization || null,
       email,
       mobile,
       summary,
-      leadCaptured: true,
-      leadCapturedAt: existing.leadCaptured ? existing.leadCapturedAt : new Date(),
-      lastIntent: "business_inquiry"
-    }
-  });
-
-  if (!existing.leadCaptured) {
-    const routingEmail = await getAdminRoutingEmail();
-
-    await db.inquiry.create({
-      data: {
-        name: fullName,
-        email,
-        phone: mobile,
-        company: organization || null,
-        subject: "AI Support Lead Capture",
-        message: summary
-      }
-    });
-
-    await db.emailQueue.create({
-      data: {
-        toEmail: routingEmail,
-        subject: `New RESURGENCE AI lead: ${fullName}`,
-        template: "ai-support-lead",
-        payload: {
-          conversationId,
-          fullName,
-          organization: organization || null,
-          email,
-          mobile,
-          summary
-        }
-      }
-    });
-
-    const admins = await db.user.findMany({
-      where: { role: "SYSTEM_ADMIN", status: "ACTIVE" },
-      select: { id: true }
-    });
-
-    if (admins.length) {
-      await db.notification.createMany({
-        data: admins.map((admin) => ({
-          userId: admin.id,
-          title: "New AI Support Lead",
-          message: `${fullName} submitted business details from the RESURGENCE support desk.`
-        }))
-      });
-    }
-  }
-
-  return ok({
-    ok: true,
-    leadCaptured: true,
-    conversationId,
-    lead: {
-      visitorName: updatedConversation.visitorName,
-      organization: updatedConversation.organization,
-      email: updatedConversation.email,
-      mobile: updatedConversation.mobile,
-      summary: updatedConversation.summary
-    }
+    },
   });
 }
