@@ -1,5 +1,31 @@
 import { z } from 'zod';
 
+const trimValue = (value: unknown) => (typeof value === 'string' ? value.trim() : value);
+
+const requiredText = (minimum = 2) => z.preprocess(trimValue, z.string().min(minimum));
+
+const optionalText = z.preprocess(trimValue, z.string().optional().default(''));
+
+const optionalUrl = z.preprocess((value) => {
+  if (typeof value !== 'string') return '';
+  const trimmed = value.trim();
+  if (!trimmed) return '';
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+}, z.union([z.string().url(), z.literal('')]).default(''));
+
+const optionalPhone = z.preprocess(
+  trimValue,
+  z.union([
+    z.string().regex(/^[+()0-9\s.-]{7,30}$/, 'Use a valid phone number.'),
+    z.literal(''),
+  ]).default(''),
+);
+
+const optionalDateString = z.preprocess(trimValue, z.string().optional().default('')).refine(
+  (value) => !value || !Number.isNaN(Date.parse(value)),
+  'Use a valid date.',
+);
+
 export const inquirySchema = z.object({
   name: z.string().min(2),
   organization: z.string().optional().or(z.literal('')),
@@ -67,19 +93,40 @@ export const sponsorPackageTemplateSchema = z.object({
 });
 
 export const creatorProfileSchema = z.object({
-  name: z.string().min(2),
-  slug: z.string().min(2),
-  roleLabel: z.string().min(2),
-  platformFocus: z.string().min(5),
-  audience: z.string().min(5),
-  biography: z.string().optional().or(z.literal('')),
-  journeyStory: z.string().optional().or(z.literal('')),
+  name: requiredText(2),
+  slug: optionalText,
+  roleLabel: optionalText,
+  platformFocus: optionalText,
+  audience: optionalText,
+  contactNumber: optionalPhone,
+  address: optionalText,
+  dateOfBirth: optionalDateString,
+  jobDescription: requiredText(5),
+  position: optionalText,
+  height: optionalText,
+  facebookPage: optionalUrl,
+  facebookFollowers: optionalText,
+  tiktokPage: optionalUrl,
+  tiktokFollowers: optionalText,
+  instagramPage: optionalUrl,
+  instagramFollowers: optionalText,
+  youtubePage: optionalUrl,
+  youtubeFollowers: optionalText,
+  trendingVideoUrl: optionalUrl,
+  shortBio: optionalText,
+  biography: optionalText,
+  journeyStory: optionalText,
   pointsPerGame: z.coerce.number().optional().nullable(),
   assistsPerGame: z.coerce.number().optional().nullable(),
   reboundsPerGame: z.coerce.number().optional().nullable(),
-  imageUrl: z.string().optional().or(z.literal('')),
+  imageUrl: optionalText,
   sortOrder: z.coerce.number().int().min(0).default(0),
   isActive: z.coerce.boolean().default(true),
+  accountEmail: z.preprocess(
+    trimValue,
+    z.union([z.string().email(), z.literal('')]).optional().default(''),
+  ),
+  accountPassword: z.union([z.string().min(8), z.literal('')]).optional().default(''),
 });
 
 export const sponsorInventoryCategorySchema = z.object({
@@ -263,7 +310,7 @@ const adminUserBaseSchema = z.object({
   email: z.string().email(),
   displayName: z.string().min(2),
   title: z.string().optional().or(z.literal('')),
-  role: z.enum(['SYSTEM_ADMIN', 'CASHIER', 'SPONSOR', 'STAFF', 'PARTNER']),
+  role: z.enum(['SYSTEM_ADMIN', 'CASHIER', 'SPONSOR', 'STAFF', 'PARTNER', 'CREATOR']),
   isActive: z.coerce.boolean().default(true),
 });
 

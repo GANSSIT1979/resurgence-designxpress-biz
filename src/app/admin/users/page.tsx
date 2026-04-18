@@ -13,7 +13,7 @@ export default async function UsersPage() {
     <main>
       <AdminShell
         title="Users and Roles"
-        description="Create, edit, disable, and delete multi-role accounts for System Admin, Cashier, Sponsor, Staff, and Partner dashboards."
+        description="Create, edit, disable, and delete multi-role accounts for System Admin, Cashier, Sponsor, Staff, Partner, and Creator dashboards."
         currentPath="/admin/users"
       >
         <UserManager

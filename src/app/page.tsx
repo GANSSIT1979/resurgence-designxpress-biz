@@ -144,16 +144,19 @@ export default async function HomePage() {
         <div className="container">
           <div className="section-kicker">Creator Network</div>
           <h2 className="section-title">Six high-engagement creators inside the RESURGENCE ecosystem.</h2>
+          <div className="btn-row" style={{ marginTop: 18 }}>
+            <Link href="/creators" className="button-link btn-secondary">Open Creators Directory</Link>
+          </div>
           <div className="card-grid grid-3" style={{ marginTop: 24 }}>
             {creators.map((creator: any) => (
               <article className="card" key={creator.id}>
                 <img src={creator.imageUrl || '/assets/resurgence-logo.jpg'} alt={creator.name} style={{ width: '100%', borderRadius: 16, marginBottom: 16, aspectRatio: '16 / 10', objectFit: 'cover' }} />
                 <h3 style={{ marginBottom: 8 }}>{creator.name}</h3>
-                <div className="helper" style={{ marginBottom: 12 }}>{creator.roleLabel}</div>
-                <p className="section-copy" style={{ fontSize: '1rem' }}>{creator.biography || creator.platformFocus}</p>
+                <div className="helper" style={{ marginBottom: 12 }}>{creator.position || creator.roleLabel}</div>
+                <p className="section-copy" style={{ fontSize: '1rem' }}>{creator.shortBio || creator.biography || creator.jobDescription || creator.platformFocus}</p>
                 <div className="helper">PPG {creator.pointsPerGame ?? 0} • APG {creator.assistsPerGame ?? 0} • RPG {creator.reboundsPerGame ?? 0}</div>
                 <div className="btn-row" style={{ marginTop: 16 }}>
-                  <Link href={`/creator/${creator.slug}`} className="button-link">View Dashboard</Link>
+                  <Link href={`/creators/${creator.slug}`} className="button-link">View Full Profile</Link>
                 </div>
               </article>
             ))}

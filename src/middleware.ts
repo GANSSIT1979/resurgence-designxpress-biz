@@ -51,6 +51,7 @@ export const config = {
     '/sponsor/deliverables/:path*',
     '/sponsor/billing/:path*',
     '/sponsor/profile/:path*',
+    '/creator/dashboard/:path*',
     '/api/:path*',
   ],
 };

@@ -24,6 +24,8 @@ export const permissionCatalog = [
   { key: 'partner.referrals.manage', label: 'Partner referrals', area: 'Partner' },
   { key: 'partner.agreements.manage', label: 'Partner agreements', area: 'Partner' },
   { key: 'partner.profile.manage', label: 'Partner profile', area: 'Partner' },
+  { key: 'creator.dashboard.view', label: 'Creator dashboard', area: 'Creator' },
+  { key: 'creator.profile.manage', label: 'Creator profile and social links', area: 'Creator' },
   { key: 'uploads.manage', label: 'Upload platform image assets', area: 'Shared' },
   { key: 'notifications.view', label: 'View notifications and automation inbox', area: 'Shared' },
 ] as const;
@@ -61,6 +63,12 @@ export const rolePermissionMatrix: Record<AppRole, readonly PermissionKey[]> = {
     'uploads.manage',
     'notifications.view',
   ],
+  CREATOR: [
+    'creator.dashboard.view',
+    'creator.profile.manage',
+    'uploads.manage',
+    'notifications.view',
+  ],
 };
 
 type RoutePermissionRule = {
@@ -73,6 +81,7 @@ const pageRouteRules: readonly RoutePermissionRule[] = [
   { prefix: '/admin/users', permission: 'admin.users.manage' },
   { prefix: '/admin/reports', permission: 'admin.reports.manage' },
   { prefix: '/admin/content', permission: 'admin.cms.manage' },
+  { prefix: '/admin/creators', permission: 'admin.cms.manage' },
   { prefix: '/admin/creator-network', permission: 'admin.cms.manage' },
   { prefix: '/admin/gallery', permission: 'admin.cms.manage' },
   { prefix: '/admin/inquiries', permission: 'admin.cms.manage' },
@@ -107,6 +116,7 @@ const pageRouteRules: readonly RoutePermissionRule[] = [
   { prefix: '/partner/agreements', permission: 'partner.agreements.manage' },
   { prefix: '/partner/profile', permission: 'partner.profile.manage' },
   { prefix: '/partner', permission: 'partner.dashboard.view' },
+  { prefix: '/creator/dashboard', permission: 'creator.dashboard.view' },
 ];
 
 const apiRouteRules: readonly RoutePermissionRule[] = [
@@ -128,6 +138,7 @@ const apiRouteRules: readonly RoutePermissionRule[] = [
   { prefix: '/api/partner/referrals', permission: 'partner.referrals.manage' },
   { prefix: '/api/partner/agreements', permission: 'partner.agreements.manage' },
   { prefix: '/api/partner/profile', permission: 'partner.profile.manage' },
+  { prefix: '/api/creator/profile', permission: 'creator.profile.manage' },
   { prefix: '/api/uploads/image', permission: 'uploads.manage' },
   { prefix: '/api/notifications', permission: 'notifications.view' },
 ];

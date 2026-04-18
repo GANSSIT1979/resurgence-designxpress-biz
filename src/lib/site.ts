@@ -4,6 +4,7 @@ import {
   sponsorInventoryCategories as inventoryFallbacks,
   sponsorshipStats,
 } from '@/lib/resurgence';
+import { serializeCreatorProfile } from '@/lib/creators';
 
 type ContentFallback = {
   title: string;
@@ -174,10 +175,30 @@ export async function getHomeData() {
       audience: item.audience,
       biography: item.biography,
       journeyStory: item.journeyStory,
+      contactNumber: item.contactNumber,
+      address: item.address,
+      dateOfBirth: item.dateOfBirth,
+      jobDescription: item.jobDescription,
+      position: item.position,
+      height: item.height,
+      facebookPage: item.facebookPage,
+      facebookFollowers: item.facebookFollowers,
+      tiktokPage: item.tiktokPage,
+      tiktokFollowers: item.tiktokFollowers,
+      instagramPage: item.instagramPage,
+      instagramFollowers: item.instagramFollowers,
+      youtubePage: item.youtubePage,
+      youtubeFollowers: item.youtubeFollowers,
+      trendingVideoUrl: item.trendingVideoUrl,
+      shortBio: item.shortBio,
       pointsPerGame: item.pointsPerGame,
       assistsPerGame: item.assistsPerGame,
       reboundsPerGame: item.reboundsPerGame,
       imageUrl: item.imageUrl,
+      sortOrder: index + 1,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     })),
     inventoryCategories: inventoryCategories.length
       ? inventoryCategories
@@ -194,6 +215,55 @@ export async function getHomeData() {
       { label: 'Captured Inquiries', value: String(inquiryCount).padStart(2, '0') },
     ],
   };
+}
+
+export async function getCreators({ activeOnly = true }: { activeOnly?: boolean } = {}) {
+  const creators = await prisma.creatorProfile.findMany({
+    where: activeOnly ? { isActive: true } : {},
+    include: { user: true },
+    orderBy: [{ sortOrder: 'asc' }, { updatedAt: 'desc' }],
+  });
+
+  if (creators.length) {
+    return creators.map((item) => serializeCreatorProfile(item));
+  }
+
+  return creatorFallbacks.map((item, index) => serializeCreatorProfile({
+    id: String(index + 1),
+    userId: null,
+    user: null,
+    name: item.name,
+    slug: item.slug,
+    roleLabel: item.role,
+    platformFocus: item.platformFocus,
+    audience: item.audience,
+    biography: item.biography,
+    journeyStory: item.journeyStory,
+    contactNumber: item.contactNumber,
+    address: item.address,
+    dateOfBirth: item.dateOfBirth,
+    jobDescription: item.jobDescription,
+    position: item.position,
+    height: item.height,
+    facebookPage: item.facebookPage,
+    facebookFollowers: item.facebookFollowers,
+    tiktokPage: item.tiktokPage,
+    tiktokFollowers: item.tiktokFollowers,
+    instagramPage: item.instagramPage,
+    instagramFollowers: item.instagramFollowers,
+    youtubePage: item.youtubePage,
+    youtubeFollowers: item.youtubeFollowers,
+    trendingVideoUrl: item.trendingVideoUrl,
+    shortBio: item.shortBio,
+    pointsPerGame: item.pointsPerGame,
+    assistsPerGame: item.assistsPerGame,
+    reboundsPerGame: item.reboundsPerGame,
+    imageUrl: item.imageUrl,
+    sortOrder: index + 1,
+    isActive: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  }));
 }
 
 
@@ -214,6 +284,7 @@ export async function getCreatorBySlug(slug: string) {
   return prisma.creatorProfile.findUnique({
     where: { slug },
     include: {
+      user: true,
       mediaEvents: {
         where: { isActive: true },
         include: { mediaItems: { orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] } },

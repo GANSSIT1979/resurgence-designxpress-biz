@@ -67,6 +67,48 @@ async function main() {
       title: 'Partner portal demo',
       role: UserRole.PARTNER,
     },
+    {
+      email: 'jake.anilao@resurgence.local',
+      password: 'Jake@2026Resurgence!',
+      displayName: 'Jake Anilao',
+      title: 'Co-Owner / Brand Ambassador / Basketball Coach / Influencer-Vlogger',
+      role: UserRole.CREATOR,
+    },
+    {
+      email: 'klinthon.almine@resurgence.local',
+      password: 'Klinthon@2026Resurgence!',
+      displayName: 'Klinthon S. Almine',
+      title: 'Basketball Player / Influencer-Vlogger',
+      role: UserRole.CREATOR,
+    },
+    {
+      email: 'joshua.dollente@resurgence.local',
+      password: 'Joshua@2026Resurgence!',
+      displayName: 'Joshua Dollente',
+      title: 'Co-Owner / Basketball Player / Influencer-Vlogger',
+      role: UserRole.CREATOR,
+    },
+    {
+      email: 'gabriel.dimalanta@resurgence.local',
+      password: 'Gabriel@2026Resurgence!',
+      displayName: 'Gabriel Dimalanta',
+      title: 'Co-Owner / Basketball Player / Influencer-Vlogger',
+      role: UserRole.CREATOR,
+    },
+    {
+      email: 'angelo.deciembre@resurgence.local',
+      password: 'Angelo@2026Resurgence!',
+      displayName: 'Angelo Deciembre',
+      title: 'Co-Owner / Basketball Player / Influencer-Vlogger',
+      role: UserRole.CREATOR,
+    },
+    {
+      email: 'marlon.facundo@resurgence.local',
+      password: 'Marlon@2026Resurgence!',
+      displayName: 'Marlon Villamin Facundo',
+      title: 'Co-Owner / Basketball Player / Influencer-Vlogger',
+      role: UserRole.CREATOR,
+    },
   ];
 
   const lastLoginSeed: Record<string, Date> = {
@@ -335,37 +377,60 @@ async function main() {
     });
   }
 
+  const creatorUserEmails: Record<string, string> = {
+    'jake-anilao': 'jake.anilao@resurgence.local',
+    'klinthon-s-almine': 'klinthon.almine@resurgence.local',
+    'joshua-dollente': 'joshua.dollente@resurgence.local',
+    'gabriel-dimalanta': 'gabriel.dimalanta@resurgence.local',
+    'angelo-deciembre': 'angelo.deciembre@resurgence.local',
+    'marlon-villamin-facundo': 'marlon.facundo@resurgence.local',
+  };
+
+  const legacyCreatorSlugs = ['gab-dimalanta', 'klengtv', 'macofacundo', 'angelo-h-deciembre', 'klint-almine'];
+  await prisma.creatorProfile.deleteMany({ where: { slug: { in: legacyCreatorSlugs } } });
+
   for (const [index, creator] of creatorNetwork.entries()) {
+    const linkedUser = await prisma.user.findUnique({
+      where: { email: creatorUserEmails[creator.slug] },
+    });
+    const creatorPayload = {
+      userId: linkedUser?.id || null,
+      name: creator.name,
+      roleLabel: creator.role,
+      platformFocus: creator.platformFocus,
+      audience: creator.audience,
+      biography: creator.biography,
+      journeyStory: creator.journeyStory,
+      contactNumber: creator.contactNumber || null,
+      address: creator.address || null,
+      dateOfBirth: creator.dateOfBirth ? new Date(creator.dateOfBirth) : null,
+      jobDescription: creator.jobDescription,
+      position: creator.position || null,
+      height: creator.height || null,
+      facebookPage: creator.facebookPage || null,
+      facebookFollowers: creator.facebookFollowers || null,
+      tiktokPage: creator.tiktokPage || null,
+      tiktokFollowers: creator.tiktokFollowers || null,
+      instagramPage: creator.instagramPage || null,
+      instagramFollowers: creator.instagramFollowers || null,
+      youtubePage: creator.youtubePage || null,
+      youtubeFollowers: creator.youtubeFollowers || null,
+      trendingVideoUrl: creator.trendingVideoUrl || null,
+      shortBio: creator.shortBio,
+      pointsPerGame: creator.pointsPerGame,
+      assistsPerGame: creator.assistsPerGame,
+      reboundsPerGame: creator.reboundsPerGame,
+      imageUrl: creator.imageUrl,
+      isActive: true,
+      sortOrder: index + 1,
+    };
+
     await prisma.creatorProfile.upsert({
       where: { slug: creator.slug },
-      update: {
-        name: creator.name,
-        roleLabel: creator.role,
-        platformFocus: creator.platformFocus,
-        audience: creator.audience,
-        biography: creator.biography,
-        journeyStory: creator.journeyStory,
-        pointsPerGame: creator.pointsPerGame,
-        assistsPerGame: creator.assistsPerGame,
-        reboundsPerGame: creator.reboundsPerGame,
-        imageUrl: creator.imageUrl,
-        isActive: true,
-        sortOrder: index + 1,
-      },
+      update: creatorPayload,
       create: {
-        name: creator.name,
         slug: creator.slug,
-        roleLabel: creator.role,
-        platformFocus: creator.platformFocus,
-        audience: creator.audience,
-        biography: creator.biography,
-        journeyStory: creator.journeyStory,
-        pointsPerGame: creator.pointsPerGame,
-        assistsPerGame: creator.assistsPerGame,
-        reboundsPerGame: creator.reboundsPerGame,
-        imageUrl: creator.imageUrl,
-        isActive: true,
-        sortOrder: index + 1,
+        ...creatorPayload,
       },
     });
   }
@@ -396,8 +461,8 @@ async function main() {
 
   const creatorRecords = await prisma.creatorProfile.findMany({ orderBy: { sortOrder: 'asc' } });
   const jakeCreator = creatorRecords.find((item) => item.slug === 'jake-anilao');
-  const gabCreator = creatorRecords.find((item) => item.slug === 'gab-dimalanta');
-  const klintCreator = creatorRecords.find((item) => item.slug === 'klint-almine');
+  const gabCreator = creatorRecords.find((item) => item.slug === 'gabriel-dimalanta');
+  const klintCreator = creatorRecords.find((item) => item.slug === 'klinthon-s-almine');
 
   const gallerySeed = [
     {

@@ -13,6 +13,7 @@ const demoAccounts = [
   { role: "Sponsor", area: "Sponsor portal", email: "sponsor@resurgence.local", password: "Sponsor123!" },
   { role: "Staff", area: "Operations desk", email: "staff@resurgence.local", password: "Staff123!" },
   { role: "Partner", area: "Partner workspace", email: "partner@resurgence.local", password: "Partner123!" },
+  { role: "Creator", area: "Creator dashboard", email: "jake.anilao@resurgence.local", password: "Jake@2026Resurgence!" },
 ] as const;
 
 const roleDestinations = [
@@ -21,6 +22,7 @@ const roleDestinations = [
   { role: "Sponsor", href: "/sponsor/dashboard", description: "Applications, deliverables, billing, and profile records" },
   { role: "Staff", href: "/staff", description: "Inquiries, tasks, schedules, and announcements" },
   { role: "Partner", href: "/partner", description: "Campaigns, referrals, agreements, and partner profile" },
+  { role: "Creator", href: "/creator/dashboard", description: "Profile completeness, social reach, content, and public creator links" },
 ] as const;
 
 type DemoAccount = (typeof demoAccounts)[number];
@@ -147,14 +149,14 @@ function LoginPageShell({
                   One gateway for sponsorship, commerce, and operations.
                 </h1>
                 <p className="login-copy">
-                  Sign in with your assigned account to open the right dashboard for your role. The platform will route admin, cashier, sponsor, staff, and partner users automatically after authentication.
+                  Sign in with your assigned account to open the right dashboard for your role. The platform will route admin, cashier, sponsor, staff, partner, and creator users automatically after authentication.
                 </p>
               </div>
             </div>
 
             <div className="login-metric-row" aria-label="Access highlights">
               <div className="login-metric-card">
-                <strong>5</strong>
+                <strong>6</strong>
                 <span>Role workspaces</span>
               </div>
               <div className="login-metric-card">

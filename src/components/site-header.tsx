@@ -6,6 +6,7 @@ const links = [
   { href: '/services', label: 'Services' },
   { href: '/shop', label: 'Shop' },
   { href: '/cart', label: 'Cart' },
+  { href: '/creators', label: 'Creators' },
   { href: '/sponsors', label: 'Sponsors' },
   { href: '/sponsor/apply', label: 'Sponsor Apply' },
   { href: '/support', label: 'AI Support' },

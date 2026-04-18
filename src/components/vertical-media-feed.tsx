@@ -438,7 +438,7 @@ function FeedCard({
 
         <div className="vertical-feed-cta-row">
           {event.creator?.slug ? (
-            <Link href={`/creator/${event.creator.slug}`} className="button-link">
+            <Link href={`/creators/${event.creator.slug}`} className="button-link">
               View Creator Profile
             </Link>
           ) : null}

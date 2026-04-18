@@ -32,6 +32,7 @@ enum UserRole {
   SPONSOR
   STAFF
   PARTNER
+  CREATOR
 }
 
 enum InvoiceStatus {
@@ -130,6 +131,7 @@ model User {
   sponsorProfile SponsorProfile?
   staffProfile   StaffProfile?
   partnerProfile PartnerProfile?
+  creatorProfile CreatorProfile?
   notifications  PlatformNotification[] @relation("NotificationRecipient")
   emails         AutomatedEmail[]       @relation("EmailRecipient")
   createdAt      DateTime        @default(now())
@@ -477,6 +479,8 @@ enum GalleryMediaType {
 
 model CreatorProfile {
   id               String       @id @default(cuid())
+  userId           String?      @unique
+  user             User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
   name             String       @unique
   slug             String       @unique
   roleLabel        String
@@ -484,6 +488,22 @@ model CreatorProfile {
   audience         String
   biography        String?
   journeyStory     String?
+  contactNumber    String?
+  address          String?
+  dateOfBirth      DateTime?
+  jobDescription   String       @default("")
+  position         String?
+  height           String?
+  facebookPage     String?
+  facebookFollowers String?
+  tiktokPage       String?
+  tiktokFollowers  String?
+  instagramPage    String?
+  instagramFollowers String?
+  youtubePage      String?
+  youtubeFollowers String?
+  trendingVideoUrl String?
+  shortBio         String?
   pointsPerGame    Float?
   assistsPerGame   Float?
   reboundsPerGame  Float?
@@ -493,6 +513,10 @@ model CreatorProfile {
   isActive         Boolean      @default(true)
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
+
+  @@index([userId])
+  @@index([isActive, sortOrder])
+  @@index([position])
 }
 
 

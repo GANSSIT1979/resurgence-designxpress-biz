@@ -6,7 +6,7 @@ const items = [
   { href: '/admin', label: 'Dashboard' },
   { href: '/admin/sponsor-submissions', label: 'Sponsor Submissions' },
   { href: '/admin/sponsor-packages', label: 'Sponsor Packages' },
-  { href: '/admin/creator-network', label: 'Creator Network' },
+  { href: '/admin/creators', label: 'Manage Creators' },
   { href: '/admin/gallery', label: 'Gallery' },
   { href: '/admin/sponsor-inventory', label: 'Sponsor Inventory' },
   { href: '/admin/sponsors', label: 'Sponsors' },
