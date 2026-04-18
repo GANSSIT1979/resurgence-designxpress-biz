@@ -883,6 +883,15 @@ th {
   .login-brand-panel {
     min-height: auto;
   }
+
+  .vertical-feed-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .vertical-feed-dock,
+  .vertical-feed-keyboard-hints {
+    display: none;
+  }
 }
 
 
@@ -912,64 +921,341 @@ th {
 }
 
 .vertical-feed-shell {
-  display: flex;
+  align-items: start;
+  display: grid;
+  gap: 22px;
+  grid-template-columns: minmax(110px, 0.26fr) minmax(0, 470px) minmax(110px, 0.26fr);
   justify-content: center;
+  position: relative;
 }
 
 .vertical-feed-phone {
-  width: min(100%, 430px);
   display: grid;
-  gap: 22px;
+  gap: 28px;
+  height: min(84svh, 840px);
+  max-width: 470px;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  padding: 4px 8px 28px;
+  scroll-behavior: smooth;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: none;
+  width: min(100%, 470px);
+}
+
+.vertical-feed-phone::-webkit-scrollbar {
+  display: none;
 }
 
 .vertical-feed-card {
-  position: relative;
-  min-height: 78svh;
-  border-radius: 30px;
-  overflow: hidden;
+  aspect-ratio: 9 / 16;
+  background:
+    radial-gradient(circle at top, rgba(77, 192, 255, 0.12), transparent 34%),
+    #020914;
   border: 1px solid var(--panel-border);
-  background: rgba(255,255,255,0.04);
+  border-radius: 36px;
   box-shadow: var(--shadow);
-  scroll-snap-align: start;
+  isolation: isolate;
+  min-height: min(80svh, 820px);
+  overflow: hidden;
+  position: relative;
+  scroll-snap-align: center;
+  width: 100%;
 }
 
 .vertical-feed-card.active {
-  outline: 1px solid rgba(77, 192, 255, 0.35);
+  border-color: rgba(77, 192, 255, 0.48);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.48), 0 0 0 1px rgba(77, 192, 255, 0.16) inset;
+}
+
+.vertical-feed-stage {
+  background: #020914;
+  cursor: pointer;
+  inset: 0;
+  position: absolute;
+  z-index: 1;
+}
+
+.vertical-feed-media {
+  border: 0;
+  display: block;
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.vertical-feed-embed {
+  background: #000;
+}
+
+.vertical-feed-missing {
+  align-items: center;
+  color: var(--muted);
+  display: flex;
+  height: 100%;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+}
+
+.vertical-feed-progress {
+  display: flex;
+  gap: 6px;
+  left: 18px;
+  position: absolute;
+  right: 18px;
+  top: 16px;
+  z-index: 9;
+}
+
+.vertical-feed-progress button {
+  background: rgba(255, 255, 255, 0.18);
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  flex: 1;
+  height: 4px;
+  overflow: hidden;
+  padding: 0;
+}
+
+.vertical-feed-progress button span {
+  background: linear-gradient(90deg, white, var(--brand));
+  border-radius: inherit;
+  display: block;
+  height: 100%;
+  transition: width 0.12s linear;
+}
+
+.vertical-feed-topbar {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  left: 18px;
+  position: absolute;
+  right: 18px;
+  top: 30px;
+  z-index: 8;
+}
+
+.vertical-feed-topbar span,
+.vertical-feed-meta span,
+.vertical-feed-creator-line span,
+.vertical-feed-dock-count,
+.vertical-feed-keyboard-hints span {
+  backdrop-filter: blur(14px);
+  background: rgba(7, 17, 31, 0.52);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 999px;
+  color: white;
+}
+
+.vertical-feed-topbar span {
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  padding: 8px 11px;
+  text-transform: uppercase;
 }
 
 .vertical-feed-overlay {
-  position: absolute;
-  left: 0;
-  right: 0;
+  background: linear-gradient(180deg, transparent 0%, rgba(7, 17, 31, 0.24) 18%, rgba(7, 17, 31, 0.92) 100%);
   bottom: 0;
-  padding: 22px;
-  background: linear-gradient(180deg, transparent 0%, rgba(7,17,31,0.35) 20%, rgba(7,17,31,0.92) 100%);
+  left: 0;
+  padding: 120px 86px 24px 22px;
+  pointer-events: none;
+  position: absolute;
+  right: 0;
+  z-index: 6;
 }
 
 .vertical-feed-overlay h3 {
-  margin: 8px 0 8px;
-  font-size: 1.55rem;
+  font-size: clamp(1.45rem, 4vw, 2rem);
+  line-height: 1.08;
+  margin: 12px 0 8px;
 }
 
 .vertical-feed-overlay p {
+  color: rgba(248, 251, 255, 0.84);
+  display: -webkit-box;
+  font-size: 0.96rem;
+  line-height: 1.55;
   margin: 0;
-  color: var(--muted);
-  line-height: 1.65;
+  max-height: 4.7em;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.vertical-feed-creator-line,
+.vertical-feed-meta,
+.vertical-feed-cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.vertical-feed-creator-line span,
+.vertical-feed-meta span {
+  color: rgba(248, 251, 255, 0.9);
+  font-size: 0.76rem;
+  padding: 7px 10px;
 }
 
 .vertical-feed-meta {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
   margin-top: 12px;
 }
 
-.vertical-feed-meta span {
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.08);
-  font-size: 0.78rem;
+.vertical-feed-cta-row {
+  margin-top: 14px;
+  pointer-events: auto;
+}
+
+.vertical-feed-cta-row .button-link {
+  border-radius: 14px;
+  font-size: 0.82rem;
+  padding: 10px 12px;
+}
+
+.vertical-feed-actions {
+  bottom: 138px;
+  display: grid;
+  gap: 10px;
+  position: absolute;
+  right: 14px;
+  z-index: 8;
+}
+
+.vertical-feed-actions button,
+.vertical-feed-card-nav button,
+.vertical-feed-dock button {
+  backdrop-filter: blur(14px);
+  background: rgba(7, 17, 31, 0.58);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   color: white;
+  cursor: pointer;
+  transition: border-color 0.2s ease, opacity 0.2s ease, transform 0.2s ease, background 0.2s ease;
+}
+
+.vertical-feed-actions button {
+  align-items: center;
+  border-radius: 20px;
+  display: grid;
+  height: 62px;
+  justify-items: center;
+  padding: 8px;
+  width: 62px;
+}
+
+.vertical-feed-actions button:hover,
+.vertical-feed-card-nav button:hover,
+.vertical-feed-dock button:hover {
+  background: rgba(77, 192, 255, 0.16);
+  border-color: rgba(77, 192, 255, 0.42);
+  transform: translateY(-1px);
+}
+
+.vertical-feed-actions button:disabled,
+.vertical-feed-card-nav button:disabled,
+.vertical-feed-dock button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+  transform: none;
+}
+
+.vertical-feed-actions strong {
+  font-size: 0.76rem;
+}
+
+.vertical-feed-actions span {
+  color: var(--muted);
+  font-size: 0.68rem;
+}
+
+.vertical-feed-play-state {
+  align-items: center;
+  background: rgba(7, 17, 31, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  color: white;
+  display: flex;
+  font-weight: 900;
+  inset: 50% auto auto 50%;
+  justify-content: center;
+  padding: 14px 20px;
+  position: absolute;
+  transform: translate(-50%, -50%);
+  z-index: 7;
+}
+
+.vertical-feed-card-nav {
+  display: grid;
+  gap: 8px;
+  left: 14px;
+  position: absolute;
+  top: 70px;
+  z-index: 8;
+}
+
+.vertical-feed-card-nav button,
+.vertical-feed-dock button {
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  padding: 9px 11px;
+  text-transform: uppercase;
+}
+
+.vertical-feed-dock {
+  display: grid;
+  gap: 14px;
+  justify-items: center;
+  position: sticky;
+  top: 118px;
+}
+
+.vertical-feed-dock-count {
+  display: grid;
+  justify-items: center;
+  padding: 14px 18px;
+}
+
+.vertical-feed-dock-count strong {
+  font-size: 1.6rem;
+}
+
+.vertical-feed-dock-count span {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.vertical-feed-keyboard-hints {
+  align-content: start;
+  display: grid;
+  gap: 10px;
+  position: sticky;
+  top: 118px;
+}
+
+.vertical-feed-keyboard-hints span {
+  color: var(--muted);
+  font-size: 0.76rem;
+  padding: 9px 11px;
+}
+
+.vertical-feed-empty {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px dashed var(--panel-border);
+  border-radius: 28px;
+  max-width: 560px;
+  padding: 28px;
+  text-align: center;
+}
+
+.vertical-feed-empty h3 {
+  margin: 0 0 10px;
 }
 
 .event-media-shell {
@@ -1136,6 +1422,7 @@ th {
   }
 
   .vertical-feed-phone {
+    height: min(82svh, 820px);
     width: 100%;
   }
 }
@@ -1166,12 +1453,34 @@ th {
 
   .vertical-feed-phone {
     gap: 14px;
+    height: 78svh;
+    padding: 0 2px 18px;
   }
 
   .vertical-feed-card,
   .event-media-shell.tall {
-    min-height: 72svh;
+    min-height: 76svh;
     border-radius: 22px;
+  }
+
+  .vertical-feed-overlay {
+    padding: 104px 72px 18px 18px;
+  }
+
+  .vertical-feed-actions {
+    bottom: 118px;
+    gap: 8px;
+    right: 10px;
+  }
+
+  .vertical-feed-actions button {
+    border-radius: 18px;
+    height: 54px;
+    width: 54px;
+  }
+
+  .vertical-feed-card-nav {
+    display: none;
   }
 
   .event-media-shell.tall .event-media-stage {
