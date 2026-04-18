@@ -11,18 +11,42 @@ function decodeWebhookSecret(secret: string) {
   return Buffer.from(secret, 'utf8');
 }
 
+function extractSignature(signatureHeader: string) {
+  const normalized = signatureHeader.trim();
+  if (!normalized) {
+    return null;
+  }
+
+  const segments = normalized
+    .split(/[,\s]+/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  for (let index = 0; index < segments.length; index += 1) {
+    const part = segments[index];
+
+    if (part.startsWith('v1=')) {
+      return part.slice(3);
+    }
+
+    if (part.startsWith('v1,') && part.length > 3) {
+      return part.slice(3);
+    }
+
+    if (part === 'v1' && segments[index + 1]) {
+      return segments[index + 1];
+    }
+  }
+
+  return segments.find((part) => part !== 'v1') ?? null;
+}
+
 function verifySignature(secret: string, payload: string, webhookId: string, timestamp: string, signatureHeader: string) {
   const expected = createHmac('sha256', decodeWebhookSecret(secret))
     .update(`${webhookId}.${timestamp}.${payload}`)
     .digest('base64');
 
-  const provided = signatureHeader
-    .split(' ')
-    .flatMap((part) => part.split(','))
-    .map((part) => part.trim())
-    .filter(Boolean)
-    .map((part) => (part.startsWith('v1=') ? part.slice(3) : part.startsWith('v1,') ? part.slice(3) : part))
-    .find(Boolean);
+  const provided = extractSignature(signatureHeader);
 
   if (!provided) return false;
 

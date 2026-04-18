@@ -2,10 +2,18 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import type { FormEvent } from "react";
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoginPageShell />}>
+      <LoginPageContent />
+    </Suspense>
+  );
+}
+
+function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -53,6 +61,41 @@ export default function LoginPage() {
   }
 
   return (
+    <LoginPageShell
+      email={email}
+      error={error}
+      loading={loading}
+      nextTarget={nextTarget}
+      onSubmit={submit}
+      password={password}
+      setEmail={setEmail}
+      setPassword={setPassword}
+    />
+  );
+}
+
+type LoginPageShellProps = {
+  email?: string;
+  error?: string;
+  loading?: boolean;
+  nextTarget?: string;
+  onSubmit?: (event: FormEvent<HTMLFormElement>) => void;
+  password?: string;
+  setEmail?: (value: string) => void;
+  setPassword?: (value: string) => void;
+};
+
+function LoginPageShell({
+  email = "sponsor@resurgence.local",
+  error = "",
+  loading = false,
+  nextTarget = "",
+  onSubmit,
+  password = "Sponsor123!",
+  setEmail,
+  setPassword,
+}: LoginPageShellProps = {}) {
+  return (
     <div className="page-shell">
       <div className="container" style={{ display: "grid", placeItems: "center" }}>
         <div className="card" style={{ width: "min(100%, 480px)" }}>
@@ -62,15 +105,16 @@ export default function LoginPage() {
             Sign in to open your assigned RESURGENCE dashboard.
           </p>
 
-          <form className="form-card" onSubmit={submit}>
+          <form className="form-card" onSubmit={onSubmit}>
             <div>
               <label htmlFor="email">Email</label>
               <input
                 id="email"
                 type="email"
                 autoComplete="email"
+                readOnly={!setEmail}
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => setEmail?.(e.target.value)}
                 required
               />
             </div>
@@ -81,8 +125,9 @@ export default function LoginPage() {
                 id="password"
                 type="password"
                 autoComplete="current-password"
+                readOnly={!setPassword}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => setPassword?.(e.target.value)}
                 required
               />
             </div>

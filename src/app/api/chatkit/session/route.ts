@@ -14,7 +14,10 @@ function buildStatusPayload() {
 }
 
 export async function GET() {
-  return NextResponse.json(buildStatusPayload());
+  return NextResponse.json({
+    ok: true,
+    ...buildStatusPayload(),
+  });
 }
 
 export async function POST(request: Request) {

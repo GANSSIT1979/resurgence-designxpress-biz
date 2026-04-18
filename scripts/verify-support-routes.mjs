@@ -1,4 +1,8 @@
 import { createHmac } from "node:crypto";
+import { existsSync, readFileSync } from "node:fs";
+import path from "node:path";
+
+loadDotEnv(path.resolve(process.cwd(), ".env"));
 
 const args = parseArgs(process.argv.slice(2));
 const baseUrl = normalizeBaseUrl(
@@ -26,6 +30,42 @@ const verificationScenarios = [
 ];
 
 const results = [];
+
+function loadDotEnv(filePath) {
+  if (!existsSync(filePath)) {
+    return;
+  }
+
+  const lines = readFileSync(filePath, "utf8").split(/\r?\n/);
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    if (!trimmed || trimmed.startsWith("#")) {
+      continue;
+    }
+
+    const separatorIndex = trimmed.indexOf("=");
+    if (separatorIndex <= 0) {
+      continue;
+    }
+
+    const key = trimmed.slice(0, separatorIndex).trim();
+    if (!key || process.env[key]) {
+      continue;
+    }
+
+    const rawValue = trimmed.slice(separatorIndex + 1).trim();
+    const value =
+      rawValue.startsWith('"') && rawValue.endsWith('"')
+        ? rawValue.slice(1, -1)
+        : rawValue.startsWith("'") && rawValue.endsWith("'")
+          ? rawValue.slice(1, -1)
+          : rawValue;
+
+    process.env[key] = value;
+  }
+}
 
 function parseArgs(values) {
   return values.reduce((acc, value) => {
