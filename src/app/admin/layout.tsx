@@ -12,11 +12,7 @@ const links = [
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
-    <DashboardShell
-      title="System Admin Dashboard"
-      subtitle="Oversee sponsorship operations, content modules, creator assets, inquiry flow, user access, and business workflows from one command surface."
-      links={links}
-    >
+    <DashboardShell links={links}>
       {children}
     </DashboardShell>
   );
