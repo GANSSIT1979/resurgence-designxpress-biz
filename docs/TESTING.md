@@ -27,6 +27,8 @@ Start the app first, then run:
 npm run support:verify -- --base-url=http://localhost:3000
 ```
 
+For local HTTPS, use browser smoke tests against `https://localhost:3000`. The support verifier should use a trusted HTTPS endpoint or the default local HTTP URL unless your local certificate is trusted by Node.js.
+
 ## Route Smoke Tests
 
 Verify these pages load:

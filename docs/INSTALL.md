@@ -20,6 +20,12 @@ npm run db:seed
 npm run dev
 ```
 
+Optional local HTTPS:
+
+```bash
+npm run dev:https
+```
+
 Windows PowerShell:
 
 ```powershell
@@ -30,11 +36,18 @@ npm run db:seed
 npm run dev
 ```
 
+Optional Windows local HTTPS:
+
+```powershell
+npm run dev:https
+```
+
 `npm install` already runs Prisma generate through `postinstall`. If you change `PRISMA_DB_PROVIDER`, rerun `npm run prisma:generate`.
 
 ## First Local Checks
 
 - Open `http://localhost:3000`
+- Open `https://localhost:3000` when running `npm run dev:https`
 - Open `http://localhost:3000/login`
 - Open `http://localhost:3000/support`
 - Open `http://localhost:3000/api/health`

@@ -2,10 +2,29 @@ import { NextRequest, NextResponse } from 'next/server';
 import { COOKIE_NAME, getLoginRedirect, isPathAllowedForRole, verifySession } from '@/lib/auth';
 import { getRequiredPermission } from '@/lib/permissions';
 
+const localHttpsHosts = new Set(['localhost', '127.0.0.1', '0.0.0.0', '::1', '[::1]']);
+
+function shouldRedirectToHttps(request: NextRequest) {
+  if (process.env.FORCE_HTTPS !== 'true') return false;
+
+  const hostname = request.nextUrl.hostname;
+  if (localHttpsHosts.has(hostname)) return false;
+
+  const forwardedProto = request.headers.get('x-forwarded-proto')?.split(',')[0]?.trim();
+  const protocol = forwardedProto || request.nextUrl.protocol.replace(':', '');
+  return protocol === 'http';
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   const token = request.cookies.get(COOKIE_NAME)?.value;
   const requiredPermission = getRequiredPermission(pathname, request.method);
+
+  if (shouldRedirectToHttps(request)) {
+    const httpsUrl = request.nextUrl.clone();
+    httpsUrl.protocol = 'https:';
+    return NextResponse.redirect(httpsUrl, 308);
+  }
 
   if (pathname === '/login') {
     const payload = await verifySession(token);
@@ -40,18 +59,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/login',
-    '/admin/:path*',
-    '/cashier/:path*',
-    '/staff/:path*',
-    '/partner/:path*',
-    '/sponsor/dashboard/:path*',
-    '/sponsor/applications/:path*',
-    '/sponsor/packages/:path*',
-    '/sponsor/deliverables/:path*',
-    '/sponsor/billing/:path*',
-    '/sponsor/profile/:path*',
-    '/creator/dashboard/:path*',
-    '/api/:path*',
+    '/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|assets|uploads).*)',
   ],
 };

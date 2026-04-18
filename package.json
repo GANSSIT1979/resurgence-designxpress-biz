@@ -6,6 +6,7 @@
     "prisma:prepare": "node scripts/prepare-prisma-schema.mjs",
     "prisma:generate": "npm run prisma:prepare && prisma generate",
     "dev": "npm run prisma:prepare && next dev",
+    "dev:https": "npm run prisma:prepare && next dev --experimental-https --experimental-https-key certificates/localhost-key.pem --experimental-https-cert certificates/localhost.pem",
     "build": "npm run prisma:generate && next build",
     "start": "next start",
     "db:push": "npm run prisma:prepare && prisma db push",

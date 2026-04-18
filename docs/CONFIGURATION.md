@@ -27,6 +27,8 @@ JWT_SECRET="change-this-super-secret-key"
 COMPANY_NAME="DesignXpress Merchandising OPC"
 NEXT_PUBLIC_SITE_NAME="Resurgence Powered by DesignXpress"
 NEXT_PUBLIC_SITE_URL="https://resurgence-dx.biz"
+FORCE_HTTPS="true"
+NEXT_ALLOWED_DEV_ORIGINS=""
 NEXT_PUBLIC_CONTACT_NAME="Jake Anilao"
 NEXT_PUBLIC_CONTACT_ROLE="Sponsorship / Partnerships"
 NEXT_PUBLIC_CONTACT_EMAIL="partnerships@resurgence-dx.biz"
@@ -42,6 +44,23 @@ NEXT_PUBLIC_CONTACT_ADDRESS="Philippines"
 ```
 
 `ADMIN_PASSWORD_HASH` is only for the emergency fallback admin flow. Normal sign-in uses seeded database users.
+
+### HTTPS
+
+```env
+NEXT_PUBLIC_SITE_URL="https://resurgence-dx.biz"
+FORCE_HTTPS="true"
+```
+
+HTTPS behavior:
+
+- `NEXT_PUBLIC_SITE_URL` should use the final `https://` production origin.
+- `FORCE_HTTPS=true` redirects HTTP requests to HTTPS for non-local hosts.
+- local hosts such as `localhost` and `127.0.0.1` are not force-redirected, so normal local development still works.
+- use `npm run dev:https` for local HTTPS with the certificates in `certificates/`.
+- local network IPs are automatically added to `allowedDevOrigins` during development.
+- set `NEXT_ALLOWED_DEV_ORIGINS` to a comma-separated list if you need extra development hostnames.
+- production TLS certificates should be handled by Vercel, Railway, Render, Docker ingress, Nginx, Caddy, or another HTTPS-capable host/proxy.
 
 ### Support And Webhooks
 
@@ -71,11 +90,11 @@ The package scripts use `scripts/prepare-prisma-schema.mjs` to switch the dataso
 - local storage path: `public/uploads/<scope>/<year>/<month>`
 - accepted file types: JPG, PNG, WEBP, GIF
 - size limit: `5 MB`
-- upload scopes: `sponsor`, `creator`, `brand-profile`
+- upload scopes: `sponsor`, `creator`, `brand-profile`, `merch`
 
 Role access:
 
-- `SYSTEM_ADMIN`: `sponsor`, `creator`, `brand-profile`
+- `SYSTEM_ADMIN`: `sponsor`, `creator`, `brand-profile`, `merch`
 - `SPONSOR`: `brand-profile`
 - `PARTNER`: `brand-profile`
 

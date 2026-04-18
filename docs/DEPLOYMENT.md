@@ -30,6 +30,7 @@ Required or commonly used variables:
 - `DATABASE_URL`
 - `JWT_SECRET`
 - `NEXT_PUBLIC_SITE_URL`
+- `FORCE_HTTPS=true`
 - `NEXT_PUBLIC_SITE_NAME`
 - `PRISMA_DB_PROVIDER`
 - `ADMIN_EMAIL`
@@ -70,6 +71,8 @@ Typical flow:
 
 Important:
 
+- Vercel provisions and renews HTTPS certificates automatically for configured domains
+
 - do not rely on Vercel’s filesystem for long-term uploads
 - confirm the prepared Prisma schema reflects PostgreSQL before deployment
 - verify `/api/health` after deployment
@@ -86,6 +89,8 @@ Typical flow:
 6. run `npx prisma migrate deploy` during release or pre-start orchestration
 
 Recommended:
+
+- use platform-managed HTTPS or terminate TLS at a reverse proxy before traffic reaches Next.js
 
 - use persistent object storage for uploaded media in production
 - keep `public/uploads` only for local or temporary workflows unless persistent disk support exists
@@ -106,6 +111,7 @@ Make sure:
 - `DATABASE_URL` is injected correctly
 - Prisma Client is generated against the prepared schema
 - migrations are handled intentionally during release, not implicitly by app traffic
+- HTTPS is terminated by your ingress, load balancer, Caddy, Nginx, Traefik, or another TLS proxy
 
 ## VPS Or Custom Node Hosting
 
@@ -121,6 +127,8 @@ Typical flow:
 8. run `npm run build`
 9. run `npm run start` behind a process manager or reverse proxy
 
+For HTTPS on a VPS, terminate TLS at Caddy or Nginx and forward requests to the app on port `3000`. Set `FORCE_HTTPS=true` so direct HTTP requests are redirected to the HTTPS origin.
+
 ## Release Checklist
 
 - `npm run prisma:prepare` passes
@@ -128,6 +136,9 @@ Typical flow:
 - `npx prisma migrate deploy` passes
 - `npm run build` passes
 - `GET /api/health` returns `ok`
+- `NEXT_PUBLIC_SITE_URL` uses `https://`
+- `FORCE_HTTPS=true` is set in production
+- HTTP requests redirect to HTTPS
 - login works
 - admin dashboard loads
 - admin users module loads

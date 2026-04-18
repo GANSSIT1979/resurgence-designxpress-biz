@@ -14,6 +14,12 @@ npm run db:seed
 npm run dev
 ```
 
+Optional local HTTPS:
+
+```bash
+npm run dev:https
+```
+
 Windows PowerShell:
 
 ```powershell
@@ -24,11 +30,18 @@ npm run db:seed
 npm run dev
 ```
 
+Optional Windows local HTTPS:
+
+```powershell
+npm run dev:https
+```
+
 If you change `PRISMA_DB_PROVIDER`, run `npm run prisma:generate` before the database commands.
 
 ## Verify Locally
 
 - `http://localhost:3000`
+- `https://localhost:3000` with `npm run dev:https`
 - `http://localhost:3000/login`
 - `http://localhost:3000/support`
 - `http://localhost:3000/api/health`

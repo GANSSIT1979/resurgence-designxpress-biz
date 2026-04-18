@@ -11,11 +11,18 @@ npm run db:seed
 npm run dev
 ```
 
+For local HTTPS, use:
+
+```bash
+npm run dev:https
+```
+
 If you switched providers, run `npm run prisma:generate` first.
 
 ## Key URLs
 
 - Public site: `http://localhost:3000`
+- Local HTTPS site: `https://localhost:3000` with `npm run dev:https`
 - Login: `http://localhost:3000/login`
 - Contact: `http://localhost:3000/contact`
 - Sponsor Apply: `http://localhost:3000/sponsor/apply`

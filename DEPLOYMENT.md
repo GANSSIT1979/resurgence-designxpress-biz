@@ -10,6 +10,7 @@ This root guide is the short deployment companion to `docs/DEPLOYMENT.md` and `d
 - `PRISMA_DB_PROVIDER=postgresql` and a production `DATABASE_URL` are recommended
 - `JWT_SECRET`
 - `NEXT_PUBLIC_SITE_URL`
+- `FORCE_HTTPS=true`
 - durable object storage if you do not want uploads on the app filesystem
 - optional OpenAI and email webhook credentials if you are enabling support automation and outbound delivery
 
@@ -21,6 +22,8 @@ npm run prisma:generate
 npm run build
 npm run start
 ```
+
+HTTPS should be terminated by the deployment platform or a reverse proxy such as Caddy, Nginx, or Traefik. The app redirects HTTP to HTTPS for non-local hosts when `FORCE_HTTPS=true`.
 
 ## Optional AI Support Steps
 

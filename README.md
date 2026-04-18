@@ -38,6 +38,12 @@ npm run db:seed
 npm run dev
 ```
 
+Local HTTPS:
+
+```bash
+npm run dev:https
+```
+
 Windows PowerShell:
 
 ```powershell
@@ -46,6 +52,12 @@ npm install
 npm run db:push
 npm run db:seed
 npm run dev
+```
+
+Windows local HTTPS:
+
+```powershell
+npm run dev:https
 ```
 
 If you change `PRISMA_DB_PROVIDER`, rerun `npm run prisma:generate` before pushing, migrating, or building.
@@ -75,6 +87,7 @@ npm run support:verify -- --base-url=http://localhost:3000
 ## Core URLs
 
 - `http://localhost:3000`
+- `https://localhost:3000` with `npm run dev:https`
 - `http://localhost:3000/login`
 - `http://localhost:3000/support`
 - `http://localhost:3000/api/health`
