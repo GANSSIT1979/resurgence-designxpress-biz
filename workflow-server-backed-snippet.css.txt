@@ -1,0 +1,115 @@
+.workflow-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.workflow-summary-card {
+  padding: 16px 18px;
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.workflow-summary-warning {
+  background: rgba(255, 211, 77, 0.08);
+}
+
+.workflow-summary-success {
+  background: rgba(104, 211, 145, 0.08);
+}
+
+.workflow-summary-value {
+  font-size: 1.8rem;
+  font-weight: 900;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.workflow-summary-label {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.saved-views-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.saved-view-chip {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.workflow-filters-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  gap: 14px;
+  flex: 1 1 560px;
+}
+
+.workflow-row-actions {
+  position: relative;
+}
+
+.workflow-row-actions-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 20;
+  min-width: 220px;
+  display: grid;
+  gap: 4px;
+  padding: 8px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  box-shadow: var(--shadow-xl);
+}
+
+.workflow-row-action-item {
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.workflow-row-action-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.workflow-row-action-danger {
+  color: #ffb3b3;
+}
+
+.workflow-row-action-group {
+  display: grid;
+  gap: 4px;
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+}
+
+.workflow-row-action-group-title {
+  padding: 6px 12px 2px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+@media (max-width: 980px) {
+  .workflow-summary-grid,
+  .workflow-filters-grid {
+    grid-template-columns: 1fr;
+  }
+}

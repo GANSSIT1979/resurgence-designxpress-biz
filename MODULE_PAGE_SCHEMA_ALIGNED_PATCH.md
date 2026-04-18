@@ -1,41 +1,18 @@
-# Module Page Schema-Aligned Patch
+# Module Page Schema Aligned Patch
 
-This pack corrects the module page conversion layer to match your actual Prisma schema.
+Updated: 2026-04-16
 
-Main fixes:
-- `SponsorApplication` used instead of the non-existent `SponsorSubmission`
-- sponsor application field names corrected:
-  - `sponsorName`
-  - `company`
-  - `packageInterest`
-- inquiry statuses corrected to:
-  - `NEW`
-  - `REVIEWED`
-  - `CLOSED`
-- invoice fields corrected:
-  - `number`
-  - `balanceDue`
-- receipt field corrected:
-  - `number`
-- sponsor billing page now reads linked sponsor invoices if present
-- admin overview page corrected to use `db.sponsorApplication`
+## Purpose
 
-Replace:
-- `src/app/admin/page.tsx`
-- `src/app/sponsor/dashboard/applications/page.tsx`
-- `src/app/sponsor/dashboard/billing/page.tsx`
-- `src/app/sponsor/dashboard/deliverables/page.tsx`
-- `src/app/admin/sponsor-submissions/page.tsx`
-- `src/app/admin/gallery/page.tsx`
-- `src/app/admin/inquiries/page.tsx`
-- `src/app/cashier/invoices/page.tsx`
-- `src/app/cashier/receipts/page.tsx`
-- `src/app/cashier/reports/page.tsx`
+This note records the effort to replace older route assumptions with names from the active Prisma schema.
 
-Then run:
+## Current State
 
-```powershell
-Remove-Item -Recurse -Force .next -ErrorAction SilentlyContinue
-npm run prisma:generate
-npm run dev
-```
+- the Prisma schema remains the authority
+- several older field-name mismatches were fixed in past passes
+- a few pages and API routes still need the same treatment
+
+## Canonical Docs
+
+- `docs/DATABASE.md`
+- `docs/TROUBLESHOOTING.md`

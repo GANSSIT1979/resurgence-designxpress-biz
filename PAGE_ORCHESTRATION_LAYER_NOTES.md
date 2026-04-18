@@ -1,23 +1,17 @@
-# Page Orchestration Layer Pack
+# Page Orchestration Layer Notes
 
-Included:
-- `src/components/dashboard-page-orchestrator.tsx`
-- `src/app/admin/layout.tsx`
-- `src/app/admin/page.tsx`
-- `src/app/cashier/layout.tsx`
-- `src/app/cashier/page.tsx`
-- `src/app/sponsor/dashboard/layout.tsx`
-- `src/app/sponsor/dashboard/page.tsx`
+Updated: 2026-04-16
 
-What this layer changes:
-- makes sponsor, admin, and cashier dashboards use one shared orchestration pattern
-- unifies hero blocks, tabs, metrics, actions, and content flow
-- applies the newer semantic components consistently
-- improves readability without changing the underlying business model
+## Purpose
 
-After replacing files:
+This note tracks the shared dashboard-page orchestration layer introduced across admin, sponsor, and cashier screens.
 
-```powershell
-Remove-Item -Recurse -Force .next -ErrorAction SilentlyContinue
-npm run dev
-```
+## Current State
+
+- orchestration concepts remain part of the active dashboard structure
+- legacy page repairs still need to respect the current Prisma schema while using that shared pattern
+
+## Canonical Docs
+
+- `docs/ARCHITECTURE.md`
+- `docs/ADMIN_GUIDE.md`
