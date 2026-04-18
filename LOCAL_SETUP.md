@@ -1,6 +1,6 @@
 # Local Setup Guide
 
-Updated: 2026-04-16
+Updated: 2026-04-19
 
 This root guide is the short local bootstrap companion to `docs/INSTALL.md` and `docs/QUICKSTART.md`.
 
@@ -9,7 +9,6 @@ This root guide is the short local bootstrap companion to `docs/INSTALL.md` and 
 ```bash
 cp .env.example .env
 npm install
-npm run prisma:generate
 npm run db:push
 npm run db:seed
 npm run dev
@@ -20,11 +19,12 @@ Windows PowerShell:
 ```powershell
 Copy-Item .env.example .env
 npm install
-npm run prisma:generate
 npm run db:push
 npm run db:seed
 npm run dev
 ```
+
+If you change `PRISMA_DB_PROVIDER`, run `npm run prisma:generate` before the database commands.
 
 ## Verify Locally
 
@@ -35,18 +35,21 @@ npm run dev
 
 ## Demo Accounts
 
-- Admin: `admin@resurgence.local` / `Admin123!`
+- System Admin: `admin@resurgence.local` / `ChangeMe123!`
 - Cashier: `cashier@resurgence.local` / `Cashier123!`
 - Sponsor: `sponsor@resurgence.local` / `Sponsor123!`
 - Staff: `staff@resurgence.local` / `Staff123!`
 - Partner: `partner@resurgence.local` / `Partner123!`
 
-## Support Check
+## Local Checks
+
+```bash
+npx tsc --noEmit --pretty false
+npm run build
+```
+
+Support check:
 
 ```bash
 npm run support:verify -- --base-url=http://localhost:3000
 ```
-
-## Current Caveat
-
-The app can be run locally, but full repository build cleanup is still in progress. See `docs/TROUBLESHOOTING.md` for the current blockers.

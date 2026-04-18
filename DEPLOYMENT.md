@@ -1,37 +1,38 @@
 # Deployment Guide
 
-Updated: 2026-04-16
+Updated: 2026-04-19
 
 This root guide is the short deployment companion to `docs/DEPLOYMENT.md` and `docs/AI_SUPPORT_PRODUCTION.md`.
 
 ## Production Baseline
 
 - Node.js 20.x
-- PostgreSQL
-- strong `AUTH_SECRET`
-- durable object storage for uploads
-- OpenAI credentials only when enabling production AI support
+- `PRISMA_DB_PROVIDER=postgresql` and a production `DATABASE_URL` are recommended
+- `JWT_SECRET`
+- `NEXT_PUBLIC_SITE_URL`
+- durable object storage if you do not want uploads on the app filesystem
+- optional OpenAI and email webhook credentials if you are enabling support automation and outbound delivery
 
-## Required Steps
+## Build And Release
 
 ```bash
 npm install
 npm run prisma:generate
 npm run build
+npm run start
 ```
 
-## AI Support Steps
+## Optional AI Support Steps
 
-- publish the OpenAI workflow
+- set `OPENAI_API_KEY`
 - set `OPENAI_WORKFLOW_ID`
-- optionally set `OPENAI_WORKFLOW_VERSION`
-- create the OpenAI project webhook
+- optionally add `OPENAI_WORKFLOW_VERSION`
 - set `OPENAI_WEBHOOK_SECRET`
 - run `npm run support:verify -- --base-url=https://your-domain.example --webhook-secret=whsec_...`
 
-## Current Caveat
+## Current Note
 
-Do not treat deployment as ready until the repository-wide build blockers are repaired. The current first build stop is the missing `@/lib/sponsor-server` helper in the sponsor profile API route.
+As of 2026-04-19 the local production build is green. Real deployment readiness still depends on correct secrets, database connectivity, storage choices, and host configuration.
 
 ## Canonical References
 

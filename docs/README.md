@@ -1,18 +1,19 @@
 # RESURGENCE Documentation
 
-Updated: 2026-04-16
+Updated: 2026-04-19
 
 ## Snapshot
 
-RESURGENCE Powered by DesignXpress is a Next.js + Prisma multi-role platform for sponsorship operations, creator management, partner coordination, cashier workflows, and AI-assisted customer service.
+RESURGENCE Powered by DesignXpress is a Next.js 15 + Prisma platform for sponsorship operations, support routing, commerce, and role-based internal dashboards.
 
 ## Current Repository State
 
-- Public website pages and multi-role dashboards are present in the active `src/` application.
-- Prisma is configured through `prisma/schema.template.prisma` and prepared by `scripts/prepare-prisma.mjs`.
-- Demo users are seeded with hashed passwords.
-- AI customer service routes now cover `/support`, `/api/chatkit/session`, `/api/chatkit/message`, and `/api/openai/webhook`.
-- The repository is not fully build-green yet. As of 2026-04-16, `npm run build` stops on a missing `@/lib/sponsor-server` import and `npx tsc --noEmit` still reports legacy schema and route drift in unrelated modules.
+- The active app lives in `src/`.
+- `npx tsc --noEmit --pretty false` passes.
+- `npm run build` passes.
+- `npm run support:verify` passes against a running local server.
+- The live Prisma workflow used by npm scripts is `scripts/prepare-prisma-schema.mjs` plus `prisma/schema.prisma`.
+- `prisma/schema.template.prisma` and `scripts/prepare-prisma.mjs` remain in the repo as legacy artifacts and are not the default script path.
 
 ## Canonical Docs
 
@@ -45,19 +46,12 @@ RESURGENCE Powered by DesignXpress is a Next.js + Prisma multi-role platform for
 
 ## Primary Working Areas
 
-- Public pages: Home, About, Services, Sponsors, Sponsor Apply, Contact, Support, Creator profiles
-- Dashboards: Admin, Cashier, Sponsor, Staff, Partner, Creator
-- Finance: invoices, transactions, receipts, summary and revenue monitoring routes
-- Support: chat session bootstrap, route-aware messaging, lead capture, signed OpenAI webhook verification
-- CMS: sponsors, partners, creators, gallery, media events, products and services, settings
-
-## Known Repair Themes
-
-- Sponsor portal typing and missing `sponsor-server` helper
-- Legacy content and gallery delegates that do not yet match the active Prisma schema
-- Cashier route field names that still reference older invoice and receipt shapes
-- Creator and dashboard typing mismatches in a few legacy pages
+- Public site: discovery pages, sponsor apply, contact, support, shop, cart, checkout
+- Internal roles: admin, cashier, sponsor, staff, partner
+- Support automation: session bootstrap, message routing, lead capture, webhook verification
+- CMS and operations: creators, gallery, sponsors, packages, submissions, reports, settings
+- Finance: invoices, transactions, receipts, cashier summaries and exports
 
 ## Documentation Policy
 
-The `docs/` folder is the canonical documentation set. Root-level patch notes are retained as historical implementation notes and should not override these documents.
+The `docs/` folder is the source of truth. Root Markdown notes in the repo root are retained as historical implementation references only.
