@@ -1,20 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import type { ServerSavedViewRecord, ServerSavedViewState } from "@/hooks/use-server-saved-views";
+import type { SavedViewRecord, SavedViewState } from "@/hooks/use-saved-views";
 
 type SavedViewsBarProps = {
-  views: ServerSavedViewRecord[];
-  loading?: boolean;
-  onApply: (state: ServerSavedViewState) => void;
-  onSave: (name: string) => Promise<boolean | undefined> | boolean | undefined;
-  onDelete: (id: string) => Promise<boolean | undefined> | boolean | undefined;
-  onReplace: (id: string, name?: string) => Promise<boolean | undefined> | boolean | undefined;
+  views: SavedViewRecord[];
+  onApply: (state: SavedViewState) => void;
+  onSave: (name: string) => void;
+  onDelete: (id: string) => void;
+  onReplace: (id: string) => void;
 };
 
 export function SavedViewsBar({
   views,
-  loading = false,
   onApply,
   onSave,
   onDelete,
@@ -39,13 +37,12 @@ export function SavedViewsBar({
           <button
             type="button"
             className="button button-small"
-            disabled={loading}
-            onClick={async () => {
-              const ok = await onSave(draftName);
-              if (ok) setDraftName("");
+            onClick={() => {
+              onSave(draftName);
+              setDraftName("");
             }}
           >
-            {loading ? "Saving..." : "Save View"}
+            Save View
           </button>
         </div>
       </div>
@@ -57,21 +54,14 @@ export function SavedViewsBar({
               <button
                 type="button"
                 className="button button-secondary button-small"
-                onClick={() =>
-                  onApply({
-                    search: view.search || "",
-                    status: view.status || "",
-                    filtersJson: view.filtersJson,
-                    sortJson: view.sortJson,
-                  })
-                }
+                onClick={() => onApply(view.state)}
               >
                 {view.name}
               </button>
               <button
                 type="button"
                 className="button button-secondary button-small"
-                onClick={() => onReplace(view.id, view.name)}
+                onClick={() => onReplace(view.id)}
                 title="Update this view with current filters"
               >
                 Update

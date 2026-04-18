@@ -10,7 +10,7 @@ import { WorkflowBulkActions } from "./workflow-bulk-actions";
 import { WorkflowFilters } from "./workflow-filters";
 import { WorkflowRowActions } from "./workflow-row-actions";
 import { WorkflowSummaryStrip } from "./workflow-summary-strip";
-import { useServerSavedViews } from "@/hooks/use-server-saved-views";
+import { useSavedViews } from "@/hooks/use-saved-views";
 
 type ColumnDef = {
   key?: string;
@@ -37,8 +37,6 @@ type CrudManagerProps = {
   subtitle?: string;
   endpoint?: string;
   apiEndpoint?: string;
-  bulkEndpoint?: string;
-  savedViewScope?: string;
   resourceName?: string;
   entityName?: string;
   columns?: ColumnDef[];
@@ -47,10 +45,8 @@ type CrudManagerProps = {
   formFields?: FieldDef[];
   initialValues?: Record<string, unknown>;
   defaultValues?: Record<string, unknown>;
-  initialItems?: Record<string, unknown>[];
   emptyMessage?: string;
   statusField?: string;
-  duplicateSanitizeKeys?: string[];
 };
 
 function fieldName(field: FieldDef) {
@@ -93,57 +89,30 @@ function readJsonSafe(text: string) {
   }
 }
 
-function inferBulkEndpoint(endpoint: string) {
-  switch (endpoint) {
-    case "/api/sponsor-applications":
-      return "/api/bulk/sponsor-applications";
-    case "/api/admin/inquiries":
-      return "/api/bulk/admin-inquiries";
-    case "/api/admin/gallery":
-      return "/api/bulk/admin-gallery";
-    case "/api/cashier/invoices":
-      return "/api/bulk/cashier-invoices";
-    case "/api/cashier/receipts":
-      return "/api/bulk/cashier-receipts";
-    default:
-      return "";
-  }
-}
-
 export function CrudManager(props: CrudManagerProps) {
   const title = props.title || props.resourceName || props.entityName || "Manager";
-const subtitle =
-  props.subtitle ||
-  "Manage records, update content, and keep the dashboard data organized.";
-const endpoint = props.endpoint || props.apiEndpoint || "";
-const bulkEndpoint = props.bulkEndpoint || inferBulkEndpoint(endpoint);
-const savedViewScope = props.savedViewScope || endpoint || title;
-const columns = props.columns || props.tableColumns || [];
-const fields = props.fields || props.formFields || [];
-const baseValues = props.initialValues || props.defaultValues || {};
-const emptyMessage = props.emptyMessage || "No records available yet.";
-const statusField = props.statusField || "status";
-const duplicateSanitizeKeys = props.duplicateSanitizeKeys || [
-  "id",
-  "createdAt",
-  "updatedAt",
-];
+  const subtitle =
+    props.subtitle ||
+    "Manage records, update content, and keep the dashboard data organized.";
+  const endpoint = props.endpoint || props.apiEndpoint || "";
+  const columns = props.columns || props.tableColumns || [];
+  const fields = props.fields || props.formFields || [];
+  const baseValues = props.initialValues || props.defaultValues || {};
+  const emptyMessage = props.emptyMessage || "No records available yet.";
+  const statusField = props.statusField || "status";
 
-const hasEndpoint = Boolean(endpoint);
-const hasInitialItems = props.initialItems !== undefined;
+  const [items, setItems] = useState<Record<string, unknown>[]>([]);
+  const [form, setForm] = useState<Record<string, unknown>>(baseValues);
+  const [selectedId, setSelectedId] = useState<string>("");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [done, setDone] = useState("");
 
-const [items, setItems] = useState<Record<string, unknown>[]>(props.initialItems || []);
-const [form, setForm] = useState<Record<string, unknown>>(baseValues);
-const [selectedId, setSelectedId] = useState<string>("");
-const [selectedIds, setSelectedIds] = useState<string[]>([]);
-const [search, setSearch] = useState("");
-const [status, setStatus] = useState("");
-const [loading, setLoading] = useState(hasEndpoint && !hasInitialItems);
-const [saving, setSaving] = useState(false);
-const [error, setError] = useState("");
-const [done, setDone] = useState("");
-
-const serverViews = useServerSavedViews(savedViewScope, { search, status });
+  const hasEndpoint = Boolean(endpoint);
 
   const normalizedColumns = useMemo(() => {
     if (columns.length) return columns;
@@ -154,23 +123,13 @@ const serverViews = useServerSavedViews(savedViewScope, { search, status });
   }, [columns, items]);
 
   const statusOptions = useMemo(() => {
-    const fromFields = fields.find((field) => fieldName(field) === statusField)?.options;
     const values = new Set<string>();
-
-    if (Array.isArray(fromFields)) {
-      fromFields.forEach((option) => {
-        if (typeof option === "string") values.add(option);
-        else values.add(option.value);
-      });
-    }
-
     items.forEach((item) => {
       const value = item[statusField];
       if (typeof value === "string" && value.trim()) values.add(value);
     });
-
     return Array.from(values).sort();
-  }, [fields, items, statusField]);
+  }, [items, statusField]);
 
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
@@ -181,6 +140,8 @@ const serverViews = useServerSavedViews(savedViewScope, { search, status });
       return matchesSearch && matchesStatus;
     });
   }, [items, search, status, statusField]);
+
+  const savedViews = useSavedViews(endpoint || title, { search, status });
 
   function resetForm() {
     setSelectedId("");
@@ -217,19 +178,11 @@ const serverViews = useServerSavedViews(savedViewScope, { search, status });
   }
 
   useEffect(() => {
-  if (hasInitialItems) {
-    setItems(props.initialItems || []);
-    setLoading(false);
-    return;
-  }
-
-  loadItems();
-}, [endpoint, hasInitialItems, props.initialItems]);
+    loadItems();
+  }, [endpoint]);
 
   useEffect(() => {
-    setSelectedIds((current) =>
-      current.filter((id) => filteredItems.some((item) => String(item.id ?? "") === id))
-    );
+    setSelectedIds((current) => current.filter((id) => filteredItems.some((item) => String(item.id ?? "") == id)));
   }, [filteredItems]);
 
   function selectItem(item: Record<string, unknown>) {
@@ -303,60 +256,6 @@ const serverViews = useServerSavedViews(savedViewScope, { search, status });
     }
   }
 
-  async function duplicateItem(item: Record<string, unknown>) {
-    const clone: Record<string, unknown> = {};
-
-    for (const [key, value] of Object.entries(item)) {
-      if (!duplicateSanitizeKeys.includes(key)) {
-        clone[key] = value;
-      }
-    }
-
-    try {
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(clone),
-      });
-
-      const text = await res.text();
-      const json = readJsonSafe(text);
-
-      if (!res.ok) {
-        setError(json?.error || "Unable to duplicate record.");
-        return;
-      }
-
-      setDone("Record duplicated successfully.");
-      await loadItems();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to duplicate record.");
-    }
-  }
-
-  async function changeStatus(id: string, nextStatus: string) {
-    try {
-      const res = await fetch(`${endpoint}/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ [statusField]: nextStatus }),
-      });
-
-      const text = await res.text();
-      const json = readJsonSafe(text);
-
-      if (!res.ok) {
-        setError(json?.error || "Unable to update status.");
-        return;
-      }
-
-      setDone(`Status updated to ${nextStatus}.`);
-      await loadItems();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to update status.");
-    }
-  }
-
   async function bulkDelete() {
     if (!selectedIds.length) return;
     const confirmed = window.confirm(`Delete ${selectedIds.length} selected record(s)?`);
@@ -366,67 +265,15 @@ const serverViews = useServerSavedViews(savedViewScope, { search, status });
     setDone("");
 
     try {
-      if (bulkEndpoint) {
-        const res = await fetch(bulkEndpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "delete",
-            ids: selectedIds,
-          }),
-        });
-
-        const text = await res.text();
-        const json = readJsonSafe(text);
-
-        if (!res.ok) {
-          setError(json?.error || "Unable to complete bulk delete.");
-          return;
-        }
-      } else {
-        for (const id of selectedIds) {
-          await fetch(`${endpoint}/${id}`, { method: "DELETE" });
-        }
+      for (const id of selectedIds) {
+        await fetch(`${endpoint}/${id}`, { method: "DELETE" });
       }
-
       setDone(`${selectedIds.length} record(s) deleted successfully.`);
       setSelectedIds([]);
       resetForm();
       await loadItems();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to complete bulk delete.");
-    }
-  }
-
-  async function bulkStatusChange(nextStatus: string) {
-    if (!selectedIds.length || !bulkEndpoint) return;
-
-    setError("");
-    setDone("");
-
-    try {
-      const res = await fetch(bulkEndpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "status",
-          value: nextStatus,
-          ids: selectedIds,
-        }),
-      });
-
-      const text = await res.text();
-      const json = readJsonSafe(text);
-
-      if (!res.ok) {
-        setError(json?.error || "Unable to update selected rows.");
-        return;
-      }
-
-      setDone(`Updated ${selectedIds.length} record(s) to ${nextStatus}.`);
-      await loadItems();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to update selected rows.");
     }
   }
 
@@ -484,8 +331,7 @@ const serverViews = useServerSavedViews(savedViewScope, { search, status });
           >
             <option value="">Select {label}</option>
             {options.map((option) => {
-              const normalized =
-                typeof option === "string" ? { label: option, value: option } : option;
+              const normalized = typeof option === "string" ? { label: option, value: option } : option;
               return (
                 <option key={normalized.value} value={normalized.value}>
                   {normalized.label}
@@ -535,25 +381,22 @@ const serverViews = useServerSavedViews(savedViewScope, { search, status });
       />
 
       <SavedViewsBar
-        views={serverViews.views}
-        loading={serverViews.loading}
+        views={savedViews.views}
         onApply={(state) => {
-          setSearch(state.search || "");
-          setStatus(state.status || "");
+          setSearch(state.search);
+          setStatus(state.status);
         }}
-        onSave={serverViews.createView}
-        onDelete={serverViews.deleteView}
-        onReplace={serverViews.replaceView}
+        onSave={savedViews.createView}
+        onDelete={savedViews.deleteView}
+        onReplace={savedViews.replaceView}
       />
 
       <WorkflowBulkActions
         selectedCount={selectedIds.length}
         totalCount={filteredItems.length}
-        statusOptions={statusOptions}
         onSelectAll={() => setSelectedIds(filteredItems.map((item) => String(item.id ?? "")))}
         onClearSelection={() => setSelectedIds([])}
         onBulkDelete={bulkDelete}
-        onBulkStatusChange={bulkEndpoint ? bulkStatusChange : undefined}
       />
 
       <section className="crud-layout">
@@ -587,7 +430,7 @@ const serverViews = useServerSavedViews(savedViewScope, { search, status });
         <FormSection
           eyebrow="Records Table"
           title="Existing Records"
-          subtitle="Review, search, filter, select, and operate on records while keeping the module history visible."
+          subtitle="Review, search, filter, select, and remove records while keeping the module history visible."
         >
           <div className="dashboard-toolbar">
             <div className="dashboard-chip">API: {hasEndpoint ? endpoint : "Not configured"}</div>
@@ -654,11 +497,8 @@ const serverViews = useServerSavedViews(savedViewScope, { search, status });
                           <WorkflowRowActions
                             rowLabel={title}
                             rowData={item}
-                            statusOptions={statusOptions}
                             onEdit={() => selectItem(item)}
                             onDelete={() => deleteItem(rowId)}
-                            onDuplicate={() => duplicateItem(item)}
-                            onStatusChange={statusOptions.length ? (next) => changeStatus(rowId, next) : undefined}
                           />
                         </td>
                       </tr>

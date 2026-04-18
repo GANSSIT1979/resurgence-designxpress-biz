@@ -5,21 +5,15 @@ import { useState } from "react";
 type WorkflowRowActionsProps = {
   onEdit: () => void;
   onDelete: () => void;
-  onDuplicate?: () => void | Promise<void>;
-  onStatusChange?: (status: string) => void | Promise<void>;
   rowLabel?: string;
   rowData?: Record<string, unknown>;
-  statusOptions?: string[];
 };
 
 export function WorkflowRowActions({
   onEdit,
   onDelete,
-  onDuplicate,
-  onStatusChange,
   rowLabel = "Row",
   rowData,
-  statusOptions = [],
 }: WorkflowRowActionsProps) {
   const [open, setOpen] = useState(false);
 
@@ -45,38 +39,6 @@ export function WorkflowRowActions({
           >
             Edit {rowLabel}
           </button>
-
-          {onDuplicate ? (
-            <button
-              type="button"
-              className="workflow-row-action-item"
-              onClick={async () => {
-                await onDuplicate();
-                setOpen(false);
-              }}
-            >
-              Duplicate {rowLabel}
-            </button>
-          ) : null}
-
-          {statusOptions.length && onStatusChange ? (
-            <div className="workflow-row-action-group">
-              <div className="workflow-row-action-group-title">Quick Status</div>
-              {statusOptions.map((status) => (
-                <button
-                  key={status}
-                  type="button"
-                  className="workflow-row-action-item"
-                  onClick={async () => {
-                    await onStatusChange(status);
-                    setOpen(false);
-                  }}
-                >
-                  Set {status}
-                </button>
-              ))}
-            </div>
-          ) : null}
 
           <button
             type="button"
