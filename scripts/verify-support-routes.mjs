@@ -6,7 +6,7 @@ loadDotEnv(path.resolve(process.cwd(), ".env"));
 
 const args = parseArgs(process.argv.slice(2));
 const baseUrl = normalizeBaseUrl(
-  args["base-url"] || process.env.SUPPORT_BASE_URL || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
+  args["base-url"] || process.env.SUPPORT_BASE_URL || "http://localhost:3000",
 );
 const webhookSecret = args["webhook-secret"] || process.env.OPENAI_WEBHOOK_SECRET || "";
 

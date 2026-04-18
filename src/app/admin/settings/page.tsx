@@ -11,7 +11,7 @@ export default async function SettingsPage() {
     <main>
       <AdminShell
         title="Settings and Deployment Notes"
-        description="Update business contact details, admin branding, and report footer text from one system-admin settings module."
+        description="Update the brand profile, primary and support contacts, commercial details, and admin branding from one system-admin settings module."
         currentPath="/admin/settings"
       >
         <SettingsManager initialSettings={settings} />

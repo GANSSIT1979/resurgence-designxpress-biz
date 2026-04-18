@@ -243,7 +243,7 @@ async function main() {
   const content = [
     {
       key: 'home.hero',
-      title: 'RESURGENCE Powered by DesignXpress',
+      title: 'Resurgence Powered by DesignXpress',
       subtitle: '2026 Sponsorship Proposal • Sports • Media • Brand Growth',
       body: `A sponsorship-driven sports and creator platform with ${sponsorshipStats.combinedFollowers} combined followers, ${sponsorshipStats.activePlatforms} active platforms, and ${sponsorshipStats.creatorCount} high-engagement creators.`,
       ctaLabel: 'Apply as Sponsor',
@@ -253,7 +253,7 @@ async function main() {
       key: 'home.about',
       title: 'Built for sponsorship visibility, creator-led storytelling, and measurable activation.',
       subtitle: 'Opportunity Summary',
-      body: 'RESURGENCE Powered by DesignXpress combines creator network reach, sports community trust, digital integration, on-ground activation, and commercial support into one premium sponsorship platform.',
+      body: 'Resurgence Powered by DesignXpress combines creator network reach, sports community trust, digital integration, on-ground activation, and commercial support into one premium sponsorship platform operated by DesignXpress Merchandising OPC.',
       ctaLabel: 'View Sponsor Packages',
       ctaHref: '/sponsors',
     },
@@ -277,7 +277,7 @@ async function main() {
       key: 'contact.details',
       title: "Let's build a premium sponsorship package together.",
       subtitle: 'Contact & Inquiry',
-      body: 'Use the inquiry form to request sponsor packages, creator integration, on-ground activation support, commercial proposals, or partnership discussions. For direct business discussions, contact Jake Anilao.',
+      body: 'Use the inquiry form to request sponsor packages, creator integration, event support, apparel production, commercial proposals, or partnership discussions. For sponsorship and partnership conversations, contact Jake Anilao through the official Resurgence Powered by DesignXpress channels.',
       ctaLabel: 'Open sponsor application',
       ctaHref: '/sponsor/apply',
     },
@@ -1166,13 +1166,24 @@ async function main() {
   const receipts = await prisma.receipt.findMany({ orderBy: { receiptNumber: 'asc' } });
 
   const settingSeed = [
+    { key: 'brandName', value: process.env.NEXT_PUBLIC_SITE_NAME || 'Resurgence Powered by DesignXpress', label: 'Brand name', group: 'contact' },
+    { key: 'companyName', value: process.env.COMPANY_NAME || 'DesignXpress Merchandising OPC', label: 'Company name', group: 'contact' },
+    { key: 'siteUrl', value: process.env.NEXT_PUBLIC_SITE_URL || 'https://resurgence-dx.biz', label: 'Website URL', group: 'contact' },
     { key: 'contactName', value: process.env.NEXT_PUBLIC_CONTACT_NAME || 'Jake Anilao', label: 'Contact name', group: 'contact' },
-    { key: 'contactEmail', value: process.env.NEXT_PUBLIC_CONTACT_EMAIL || 'resurgence.dx@gmail.com', label: 'Contact email', group: 'contact' },
-    { key: 'contactPhone', value: process.env.NEXT_PUBLIC_CONTACT_PHONE || '09387841636', label: 'Contact phone', group: 'contact' },
-    { key: 'contactAddress', value: process.env.NEXT_PUBLIC_CONTACT_ADDRESS || 'Official business address to follow', label: 'Contact address', group: 'contact' },
-    { key: 'adminTitle', value: 'RESURGENCE Admin', label: 'Admin title', group: 'admin' },
-    { key: 'adminSubtitle', value: '2026 Sponsorship Operations', label: 'Admin subtitle', group: 'admin' },
-    { key: 'reportFooter', value: 'RESURGENCE Powered by DesignXpress', label: 'Report footer', group: 'admin' },
+    { key: 'contactRole', value: process.env.NEXT_PUBLIC_CONTACT_ROLE || 'Sponsorship / Partnerships', label: 'Contact role', group: 'contact' },
+    { key: 'contactEmail', value: process.env.NEXT_PUBLIC_CONTACT_EMAIL || 'partnerships@resurgence-dx.biz', label: 'Contact email', group: 'contact' },
+    { key: 'contactPhone', value: process.env.NEXT_PUBLIC_CONTACT_PHONE || '+639387841636', label: 'Contact phone', group: 'contact' },
+    { key: 'supportEmail', value: process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'support@resurgence-dx.biz', label: 'Support email', group: 'contact' },
+    { key: 'supportPhone', value: process.env.NEXT_PUBLIC_SUPPORT_PHONE || '+639957558147', label: 'Support phone', group: 'contact' },
+    { key: 'businessHours', value: process.env.NEXT_PUBLIC_BUSINESS_HOURS || 'Monday to Saturday, 9:00 AM to 6:00 PM, Asia/Manila', label: 'Business hours', group: 'contact' },
+    { key: 'location', value: process.env.NEXT_PUBLIC_LOCATION || 'Philippines', label: 'Location', group: 'contact' },
+    { key: 'currency', value: process.env.NEXT_PUBLIC_CURRENCY || 'PHP', label: 'Currency', group: 'contact' },
+    { key: 'paymentMethods', value: process.env.NEXT_PUBLIC_PAYMENT_METHODS || 'GCash, Maya, Bank Transfer, Credit/Debit Card, Cash', label: 'Payment methods', group: 'contact' },
+    { key: 'shippingArea', value: process.env.NEXT_PUBLIC_SHIPPING_AREA || 'Philippines nationwide', label: 'Shipping area', group: 'contact' },
+    { key: 'contactAddress', value: process.env.NEXT_PUBLIC_CONTACT_ADDRESS || 'Philippines', label: 'Contact address', group: 'contact' },
+    { key: 'adminTitle', value: 'Resurgence Admin', label: 'Admin title', group: 'admin' },
+    { key: 'adminSubtitle', value: `${process.env.COMPANY_NAME || 'DesignXpress Merchandising OPC'} - Sponsorship Operations`, label: 'Admin subtitle', group: 'admin' },
+    { key: 'reportFooter', value: `${process.env.NEXT_PUBLIC_SITE_NAME || 'Resurgence Powered by DesignXpress'} - ${process.env.COMPANY_NAME || 'DesignXpress Merchandising OPC'}`, label: 'Report footer', group: 'admin' },
   ];
 
   for (const setting of settingSeed) {

@@ -89,7 +89,7 @@ const serviceFallbacks = [
 
 const contentFallbacks: Record<string, ContentFallback> = {
   'home.hero': {
-    title: 'RESURGENCE Powered by DesignXpress',
+    title: 'Resurgence Powered by DesignXpress',
     subtitle: '2026 Sponsorship Proposal • Sports • Media • Brand Growth',
     body: `A sponsorship-driven sports and creator platform with ${sponsorshipStats.combinedFollowers} combined followers, ${sponsorshipStats.activePlatforms} active platforms, and ${sponsorshipStats.creatorCount} high-engagement creators.`,
     ctaLabel: 'Apply as Sponsor',
@@ -119,7 +119,7 @@ const contentFallbacks: Record<string, ContentFallback> = {
   'contact.details': {
     title: "Let's build a premium sponsorship package together.",
     subtitle: 'Contact & Inquiry',
-    body: 'Use the inquiry form to request sponsor packages, creator integration, on-ground activation support, commercial proposals, or partnership discussions. For direct business discussions, contact Jake Anilao.',
+    body: 'Use the inquiry form to request sponsor packages, creator integration, event support, apparel production, commercial proposals, or partnership discussions. For sponsorship and partnership conversations, contact Jake Anilao through the official Resurgence Powered by DesignXpress channels.',
     ctaLabel: 'Open sponsor application',
     ctaHref: '/sponsor/apply',
   },

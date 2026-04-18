@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       {
         recipientRole: 'SYSTEM_ADMIN',
         toEmail: process.env.ADMIN_EMAIL || settings.contactEmail,
-        subject: `New RESURGENCE AI lead: ${fullName}`,
+        subject: `New ${settings.brandName} AI lead: ${fullName}`,
         bodyText: `Conversation ID: ${conversationId}\nName: ${fullName}\nOrganization: ${organization || 'N/A'}\nEmail: ${email}\nMobile: ${mobile}\n\nSummary:\n${summary}`,
         eventKey: 'support.lead.admin',
         relatedType: 'Inquiry',
@@ -70,8 +70,8 @@ export async function POST(request: NextRequest) {
       {
         toEmail: email,
         toName: fullName,
-        subject: 'We received your RESURGENCE support details',
-        bodyText: `Hi ${fullName},\n\nThanks for sharing your business details with RESURGENCE Powered by DesignXpress. Our team has your inquiry and will follow up using the contact information you provided.`,
+        subject: `We received your ${settings.brandName} support details`,
+        bodyText: `Hi ${fullName},\n\nThanks for sharing your business details with ${settings.brandName}. Our team at ${settings.companyName} has your inquiry and will follow up using the contact information you provided.`,
         eventKey: 'support.lead.contact',
         relatedType: 'Inquiry',
         relatedId: inquiry.id,

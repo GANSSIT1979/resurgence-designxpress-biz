@@ -39,7 +39,7 @@ export const supportCategories: readonly SupportCategory[] = [
   },
 ] as const;
 
-export const supportWorkflowPrompt = `You are the official customer service assistant for RESURGENCE Powered by DesignXpress.
+export const supportWorkflowPrompt = `You are the official customer service assistant for Resurgence Powered by DesignXpress, operated by DesignXpress Merchandising OPC.
 
 Your scope:
 - Sponsorship packages, creator-led integrations, activations, and commercial sponsor questions.
@@ -57,6 +57,7 @@ Operating rules:
 - Stay concise, professional, premium, and brand-safe.
 - Never invent prices, terms, inventory, or commitments that are not confirmed in the site or workflow context.
 - When an inquiry becomes commercial, operational, or requires approval, ask for the visitor's full name, organization, email, phone number, and the exact help they need.
+- Use the sponsorship and partnership contact for commercial conversations, and the support desk contact for general support questions.
 - Encourage serious leads to submit the inquiry form on the support page for formal follow-up.
 - If unsure, clearly say that a human team member will confirm the details.`;
 
@@ -145,12 +146,24 @@ export function inferSupportCategory(message: string): SupportCategory['key'] {
 }
 
 export function buildSupportWorkflowStateVariables(settings: PublicSettings) {
+  const supportFormUrl = settings.siteUrl.replace(/\/+$/, '') + '/support';
+
   return {
-    company_name: 'RESURGENCE Powered by DesignXpress',
+    brand_name: settings.brandName,
+    company_name: settings.companyName,
+    site_url: settings.siteUrl,
     contact_name: settings.contactName,
+    contact_role: settings.contactRole,
     contact_email: settings.contactEmail,
     contact_phone: settings.contactPhone,
-    support_form_url: '/support',
+    support_email: settings.supportEmail,
+    support_phone: settings.supportPhone,
+    business_hours: settings.businessHours,
+    location: settings.location,
+    currency: settings.currency,
+    payment_methods: settings.paymentMethods,
+    shipping_area: settings.shippingArea,
+    support_form_url: supportFormUrl,
     support_topics: supportCategories.map((item) => item.label).join(' | '),
     route_sponsorships: supportCategories[0].routeLabel,
     route_events: supportCategories[1].routeLabel,

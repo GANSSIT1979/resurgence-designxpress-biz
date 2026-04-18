@@ -1,38 +1,49 @@
 import Link from 'next/link';
 import { SponsorApplicationForm } from '@/components/forms/sponsor-application-form';
+import { getPublicSettings } from '@/lib/settings';
 
 export const dynamic = 'force-dynamic';
 
-export default function SponsorApplyPage() {
-  const contactName = process.env.NEXT_PUBLIC_CONTACT_NAME || 'Jake Anilao';
-  const contactEmail = process.env.NEXT_PUBLIC_CONTACT_EMAIL || 'resurgence.dx@gmail.com';
-  const contactPhone = process.env.NEXT_PUBLIC_CONTACT_PHONE || '+63 938 784 1636';
+export default async function SponsorApplyPage() {
+  const settings = await getPublicSettings();
 
   return (
     <main className="section">
       <div className="container split">
         <div>
           <div className="section-kicker">Sponsor Application</div>
-          <h1 className="section-title">Apply to sponsor RESURGENCE Powered by DesignXpress</h1>
+          <h1 className="section-title">Apply to sponsor {settings.brandName}</h1>
           <p className="section-copy">
-            The application form now matches the 2026 sponsorship deck with standardized package names, aligned budget ranges, and inventory-aware sponsorship positioning.
+            The application form matches the current sponsorship workflow with standardized package names,
+            aligned budget ranges, and inventory-aware sponsor positioning.
           </p>
+
+          <div className="panel" style={{ marginTop: 18 }}>
+            <div className="section-kicker">Business Profile</div>
+            <div className="helper">Company: {settings.companyName}</div>
+            <div className="helper">Website: {settings.siteUrl}</div>
+            <div className="helper">Location: {settings.location}</div>
+            <div className="helper">Currency: {settings.currency}</div>
+          </div>
 
           <div className="panel" style={{ marginTop: 18 }}>
             <div className="section-kicker">Current package tiers</div>
             <ul className="list-clean">
-              <li>Supporting Sponsor — PHP 15,000–50,000</li>
-              <li>Official Brand Partner — PHP 75,000–95,000</li>
-              <li>Major Partner — PHP 120,000–150,000</li>
-              <li>Event Presenting — Custom Proposal</li>
+              <li>Supporting Sponsor - PHP 15,000-50,000</li>
+              <li>Official Brand Partner - PHP 75,000-95,000</li>
+              <li>Major Partner - PHP 120,000-150,000</li>
+              <li>Event Presenting - Custom Proposal</li>
             </ul>
           </div>
 
           <div className="panel" style={{ marginTop: 18 }}>
             <div className="section-kicker">Direct Contact</div>
-            <div className="helper">Contact: {contactName}</div>
-            <div className="helper">Email: {contactEmail}</div>
-            <div className="helper">Phone: {contactPhone}</div>
+            <div className="helper">Contact: {settings.contactName}</div>
+            <div className="helper">Role: {settings.contactRole}</div>
+            <div className="helper">Email: {settings.contactEmail}</div>
+            <div className="helper">Phone: {settings.contactPhone}</div>
+            <div className="helper">Support: {settings.supportEmail} / {settings.supportPhone}</div>
+            <div className="helper">Business Hours: {settings.businessHours}</div>
             <div className="btn-row" style={{ marginTop: 16 }}>
               <Link className="button-link" href="/sponsors">View sponsor packages</Link>
               <Link className="button-link btn-secondary" href="/contact">General inquiry</Link>

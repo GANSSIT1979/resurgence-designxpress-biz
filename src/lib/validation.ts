@@ -276,9 +276,20 @@ export const adminUserUpdateSchema = adminUserBaseSchema.extend({
 });
 
 export const adminSettingsSchema = z.object({
+  brandName: z.string().min(2),
+  companyName: z.string().min(2),
+  siteUrl: z.string().url(),
   contactName: z.string().min(2),
+  contactRole: z.string().min(2),
   contactEmail: z.string().email(),
   contactPhone: z.string().min(5),
+  supportEmail: z.string().email(),
+  supportPhone: z.string().min(5),
+  businessHours: z.string().min(5),
+  location: z.string().min(2),
+  currency: z.string().min(2),
+  paymentMethods: z.string().min(2),
+  shippingArea: z.string().min(2),
   contactAddress: z.string().min(5),
   adminTitle: z.string().min(2),
   adminSubtitle: z.string().min(2),

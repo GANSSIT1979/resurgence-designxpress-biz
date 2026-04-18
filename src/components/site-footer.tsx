@@ -2,17 +2,21 @@ import { getPublicSettings } from '@/lib/settings';
 
 export async function SiteFooter() {
   const settings = await getPublicSettings();
+
   return (
     <footer className="footer">
       <div className="footer-inner">
         <div>
-          <strong>RESURGENCE Powered by DesignXpress</strong>
-          <div>Sports Management • Media • Apparel • Sponsorship</div>
+          <strong>{settings.brandName}</strong>
+          <div>{settings.companyName}</div>
+          <div>{settings.siteUrl}</div>
         </div>
         <div>
           <div>{settings.contactName}</div>
+          <div>{settings.contactRole}</div>
           <div>{settings.contactEmail}</div>
-          <div>{settings.contactPhone}</div>
+          <div>{settings.supportEmail}</div>
+          <div>{settings.supportPhone}</div>
         </div>
       </div>
     </footer>

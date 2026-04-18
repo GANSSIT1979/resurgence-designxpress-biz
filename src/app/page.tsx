@@ -9,9 +9,15 @@ export default async function HomePage() {
   const [{ contentMap, sponsors, partners, stats, creators, inventoryCategories, galleryEvents }, services, settings, shopProducts] = await Promise.all([getHomeData(), getProductServices(), getPublicSettings(), getFeaturedShopProducts(4)]);
   const hero = contentMap['home.hero'];
   const about = contentMap['home.about'];
+  const brandName = settings.brandName;
+  const siteUrl = settings.siteUrl;
   const contactName = settings.contactName;
+  const contactRole = settings.contactRole;
   const contactEmail = settings.contactEmail;
   const contactPhone = settings.contactPhone;
+  const supportEmail = settings.supportEmail;
+  const supportPhone = settings.supportPhone;
+  const businessHours = settings.businessHours;
   const contactAddress = settings.contactAddress;
 
   return (
@@ -202,19 +208,24 @@ export default async function HomePage() {
         <div className="container split">
           <div>
             <div className="section-kicker">Direct Contact</div>
-            <h2 className="section-title">Contact Jake for sponsorships, events, creator partnerships, and proposals.</h2>
-            <p className="section-copy">For direct business discussions, proposal requests, and custom partnership packages, reach out using the official RESURGENCE contact details below.</p>
+            <h2 className="section-title">Contact {contactName} for sponsorships, partnerships, events, and proposals.</h2>
+            <p className="section-copy">For direct business discussions, proposal requests, and custom partnership packages, reach out using the official {brandName} contact details below.</p>
             <div className="btn-row" style={{ marginTop: 18 }}>
               <Link href="/contact" className="button-link">Open Contact Page</Link>
-              <a href={`mailto:${contactEmail}`} className="button-link btn-secondary">Email Jake</a>
+              <a href={`mailto:${contactEmail}`} className="button-link btn-secondary">Email Partnerships</a>
             </div>
           </div>
           <div className="panel">
             <div className="section-kicker">Official Contact Details</div>
+            <div className="helper">Brand: {brandName}</div>
+            <div className="helper">Website: {siteUrl}</div>
             <div className="helper">Contact Person: {contactName}</div>
-            <div className="helper">Email: {contactEmail}</div>
-            <div className="helper">Phone: {contactPhone}</div>
-            <div className="helper">Address: {contactAddress}</div>
+            <div className="helper">Role: {contactRole}</div>
+            <div className="helper">Partnerships: {contactEmail}</div>
+            <div className="helper">Primary Phone: {contactPhone}</div>
+            <div className="helper">Support Desk: {supportEmail} / {supportPhone}</div>
+            <div className="helper">Business Hours: {businessHours}</div>
+            <div className="helper">Coverage: {contactAddress}</div>
           </div>
         </div>
       </section>

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateSupportResponse, getSupportCategory, getSupportRouteStatus, inferSupportCategory } from '@/lib/openai-support';
-import { getPublicSettings } from '@/lib/settings';
+import { getPublicSettings, type PublicSettings } from '@/lib/settings';
 
 export const runtime = 'nodejs';
 
@@ -13,34 +13,36 @@ function hasBusinessIntent(message: string) {
   return /(proposal|quotation|quote|pricing|price|budget|meeting|callback|call me|formal follow-up|proceed|interested in partnering)/i.test(message);
 }
 
-function buildSupportReply(message: string, routeKey: string, contactName: string, contactEmail: string, contactPhone: string) {
+function buildSupportReply(message: string, routeKey: string, settings: PublicSettings) {
   const lower = message.toLowerCase();
   const askForLeadDetails = hasBusinessIntent(message);
+  const primaryContactLine = `${settings.contactEmail} / ${settings.contactPhone}`;
+  const supportContactLine = `${settings.supportEmail} / ${settings.supportPhone}`;
 
   if (routeKey === 'events') {
     return askForLeadDetails
-      ? `We can help with event booking, league support, and on-ground activation planning.\n\nPlease share your full name, organization, email address, mobile number, and the event date, venue, and audience size so ${contactName} can route this for formal follow-up.\n\nYou can also leave the details in the form on this page or contact ${contactEmail} / ${contactPhone}.`
+      ? `We can help with event booking, league support, and on-ground activation planning.\n\nPlease share your full name, organization, email address, mobile number, and the event date, venue, and audience size so our team can route this for formal follow-up.\n\nYou can also leave the details in the form on this page or contact ${supportContactLine} during ${settings.businessHours}.`
       : `We support basketball events, leagues, activations, and venue-side coordination.\n\nThe fastest next step is to share the event type, date, venue, target audience, and the kind of support you need so we can point you to the right workflow.`;
   }
 
   if (routeKey === 'custom-apparel') {
     return askForLeadDetails
-      ? `We can route custom jersey, uniform, and apparel requests.\n\nPlease send your full name, organization, email address, mobile number, required quantity, target timeline, and any design notes so ${contactName} can follow up with the right production details.\n\nYou can also submit those details through the support form on this page.`
+      ? `We can route custom jersey, uniform, and apparel requests.\n\nPlease send your full name, organization, email address, mobile number, required quantity, target timeline, and any design notes so our team can follow up with the right production details.\n\nYou can also submit those details through the support form on this page or contact ${supportContactLine}.`
       : `We can help with custom jerseys, uniforms, and apparel production requests.\n\nTo prepare an accurate handoff, we usually need quantity, target timeline, sizing needs, and any design or branding requirements.`;
   }
 
   if (routeKey === 'partnerships') {
     return askForLeadDetails
-      ? `RESURGENCE is open to media, brand, and creator collaboration discussions.\n\nPlease share your full name, organization, email address, mobile number, and a short summary of the partnership you want to explore so ${contactName} can route this for review.\n\nDirect contact: ${contactEmail} / ${contactPhone}.`
+      ? `${settings.brandName} is open to media, brand, and creator collaboration discussions.\n\nPlease share your full name, organization, email address, mobile number, and a short summary of the partnership you want to explore so ${settings.contactName} (${settings.contactRole}) can route this for review.\n\nDirect contact: ${primaryContactLine}.`
       : `We handle media partnerships, brand collaborations, and creator-led opportunities.\n\nA useful next step is to tell us whether you're looking for media support, co-branding, creator collaboration, or a longer-term commercial partnership.`;
   }
 
   if (lower.includes('price') || lower.includes('cost') || lower.includes('rate')) {
-    return `Package and commercial pricing depend on scope, inventory, and activation requirements.\n\nIf you want a formal estimate, please share your full name, organization, email address, mobile number, and what you need help with so ${contactName} can route it for follow-up.`;
+    return `Package and commercial pricing depend on scope, inventory, and activation requirements.\n\nIf you want a formal estimate, please share your full name, organization, email address, mobile number, and what you need help with so ${settings.contactName} can route it for follow-up. Direct contact: ${primaryContactLine}.`;
   }
 
   return askForLeadDetails
-    ? `We can help with sponsorship packages, creator integrations, and brand activation planning.\n\nPlease share your full name, organization, email address, mobile number, and the exact sponsorship support you need so ${contactName} can route this for formal follow-up.\n\nYou can also leave the details in the support form on this page.`
+    ? `We can help with sponsorship packages, creator integrations, and brand activation planning.\n\nPlease share your full name, organization, email address, mobile number, and the exact sponsorship support you need so ${settings.contactName} (${settings.contactRole}) can route this for formal follow-up.\n\nYou can also leave the details in the support form on this page or contact ${primaryContactLine}.`
     : `We can help with sponsorship packages, creator-led integrations, activations, and general support questions.\n\nIf you're exploring a serious sponsorship conversation, the fastest path is to tell us your brand, goals, and preferred package direction so we can prepare the right follow-up.`;
 }
 
@@ -104,13 +106,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (!output) {
-      output = buildSupportReply(
-        message,
-        route.key,
-        settings.contactName,
-        settings.contactEmail,
-        settings.contactPhone,
-      );
+      output = buildSupportReply(message, route.key, settings);
     }
 
     return NextResponse.json({

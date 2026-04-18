@@ -10,7 +10,7 @@ Today the stack includes:
 
 - `/support` for the public support experience
 - `/api/chatkit/session` for widget bootstrap and local ChatKit-style session payloads
-- `/api/chatkit/message` for rule-based routing across support categories
+- `/api/chatkit/message` for prompt-backed routing when OpenAI is configured, with local fallback routing when it is not
 - `/api/chatkit/lead` for inquiry creation and workflow automation
 - `/api/openai/webhook` for signed webhook verification
 
@@ -35,10 +35,10 @@ If you want a fully configured workflow-backed production setup, you still need 
 
 ```env
 OPENAI_API_KEY="sk-..."
-OPENAI_WORKFLOW_ID="wf_..."
+OPENAI_WORKFLOW_ID="pmpt_..."
 OPENAI_WORKFLOW_VERSION=""
 OPENAI_WEBHOOK_SECRET="whsec_..."
-NEXT_PUBLIC_SITE_URL="https://your-domain.example"
+NEXT_PUBLIC_SITE_URL="https://resurgence-dx.biz"
 ```
 
 ## Verification
@@ -52,7 +52,7 @@ npm run support:verify -- --base-url=http://localhost:3000
 Production verification:
 
 ```bash
-npm run support:verify -- --base-url=https://your-domain.example --webhook-secret=whsec_...
+npm run support:verify -- --base-url=https://resurgence-dx.biz --webhook-secret=whsec_...
 ```
 
 The verifier now auto-loads `.env` when run locally, but the target app must already be running.

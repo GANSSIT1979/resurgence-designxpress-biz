@@ -51,7 +51,7 @@ export async function AdminShell({
           <div className="admin-topbar-meta">
             <div className="section-kicker" style={{ marginBottom: 6 }}>System Admin Dashboard</div>
             <div className="helper" style={{ margin: 0 }}>
-              Contact: {settings.contactName} • {settings.contactEmail} • {settings.contactPhone}
+              {settings.contactRole}: {settings.contactName} • {settings.contactEmail} • {settings.contactPhone}
             </div>
           </div>
 
@@ -77,11 +77,21 @@ export async function AdminShell({
             </Link>
           ))}
           <div className="admin-sidebar-footer">
-            <div className="helper"><strong>Business Contact</strong></div>
+            <div className="helper"><strong>{settings.brandName}</strong></div>
+            <div className="helper">{settings.companyName}</div>
+            <div className="helper">{settings.siteUrl}</div>
+            <div style={{ height: 10 }} />
+            <div className="helper"><strong>Primary Contact</strong></div>
             <div className="helper">{settings.contactName}</div>
+            <div className="helper">{settings.contactRole}</div>
             <div className="helper">{settings.contactEmail}</div>
             <div className="helper">{settings.contactPhone}</div>
             <div className="helper">{settings.contactAddress}</div>
+            <div style={{ height: 10 }} />
+            <div className="helper"><strong>Support Desk</strong></div>
+            <div className="helper">{settings.supportEmail}</div>
+            <div className="helper">{settings.supportPhone}</div>
+            <div className="helper">{settings.businessHours}</div>
             <div style={{ height: 10 }} />
             <div className="helper">Sponsor application page:</div>
             <Link className="helper" href="/sponsor/apply" style={{ color: 'white' }}>/sponsor/apply</Link>

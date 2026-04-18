@@ -15,12 +15,36 @@ export default async function ContactPage() {
           <div className="section-kicker">{contact.subtitle}</div>
           <h1 className="section-title">{contact.title}</h1>
           <p className="section-copy">{contact.body}</p>
+
           <div className="panel" style={{ marginTop: 24 }}>
-            <div className="section-kicker">Business Details</div>
+            <div className="section-kicker">Business Profile</div>
+            <div className="helper">Brand: {settings.brandName}</div>
+            <div className="helper">Company: {settings.companyName}</div>
+            <div className="helper">Website: {settings.siteUrl}</div>
+            <div className="helper">Location: {settings.location}</div>
+          </div>
+
+          <div className="panel" style={{ marginTop: 18 }}>
+            <div className="section-kicker">Primary Contact</div>
             <div className="helper">Contact: {settings.contactName}</div>
+            <div className="helper">Role: {settings.contactRole}</div>
             <div className="helper">Email: {settings.contactEmail}</div>
             <div className="helper">Phone: {settings.contactPhone}</div>
-            <div className="helper">Address: {settings.contactAddress}</div>
+            <div className="helper">Coverage: {settings.contactAddress}</div>
+          </div>
+
+          <div className="panel" style={{ marginTop: 18 }}>
+            <div className="section-kicker">Support Desk</div>
+            <div className="helper">Support Email: {settings.supportEmail}</div>
+            <div className="helper">Support Phone: {settings.supportPhone}</div>
+            <div className="helper">Business Hours: {settings.businessHours}</div>
+          </div>
+
+          <div className="panel" style={{ marginTop: 18 }}>
+            <div className="section-kicker">Commercial Details</div>
+            <div className="helper">Currency: {settings.currency}</div>
+            <div className="helper">Payment Methods: {settings.paymentMethods}</div>
+            <div className="helper">Shipping Area: {settings.shippingArea}</div>
           </div>
         </div>
 

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { getContentMap } from '@/lib/site';
+import { getPublicSettings } from '@/lib/settings';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,12 +12,8 @@ const values = [
 ];
 
 export default async function AboutPage() {
-  const contentMap = await getContentMap();
+  const [contentMap, settings] = await Promise.all([getContentMap(), getPublicSettings()]);
   const story = contentMap['about.story'];
-  const contactName = process.env.NEXT_PUBLIC_CONTACT_NAME || 'Jake Anilao';
-  const contactEmail = process.env.NEXT_PUBLIC_CONTACT_EMAIL || 'resurgence.dx@gmail.com';
-  const contactPhone = process.env.NEXT_PUBLIC_CONTACT_PHONE || '09387841636';
-  const contactAddress = process.env.NEXT_PUBLIC_CONTACT_ADDRESS || 'Official business address to follow';
 
   return (
     <main className="section">
@@ -26,7 +23,7 @@ export default async function AboutPage() {
           <h1 className="section-title">{story.title}</h1>
           <p className="section-copy">{story.body}</p>
           <div className="btn-row" style={{ marginTop: 20 }}>
-            <Link href={story.ctaHref || '/contact'} className="button-link">{story.ctaLabel || 'Contact Jake'}</Link>
+            <Link href={story.ctaHref || '/contact'} className="button-link">{story.ctaLabel || `Contact ${settings.contactName}`}</Link>
           </div>
         </div>
         <div className="panel">
@@ -51,16 +48,23 @@ export default async function AboutPage() {
 
       <div className="container" style={{ marginTop: 24 }}>
         <div className="panel">
-          <div className="section-kicker">Contact Jake</div>
+          <div className="section-kicker">Contact {settings.contactName}</div>
           <h2 style={{ marginTop: 0 }}>Ready to discuss sponsorships, uniforms, league activations, or custom partnerships?</h2>
-          <p className="section-copy">RESURGENCE Powered by DesignXpress is open for brand collaborations, tournament support, media partnerships, and sports program development.</p>
-          <div className="helper">Contact Person: {contactName}</div>
-          <div className="helper">Email: {contactEmail}</div>
-          <div className="helper">Phone: {contactPhone}</div>
-          <div className="helper">Address: {contactAddress}</div>
+          <p className="section-copy">
+            {settings.brandName} is operated by {settings.companyName} and is open for brand collaborations,
+            tournament support, media partnerships, and sports program development.
+          </p>
+          <div className="helper">Primary Contact: {settings.contactName}</div>
+          <div className="helper">Role: {settings.contactRole}</div>
+          <div className="helper">Email: {settings.contactEmail}</div>
+          <div className="helper">Phone: {settings.contactPhone}</div>
+          <div className="helper">Support Desk: {settings.supportEmail} / {settings.supportPhone}</div>
+          <div className="helper">Business Hours: {settings.businessHours}</div>
+          <div className="helper">Website: {settings.siteUrl}</div>
+          <div className="helper">Location: {settings.location}</div>
           <div className="btn-row" style={{ marginTop: 18 }}>
             <Link href="/contact" className="button-link">Go to Contact Page</Link>
-            <a href={`mailto:${contactEmail}`} className="button-link btn-secondary">Email Jake</a>
+            <a href={`mailto:${settings.contactEmail}`} className="button-link btn-secondary">Email Partnerships</a>
           </div>
         </div>
       </div>
