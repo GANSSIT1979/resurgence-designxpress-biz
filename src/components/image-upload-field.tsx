@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-type UploadScope = 'sponsor' | 'creator' | 'brand-profile';
+type UploadScope = 'sponsor' | 'creator' | 'brand-profile' | 'merch';
 
 export function ImageUploadField({
   label,
@@ -73,4 +73,3 @@ export function ImageUploadField({
     </div>
   );
 }
-

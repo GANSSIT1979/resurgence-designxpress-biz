@@ -5,12 +5,13 @@ import { extname, join } from 'path';
 export const allowedImageMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'] as const;
 export const maxUploadSizeBytes = 5 * 1024 * 1024;
 
-export type UploadScope = 'sponsor' | 'creator' | 'brand-profile';
+export type UploadScope = 'sponsor' | 'creator' | 'brand-profile' | 'merch';
 
 const scopeFolders: Record<UploadScope, string> = {
   sponsor: 'sponsors',
   creator: 'creators',
   'brand-profile': 'brand-profiles',
+  merch: 'merch',
 };
 
 function sanitizeFilename(filename: string) {

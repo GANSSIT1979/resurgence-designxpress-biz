@@ -4,7 +4,7 @@ const links = [
   { href: '/', label: 'Home' },
   { href: '/about', label: 'About' },
   { href: '/services', label: 'Services' },
-  { href: '/shop', label: 'Shop' },
+  { href: '/shop', label: 'Merch' },
   { href: '/cart', label: 'Cart' },
   { href: '/creators', label: 'Creators' },
   { href: '/sponsors', label: 'Sponsors' },

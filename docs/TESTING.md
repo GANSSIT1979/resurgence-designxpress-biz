@@ -37,6 +37,10 @@ Verify these pages load:
 - `/sponsor/apply`
 - `/support`
 - `/shop`
+- `/shop/product/resurgence-black-jersey`
+- `/cart`
+- `/checkout`
+- `/account/orders`
 - `/api/health`
 
 ## Role Smoke Tests
@@ -44,8 +48,18 @@ Verify these pages load:
 - Admin can open `/admin`
 - Cashier can open `/cashier`
 - Sponsor can open `/sponsor/dashboard`
+- Creator can open `/creator/dashboard` when a creator account is configured
 - Staff can open `/staff`
 - Partner can open `/partner`
+
+## Official Merch Checks
+
+- `/shop` search and filters return seeded official merch products
+- product details allow selecting size/color where available
+- cart preserves selected variants as separate line items
+- checkout accepts Cash on Delivery, GCash, Maya, Bank Transfer, Credit/Debit Card, and Cash
+- admin can create/update merch products on `/admin/products`
+- admin can review variants and update order/payment status on `/admin/orders`
 
 ## Support Checks
 

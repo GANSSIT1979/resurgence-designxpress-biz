@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getFeaturedShopProducts, getHomeData, getProductServices } from '@/lib/site';
 import { getPublicSettings } from '@/lib/settings';
+import { formatPeso } from '@/lib/shop';
 import { VerticalMediaFeed } from '@/components/vertical-media-feed';
 
 export const dynamic = 'force-dynamic';
@@ -106,8 +107,8 @@ export default async function HomePage() {
 
       <section className="section" style={{ borderTop: '1px solid rgba(255,255,255,0.08)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
         <div className="container">
-          <div className="section-kicker">Featured Merch</div>
-          <h2 className="section-title">Official shop now live inside Resurgence.</h2>
+          <div className="section-kicker">Official Resurgence Merch</div>
+          <h2 className="section-title">Court-ready merch now live inside Resurgence.</h2>
           <p className="section-copy" style={{ maxWidth: 760 }}>Launch jerseys, caps, shirts, hoodies, tumblers, and future drops from the same live platform that powers your sponsorship and creator workflows.</p>
           <div className="card-grid grid-4" style={{ marginTop: 24 }}>
             {shopProducts.map((product: any) => (
@@ -115,7 +116,7 @@ export default async function HomePage() {
                 <img src={product.imageUrl || '/assets/resurgence-poster.jpg'} alt={product.name} style={{ width: '100%', borderRadius: 18, aspectRatio: '16 / 10', objectFit: 'cover', marginBottom: 16 }} />
                 <div className="helper">{product.category?.name || 'Official Merch'}</div>
                 <h3 style={{ marginBottom: 8 }}>{product.name}</h3>
-                <p className="helper">₱{product.price.toLocaleString()}</p>
+                <p className="helper">{formatPeso(product.price)}</p>
                 <div className="btn-row" style={{ marginTop: 16 }}>
                   <Link href={`/shop/product/${product.slug}`} className="button-link">View Product</Link>
                 </div>
@@ -123,7 +124,7 @@ export default async function HomePage() {
             ))}
           </div>
           <div className="btn-row" style={{ marginTop: 18 }}>
-            <Link href="/shop" className="button-link">Open Shop</Link>
+            <Link href="/shop" className="button-link">Open Merch</Link>
             <Link href="/cart" className="button-link btn-secondary">View Cart</Link>
           </div>
         </div>

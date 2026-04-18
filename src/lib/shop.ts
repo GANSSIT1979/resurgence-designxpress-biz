@@ -27,3 +27,32 @@ export function computeShippingFee(subtotal: number) {
   if (subtotal >= 2500) return 120;
   return 180;
 }
+
+export function splitMerchOptions(value?: string | null) {
+  if (!value) return [];
+  return value
+    .split(/[\n,]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+export function formatPaymentMethod(value: string) {
+  const labels: Record<string, string> = {
+    COD: 'Cash on Delivery',
+    GCASH_MANUAL: 'GCash manual payment',
+    MAYA_MANUAL: 'Maya manual payment',
+    BANK_TRANSFER: 'Bank transfer',
+    CARD_MANUAL: 'Credit/Debit Card',
+    CASH: 'Cash',
+  };
+
+  return labels[value] || value.replace(/_/g, ' ');
+}
+
+export function buildVariantLabel(size?: string, color?: string) {
+  const parts = [
+    size ? `Size: ${size}` : '',
+    color ? `Color: ${color}` : '',
+  ].filter(Boolean);
+  return parts.join(' / ');
+}

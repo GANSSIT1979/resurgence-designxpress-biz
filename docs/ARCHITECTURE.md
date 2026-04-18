@@ -25,19 +25,22 @@ Public routes include:
 - `/cart`
 - `/checkout`
 - `/account/orders`
+- `/creators`
+- `/creators/[slug]`
 - `/creator/[slug]`
 
 Protected dashboard entry points:
 
 - `/admin`
 - `/cashier`
+- `/creator/dashboard`
 - `/sponsor/dashboard`
 - `/staff`
 - `/partner`
 
-The current app does not have a dedicated creator login or creator dashboard. Creator records are public profile content managed by admin tools.
+Creator dashboard access is available for configured `CREATOR` role accounts. Creator records also appear as public profile content managed by admin tools.
 
-The shop also uses a public customer flow today. Order review happens on `/account/orders` through checkout email lookup rather than a signed-in customer account session.
+The Official Resurgence Merch flow uses public browsing, client-side cart state, checkout, and email order lookup. Order review happens on `/account/orders` through checkout email lookup rather than a signed-in customer account session.
 
 ## Auth And Permissions
 
@@ -56,12 +59,12 @@ The route handlers in `src/app/api` cover:
 - auth
 - public inquiries and sponsor submissions
 - support routing and lead capture
-- shop listing and checkout
+- official merch listing, checkout, and admin merch management
 - admin CRUD modules
 - sponsor, partner, staff, and cashier workflows
 - uploads, notifications, and health checks
 
-For commerce specifically, product browsing is backed by public shop APIs, checkout posts to `/api/checkout`, and cart state is stored client-side in the browser rather than in a dedicated server-side cart service.
+For commerce specifically, merch browsing is backed by public shop APIs, checkout posts selected variants to `/api/checkout`, and cart state is stored client-side in the browser rather than in a dedicated server-side cart service.
 
 ## Data Layer
 

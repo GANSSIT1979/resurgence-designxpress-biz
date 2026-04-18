@@ -2,7 +2,7 @@
 
 Updated: 2026-04-19
 
-RESURGENCE Powered by DesignXpress is a Next.js 15 + Prisma platform for public sponsorship marketing, support intake, commerce, and role-based operations for admin, cashier, sponsor, staff, and partner users.
+RESURGENCE Powered by DesignXpress is a Next.js 15 + Prisma platform for public sponsorship marketing, live support intake, Official Resurgence Merch commerce, and role-based operations for admin, cashier, sponsor, creator, staff, and partner users.
 
 ## Current Status
 
@@ -15,16 +15,17 @@ RESURGENCE Powered by DesignXpress is a Next.js 15 + Prisma platform for public 
 
 ## Product Areas
 
-- Public pages: `/`, `/about`, `/services`, `/sponsors`, `/creator/[slug]`, `/contact`, `/support`, `/shop`, `/cart`, `/checkout`, `/account/orders`, `/sponsor/apply`
-- Protected dashboards: `/admin`, `/cashier`, `/sponsor/dashboard`, `/staff`, `/partner`
+- Public pages: `/`, `/about`, `/services`, `/sponsors`, `/creators`, `/creators/[slug]`, `/creator/[slug]`, `/contact`, `/support`, `/shop`, `/cart`, `/checkout`, `/account/orders`, `/sponsor/apply`
+- Protected dashboards: `/admin`, `/cashier`, `/creator/dashboard`, `/sponsor/dashboard`, `/staff`, `/partner`
 - Sponsor portal pages: `/sponsor/applications`, `/sponsor/packages`, `/sponsor/deliverables`, `/sponsor/billing`, `/sponsor/profile`
 - Support APIs: `/api/chatkit/session`, `/api/chatkit/message`, `/api/chatkit/lead`, `/api/openai/webhook`
-- Commerce and finance APIs: shop products, checkout, invoices, transactions, receipts, reports
-- Admin CMS and operations APIs: users, sponsors, packages, submissions, creator network, gallery media, reports, settings, shop data
+- Commerce and finance APIs: official merch products, checkout, invoices, transactions, receipts, reports
+- Admin CMS and operations APIs: users, sponsors, packages, submissions, creators, gallery media, reports, settings, merch data
 
 Commerce note:
 
 - the cart is client-side in the current app
+- official merch supports selectable variants such as size and color
 - `/account/orders` is an email-based order lookup page, not a signed-in customer dashboard
 
 ## Quick Start
@@ -56,6 +57,7 @@ If you change `PRISMA_DB_PROVIDER`, rerun `npm run prisma:generate` before pushi
 - Sponsor: `sponsor@resurgence.local` / `Sponsor123!`
 - Staff: `staff@resurgence.local` / `Staff123!`
 - Partner: `partner@resurgence.local` / `Partner123!`
+- Creator examples: `jake.anilao@resurgence.local` / `Jake@2026Resurgence!`
 
 ## Verification
 

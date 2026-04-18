@@ -717,7 +717,10 @@ enum ShopPaymentStatus {
 enum ShopPaymentMethod {
   COD
   GCASH_MANUAL
+  MAYA_MANUAL
   BANK_TRANSFER
+  CARD_MANUAL
+  CASH
 }
 
 model ShopCategory {
@@ -745,6 +748,13 @@ model ShopProduct {
   compareAtPrice   Int?
   stock            Int             @default(0)
   imageUrl         String?
+  badgeLabel       String?
+  material         String?
+  fitNotes         String?
+  careInstructions String?
+  availableSizes   String?
+  availableColors  String?
+  isOfficialMerch  Boolean         @default(true)
   sortOrder        Int             @default(0)
   isActive         Boolean         @default(true)
   isFeatured       Boolean         @default(false)
@@ -755,6 +765,7 @@ model ShopProduct {
   orderItems       ShopOrderItem[]
 
   @@index([isActive, isFeatured, sortOrder])
+  @@index([isOfficialMerch, isActive, sortOrder])
   @@index([categoryId, sortOrder])
 }
 
@@ -792,6 +803,7 @@ model ShopOrderItem {
   productName String
   sku         String?
   imageUrl    String?
+  variantLabel String?
   price       Int
   quantity    Int
   lineTotal   Int

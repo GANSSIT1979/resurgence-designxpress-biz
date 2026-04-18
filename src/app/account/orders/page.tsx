@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { formatPeso } from '@/lib/shop';
+import { formatPaymentMethod, formatPeso } from '@/lib/shop';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,7 +16,7 @@ export default async function AccountOrdersPage({ searchParams }: { searchParams
         <section className="card" style={{ marginBottom: 24 }}>
           <div className="section-kicker">Order Lookup</div>
           <h1 className="section-title" style={{ marginBottom: 12 }}>Your orders</h1>
-          <p className="section-copy">Use the email address used during checkout to review your order history.</p>
+          <p className="section-copy">Use the email address from checkout to review official merch orders, payment status, and fulfillment progress.</p>
           <form className="btn-row" method="get" style={{ marginTop: 18 }}>
             <input className="input" type="email" name="email" placeholder="Enter your checkout email" defaultValue={normalizedEmail} style={{ maxWidth: 420 }} required />
             <button className="btn" type="submit">View Orders</button>
@@ -36,17 +36,25 @@ export default async function AccountOrdersPage({ searchParams }: { searchParams
                 </div>
                 <div className={`status-pill status-${order.status}`}>{order.status}</div>
               </div>
-              <div className="helper">Payment: {order.paymentMethod} • {order.paymentStatus}</div>
+              <div className="helper">Payment: {formatPaymentMethod(order.paymentMethod)} - {order.paymentStatus}</div>
               <div className="helper">{order.addressLine1}, {order.city}{order.province ? `, ${order.province}` : ''}</div>
               <div className="table-wrap" style={{ marginTop: 16 }}>
                 <table>
                   <thead><tr><th>Item</th><th>Qty</th><th>Total</th></tr></thead>
                   <tbody>
-                    {order.items.map((item) => <tr key={item.id}><td>{item.productName}</td><td>{item.quantity}</td><td>{formatPeso(item.lineTotal)}</td></tr>)}
+                    {order.items.map((item) => (
+                      <tr key={item.id}>
+                        <td>{item.productName}<div className="helper">{item.variantLabel || 'Standard item'}</div></td>
+                        <td>{item.quantity}</td>
+                        <td>{formatPeso(item.lineTotal)}</td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
-              <div className="shop-summary-line"><span>Total</span><strong>{formatPeso(order.totalAmount)}</strong></div>
+              <div className="shop-summary-line"><span>Subtotal</span><strong>{formatPeso(order.subtotal)}</strong></div>
+              <div className="shop-summary-line"><span>Shipping</span><strong>{formatPeso(order.shippingFee)}</strong></div>
+              <div className="shop-summary-line shop-summary-total"><span>Total</span><strong>{formatPeso(order.totalAmount)}</strong></div>
             </article>
           ))}
         </div>

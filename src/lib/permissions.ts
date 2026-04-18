@@ -2,7 +2,7 @@ import { AppRole } from '@/lib/resurgence';
 
 export const permissionCatalog = [
   { key: 'admin.dashboard.view', label: 'Admin dashboard', area: 'Admin' },
-  { key: 'admin.cms.manage', label: 'Content, sponsors, creators, gallery, settings', area: 'Admin' },
+  { key: 'admin.cms.manage', label: 'Content, sponsors, creators, gallery, merch, settings', area: 'Admin' },
   { key: 'admin.users.manage', label: 'Users and role assignments', area: 'Admin' },
   { key: 'admin.reports.manage', label: 'Executive reports and exports', area: 'Admin' },
   { key: 'cashier.dashboard.view', label: 'Cashier overview', area: 'Cashier' },

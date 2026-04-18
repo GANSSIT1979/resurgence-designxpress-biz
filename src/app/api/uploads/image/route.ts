@@ -5,13 +5,13 @@ import { saveImageUpload, UploadScope } from '@/lib/uploads';
 export const runtime = 'nodejs';
 
 const scopeAccess: Record<string, UploadScope[]> = {
-  SYSTEM_ADMIN: ['sponsor', 'creator', 'brand-profile'],
+  SYSTEM_ADMIN: ['sponsor', 'creator', 'brand-profile', 'merch'],
   SPONSOR: ['brand-profile'],
   PARTNER: ['brand-profile'],
 };
 
 function isUploadScope(value: string): value is UploadScope {
-  return value === 'sponsor' || value === 'creator' || value === 'brand-profile';
+  return value === 'sponsor' || value === 'creator' || value === 'brand-profile' || value === 'merch';
 }
 
 export async function POST(request: Request) {
@@ -45,4 +45,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: message }, { status: 400 });
   }
 }
-

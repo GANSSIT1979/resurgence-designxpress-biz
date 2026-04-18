@@ -11,7 +11,12 @@ type CartItem = {
   price: number;
   quantity: number;
   imageUrl: string;
+  variantLabel?: string;
 };
+
+function cartKey(item: CartItem) {
+  return `${item.productId}:${item.variantLabel || 'standard'}`;
+}
 
 function readCart(): CartItem[] {
   if (typeof window === 'undefined') return [];
@@ -66,25 +71,25 @@ export function CartClient() {
             </thead>
             <tbody>
               {items.map((item) => (
-                <tr key={item.productId}>
+                <tr key={cartKey(item)}>
                   <td>
                     <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                       <img src={item.imageUrl} alt={item.name} style={{ width: 72, height: 72, borderRadius: 16, objectFit: 'cover' }} />
                       <div>
                         <strong>{item.name}</strong>
-                        <div className="helper">SKU linked to live shop product</div>
+                        <div className="helper">{item.variantLabel || 'Standard item'}</div>
                       </div>
                     </div>
                   </td>
                   <td>
                     <input className="input" style={{ width: 86 }} type="number" min="1" value={item.quantity} onChange={(e) => {
-                      const next = items.map((entry) => entry.productId === item.productId ? { ...entry, quantity: Math.max(1, Number(e.target.value || 1)) } : entry);
+                      const next = items.map((entry) => cartKey(entry) === cartKey(item) ? { ...entry, quantity: Math.max(1, Number(e.target.value || 1)) } : entry);
                       persist(next);
                     }} />
                   </td>
                   <td>{formatPeso(item.price)}</td>
                   <td>{formatPeso(item.price * item.quantity)}</td>
-                  <td><button className="btn btn-secondary" type="button" onClick={() => persist(items.filter((entry) => entry.productId !== item.productId))}>Remove</button></td>
+                  <td><button className="btn btn-secondary" type="button" onClick={() => persist(items.filter((entry) => cartKey(entry) !== cartKey(item)))}>Remove</button></td>
                 </tr>
               ))}
             </tbody>

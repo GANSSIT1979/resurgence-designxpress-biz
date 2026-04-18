@@ -353,19 +353,26 @@ export const adminReportSchema = z.object({
 
 
 export const shopProductSchema = z.object({
-  name: z.string().min(2),
-  slug: z.string().min(2),
-  sku: z.string().optional().or(z.literal('')),
-  description: z.string().min(10),
-  shortDescription: z.string().optional().or(z.literal('')),
+  name: requiredText(2),
+  slug: requiredText(2),
+  sku: optionalText,
+  description: requiredText(10),
+  shortDescription: optionalText,
   price: z.coerce.number().int().min(1),
   compareAtPrice: z.union([z.coerce.number().int().min(1), z.literal('')]).optional(),
   stock: z.coerce.number().int().min(0).default(0),
-  imageUrl: z.string().optional().or(z.literal('')),
+  imageUrl: optionalText,
+  badgeLabel: optionalText,
+  material: optionalText,
+  fitNotes: optionalText,
+  careInstructions: optionalText,
+  availableSizes: optionalText,
+  availableColors: optionalText,
   sortOrder: z.coerce.number().int().min(0).default(0),
   isActive: z.coerce.boolean().default(true),
   isFeatured: z.coerce.boolean().default(false),
-  categoryId: z.string().optional().or(z.literal('')),
+  isOfficialMerch: z.coerce.boolean().default(true),
+  categoryId: optionalText,
 });
 
 export const shopOrderUpdateSchema = z.object({
@@ -383,6 +390,10 @@ export const checkoutSchema = z.object({
   province: z.string().optional().or(z.literal('')),
   postalCode: z.string().optional().or(z.literal('')),
   notes: z.string().optional().or(z.literal('')),
-  paymentMethod: z.enum(['COD','GCASH_MANUAL','BANK_TRANSFER']),
-  items: z.array(z.object({ productId: z.string().min(1), quantity: z.coerce.number().int().min(1) })).min(1),
+  paymentMethod: z.enum(['COD','GCASH_MANUAL','MAYA_MANUAL','BANK_TRANSFER','CARD_MANUAL','CASH']),
+  items: z.array(z.object({
+    productId: z.string().min(1),
+    quantity: z.coerce.number().int().min(1),
+    variantLabel: optionalText,
+  })).min(1),
 });

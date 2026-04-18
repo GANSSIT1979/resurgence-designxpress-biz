@@ -11,11 +11,12 @@ RESURGENCE Powered by DesignXpress is a sponsorship and business operations plat
 - support and contact channels
 - creator and gallery presentation
 - sponsor-facing portal access
+- creator-facing dashboard access when a creator account is linked
 - internal dashboards for admin, cashier, staff, and partner users
 
 Important accuracy note:
 
-- the current app does not include a dedicated creator-facing login or creator dashboard
+- creator dashboard access depends on a `CREATOR` role account and a matching creator profile record
 
 ## Public Visitors
 
@@ -26,7 +27,8 @@ You can:
 - send a general inquiry through the public contact flow
 - use the support area on `/support`
 - browse sponsor and creator content
-- browse `/shop`, manage `/cart`, complete `/checkout`, and look up orders on `/account/orders`
+- browse Official Resurgence Merch on `/shop`, manage `/cart`, complete `/checkout`, and look up orders on `/account/orders`
+- select merch size/color variants on product pages when options are available
 
 ## Sponsor Users
 
@@ -44,15 +46,26 @@ What you should expect:
 - profile details should save through the sponsor profile page
 - deliverables and application history should reflect current sponsor records
 
-## Creator Profiles
+## Creator Users
 
-Creator content is public in the current app.
+Creator content is public, and creator users can access creator dashboard features when their account is configured.
 
 What you should expect:
 
-- creator profiles appear as public presentation pages, not signed-in user dashboards
-- there is no `CREATOR` login role or creator dashboard flow in this repository
+- public creator profiles appear in the creators directory
+- creator dashboard access requires a `CREATOR` role login
+- creator dashboard features work best when the signed-in email is linked to a `CreatorProfile`
 - creator records are managed through the platform's admin tools
+
+## Official Merch
+
+The merch flow supports:
+
+- searchable product browsing on `/shop`
+- product details with stock, material, fit, care, size, and color options
+- cart lines that preserve selected variants
+- checkout payment choices for Cash on Delivery, GCash, Maya, Bank Transfer, Credit/Debit Card, and Cash
+- email-based order lookup on `/account/orders`
 
 ## Support
 

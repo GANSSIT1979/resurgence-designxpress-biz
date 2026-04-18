@@ -12,8 +12,14 @@
 
 - updated the root readmes and the `docs/` set to match the repaired codebase
 - removed stale references to build blockers that no longer exist
-- removed stale references to a creator login and creator dashboard that are not part of the current app
+- documented creator dashboard access for configured `CREATOR` role users
 - corrected current script names, API paths, route redirects, and demo credentials
+
+### Official Resurgence Merch
+
+- upgraded the shop into the Official Resurgence Merch module
+- added searchable storefront filters, premium product detail pages, selected size/color variants, and expanded checkout payment methods
+- added merch metadata fields, merch image uploads, admin product management, admin order review, and seeded official merch products
 
 ### Support Documentation
 

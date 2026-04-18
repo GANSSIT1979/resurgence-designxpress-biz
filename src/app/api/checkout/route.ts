@@ -11,11 +11,16 @@ export async function POST(request: Request) {
   const ids = parsed.data.items.map((item) => item.productId);
   const products = await prisma.shopProduct.findMany({ where: { id: { in: ids }, isActive: true } });
   const productMap = new Map(products.map((product) => [product.id, product]));
+  const quantityByProduct = new Map<string, number>();
+
+  for (const item of parsed.data.items) {
+    quantityByProduct.set(item.productId, (quantityByProduct.get(item.productId) || 0) + item.quantity);
+  }
 
   for (const item of parsed.data.items) {
     const product = productMap.get(item.productId);
     if (!product) return NextResponse.json({ error: 'One or more products were not found.' }, { status: 400 });
-    if (product.stock < item.quantity) return NextResponse.json({ error: `${product.name} does not have enough stock.` }, { status: 400 });
+    if (product.stock < (quantityByProduct.get(item.productId) || 0)) return NextResponse.json({ error: `${product.name} does not have enough stock.` }, { status: 400 });
   }
 
   const subtotal = parsed.data.items.reduce((sum, item) => {
@@ -53,6 +58,7 @@ export async function POST(request: Request) {
               productName: product.name,
               sku: product.sku,
               imageUrl: product.imageUrl,
+              variantLabel: item.variantLabel || null,
               price: product.price,
               quantity: item.quantity,
               lineTotal: product.price * item.quantity,
@@ -63,9 +69,8 @@ export async function POST(request: Request) {
       include: { items: true },
     });
 
-    for (const item of parsed.data.items) {
-      const product = productMap.get(item.productId)!;
-      await tx.shopProduct.update({ where: { id: product.id }, data: { stock: { decrement: item.quantity } } });
+    for (const [productId, quantity] of quantityByProduct.entries()) {
+      await tx.shopProduct.update({ where: { id: productId }, data: { stock: { decrement: quantity } } });
     }
 
     return created;

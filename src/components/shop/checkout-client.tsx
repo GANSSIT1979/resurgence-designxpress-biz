@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { computeShippingFee, formatPeso } from '@/lib/shop';
+import { computeShippingFee, formatPaymentMethod, formatPeso } from '@/lib/shop';
 
 type CartItem = {
   productId: string;
@@ -11,7 +11,14 @@ type CartItem = {
   price: number;
   quantity: number;
   imageUrl: string;
+  variantLabel?: string;
 };
+
+const paymentMethods = ['COD', 'GCASH_MANUAL', 'MAYA_MANUAL', 'BANK_TRANSFER', 'CARD_MANUAL', 'CASH'];
+
+function cartKey(item: CartItem) {
+  return `${item.productId}:${item.variantLabel || 'standard'}`;
+}
 
 export function CheckoutClient() {
   const router = useRouter();
@@ -49,7 +56,7 @@ export function CheckoutClient() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         ...form,
-        items: items.map((item) => ({ productId: item.productId, quantity: item.quantity })),
+        items: items.map((item) => ({ productId: item.productId, quantity: item.quantity, variantLabel: item.variantLabel || '' })),
       }),
     });
     const data = await response.json();
@@ -84,10 +91,11 @@ export function CheckoutClient() {
         </div>
         <input className="input" placeholder="Postal code" value={form.postalCode} onChange={(e) => setForm({ ...form, postalCode: e.target.value })} />
         <select className="select" value={form.paymentMethod} onChange={(e) => setForm({ ...form, paymentMethod: e.target.value })}>
-          <option value="COD">Cash on Delivery</option>
-          <option value="GCASH_MANUAL">GCash Manual</option>
-          <option value="BANK_TRANSFER">Bank Transfer</option>
+          {paymentMethods.map((method) => <option key={method} value={method}>{formatPaymentMethod(method)}</option>)}
         </select>
+        <div className="notice success">
+          Manual payment orders are created safely first. The team can confirm proof, update payment status, and move the order through packing and delivery in the admin orders dashboard.
+        </div>
         <textarea className="textarea" placeholder="Order notes" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
         <button className="btn" type="submit" disabled={busy}>{busy ? 'Placing Order...' : 'Place Order'}</button>
       </form>
@@ -97,11 +105,11 @@ export function CheckoutClient() {
         <h2 style={{ marginTop: 0 }}>Summary</h2>
         <div className="form-grid">
           {items.map((item) => (
-            <div key={item.productId} className="shop-checkout-item">
+            <div key={cartKey(item)} className="shop-checkout-item">
               <img src={item.imageUrl} alt={item.name} style={{ width: 72, height: 72, borderRadius: 16, objectFit: 'cover' }} />
               <div>
                 <strong>{item.name}</strong>
-                <div className="helper">Qty {item.quantity}</div>
+                <div className="helper">{item.variantLabel || 'Standard item'}<br />Qty {item.quantity}</div>
               </div>
               <strong>{formatPeso(item.price * item.quantity)}</strong>
             </div>

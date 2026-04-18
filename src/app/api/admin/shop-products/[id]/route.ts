@@ -3,6 +3,23 @@ import { prisma } from '@/lib/prisma';
 import { shopProductSchema } from '@/lib/validation';
 import { slugify } from '@/lib/shop';
 
+function productPayload(data: any) {
+  return {
+    ...data,
+    compareAtPrice: data.compareAtPrice || null,
+    sku: data.sku || null,
+    shortDescription: data.shortDescription || null,
+    imageUrl: data.imageUrl || null,
+    badgeLabel: data.badgeLabel || null,
+    material: data.material || null,
+    fitNotes: data.fitNotes || null,
+    careInstructions: data.careInstructions || null,
+    availableSizes: data.availableSizes || null,
+    availableColors: data.availableColors || null,
+    categoryId: data.categoryId || null,
+  };
+}
+
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const body = await request.json().catch(() => null);
@@ -10,7 +27,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   const parsed = shopProductSchema.safeParse(normalized);
   if (!parsed.success) return NextResponse.json({ error: 'Invalid shop product payload.' }, { status: 400 });
   try {
-    const item = await prisma.shopProduct.update({ where: { id }, data: { ...parsed.data, compareAtPrice: parsed.data.compareAtPrice || null, sku: parsed.data.sku || null, shortDescription: parsed.data.shortDescription || null, imageUrl: parsed.data.imageUrl || null, categoryId: parsed.data.categoryId || null }, include: { category: true } });
+    const item = await prisma.shopProduct.update({ where: { id }, data: productPayload(parsed.data), include: { category: true } });
     return NextResponse.json({ item });
   } catch {
     return NextResponse.json({ error: 'Unable to update product.' }, { status: 400 });

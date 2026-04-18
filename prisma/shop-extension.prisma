@@ -26,6 +26,13 @@ model ShopProduct {
   isFeatured       Boolean            @default(false)
   categoryId       String?
   imageUrl         String?
+  badgeLabel       String?
+  material         String?
+  fitNotes         String?
+  careInstructions String?
+  availableSizes   String?
+  availableColors  String?
+  isOfficialMerch  Boolean            @default(true)
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
   category         ShopCategory?      @relation(fields: [categoryId], references: [id])
@@ -36,7 +43,10 @@ model ShopProduct {
 enum ShopPaymentMethod {
   COD
   GCASH_MANUAL
+  MAYA_MANUAL
   BANK_TRANSFER
+  CARD_MANUAL
+  CASH
 }
 
 enum ShopOrderStatus {
@@ -101,6 +111,7 @@ model ShopOrderItem {
   orderId     String
   productId   String
   productName String
+  variantLabel String?
   unitPrice   Decimal     @db.Decimal(10,2)
   quantity    Int
   totalPrice  Decimal     @db.Decimal(10,2)

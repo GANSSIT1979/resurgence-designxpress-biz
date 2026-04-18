@@ -4,7 +4,7 @@ Updated: 2026-04-19
 
 ## Snapshot
 
-RESURGENCE Powered by DesignXpress is a Next.js 15 + Prisma platform for sponsorship operations, support routing, commerce, and role-based internal dashboards.
+RESURGENCE Powered by DesignXpress is a Next.js 15 + Prisma platform for sponsorship operations, live support routing, Official Resurgence Merch commerce, creators, and role-based dashboards.
 
 ## Current Repository State
 
@@ -48,9 +48,9 @@ RESURGENCE Powered by DesignXpress is a Next.js 15 + Prisma platform for sponsor
 
 ## Primary Working Areas
 
-- Public site: discovery pages, sponsor apply, contact, support, shop, cart, checkout
-- Commerce: product catalog, public order lookup, admin products, admin orders
-- Internal roles: admin, cashier, sponsor, staff, partner
+- Public site: discovery pages, sponsor apply, contact, support, creators, official merch, cart, checkout
+- Commerce: official merch catalog, selected variants, public order lookup, admin merch products, admin merch orders
+- Internal roles: admin, cashier, sponsor, creator, staff, partner
 - Support automation: session bootstrap, message routing, lead capture, webhook verification
 - CMS and operations: creators, gallery, sponsors, packages, submissions, reports, settings
 - Finance: invoices, transactions, receipts, cashier summaries and exports

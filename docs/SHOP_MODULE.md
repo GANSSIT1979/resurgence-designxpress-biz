@@ -1,20 +1,20 @@
-# SHOP MODULE
+# OFFICIAL RESURGENCE MERCH MODULE
 
 Updated: 2026-04-19
 
 ## Overview
 
-The Resurgence shop is already built into this repository. It is not a separate starter package that needs to be imported into the current codebase.
+The Resurgence shop is now the Official Resurgence Merch module. It is already built into this repository and does not need to be imported as a separate starter package.
 
 The live commerce flow covers:
 
-- storefront browsing on `/shop`
-- product detail pages on `/shop/product/[slug]`
-- cart management on `/cart`
-- checkout on `/checkout`
+- searchable/filterable merch browsing on `/shop`
+- product detail pages on `/shop/product/[slug]` with size, color, quantity, stock, material, fit, and care details
+- cart management on `/cart` with separate lines for selected variants
+- checkout on `/checkout` with selected variants stored on order items
 - email-based order lookup on `/account/orders`
-- admin product management on `/admin/products`
-- admin order management on `/admin/orders`
+- admin merch product management on `/admin/products`
+- admin merch order management on `/admin/orders`
 
 ## Current Entry Points
 
@@ -48,6 +48,7 @@ Reusable UI and domain logic live in:
 - `src/components/shop/`
 - `src/components/forms/shop-product-manager.tsx`
 - `src/components/forms/shop-order-manager.tsx`
+- `src/components/image-upload-field.tsx`
 - `src/lib/shop.ts`
 - `src/lib/shop/types.ts`
 
@@ -73,7 +74,10 @@ The checkout module currently supports:
 
 - `COD`
 - `GCASH_MANUAL`
+- `MAYA_MANUAL`
 - `BANK_TRANSFER`
+- `CARD_MANUAL`
+- `CASH`
 
 Current server behavior in `src/app/api/checkout/route.ts`:
 
@@ -81,10 +85,32 @@ Current server behavior in `src/app/api/checkout/route.ts`:
 - loads active products from Prisma
 - rejects missing or out-of-stock items
 - computes subtotal, shipping, and total
-- creates a `ShopOrder` with `ShopOrderItem` records
+- creates a `ShopOrder` with `ShopOrderItem` records, including selected variant labels such as size and color
 - sets order status to `PENDING` for COD
 - sets order status to `AWAITING_PAYMENT` for non-COD methods
 - decrements stock transactionally after order creation
+
+## Merch Product Fields
+
+`ShopProduct` supports standard commerce fields plus official merch metadata:
+
+- `badgeLabel`
+- `material`
+- `fitNotes`
+- `careInstructions`
+- `availableSizes`
+- `availableColors`
+- `isOfficialMerch`
+
+`ShopOrderItem` stores `variantLabel` so fulfillment can see selections such as `Size: L / Color: Black`.
+
+## Admin Uploads
+
+System Admin users can upload merch images through the product manager. Uploads use the `merch` scope and are stored under:
+
+- `public/uploads/merch`
+
+Production deployments should still use persistent object storage if local filesystem writes are not durable.
 
 ## Prisma Models
 
@@ -103,7 +129,8 @@ Commerce models and enums currently include:
 Related files:
 
 - active schema: `prisma/schema.prisma`
-- sample shop seed: `prisma/seed-shop.ts`
+- active seed: `prisma/seed.ts`
+- sample shop seed/reference: `prisma/seed-shop.ts`
 - legacy reference patch: `prisma/shop-extension.prisma`
 
 `prisma/shop-extension.prisma` is retained as a reference artifact. It is not a required merge step for this repository because the live schema already contains the commerce models.
@@ -134,6 +161,18 @@ Important accuracy notes:
 - the current repository uses `JWT_SECRET`, not `AUTH_SECRET`
 - the live checkout code does not currently read `GCASH_NUMBER`, `BANK_ACCOUNT_NAME`, `BANK_ACCOUNT_NUMBER`, or `BANK_NAME`
 - business-level payment/contact information is configured through app settings and environment-backed defaults, not through dedicated checkout payment env vars
+
+## Seeded Official Products
+
+`prisma/seed.ts` creates the official categories and products used for local/demo environments:
+
+- Jerseys
+- Training Apparel
+- Lifestyle Apparel
+- Accessories
+- Creator Drops
+
+Seeded products include the Resurgence Pro Jersey, Training Hoodie, Court Tee, Signature Cap, DesignXpress Game Shorts, Courtside Tumbler, and Jake Anilao Creator Tee.
 
 ## Integration Guidance For Other Repositories
 

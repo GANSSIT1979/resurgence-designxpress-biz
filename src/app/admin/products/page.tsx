@@ -12,7 +12,7 @@ export default async function AdminProductsPage() {
 
   return (
     <main>
-      <AdminShell title="Shop Products" description="Manage the live eCommerce catalog, merch drops, pricing, stock, and homepage featured products." currentPath="/admin/products">
+      <AdminShell title="Official Resurgence Merch" description="Manage the live merch catalog, official drops, images, variants, pricing, stock, and featured storefront products." currentPath="/admin/products">
         <ShopProductManager initialItems={items as any} categories={categories} />
       </AdminShell>
     </main>

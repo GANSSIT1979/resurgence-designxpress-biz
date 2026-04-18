@@ -8,7 +8,7 @@ export default async function AdminOrdersPage() {
   const items = await prisma.shopOrder.findMany({ include: { items: true }, orderBy: { createdAt: 'desc' } });
   return (
     <main>
-      <AdminShell title="Shop Orders" description="Review customer orders, update fulfillment status, and control payment confirmation for the Resurgence commerce workflow." currentPath="/admin/orders">
+      <AdminShell title="Merch Orders" description="Review official merch orders, selected variants, delivery details, fulfillment status, and payment confirmation for the Resurgence commerce workflow." currentPath="/admin/orders">
         <ShopOrderManager initialItems={JSON.parse(JSON.stringify(items))} />
       </AdminShell>
     </main>

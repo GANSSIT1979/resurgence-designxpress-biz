@@ -70,9 +70,9 @@ The app, Prisma Client, and package scripts all run against `prisma/schema.prism
 ### Commerce
 
 - `ShopCategory`
-- `ShopProduct`
+- `ShopProduct` with official merch metadata, available sizes/colors, material, fit, and care fields
 - `ShopOrder`
-- `ShopOrderItem`
+- `ShopOrderItem` with selected variant labels for fulfillment
 
 ## Seed Data
 
@@ -83,6 +83,7 @@ The app, Prisma Client, and package scripts all run against `prisma/schema.prism
 - sponsor profile, partner profile, staff profile data
 - inquiries, tasks, schedule items, announcements
 - invoices, transactions, receipts
+- official merch categories and products
 - platform notifications and automated email records
 
 ## Local Commands

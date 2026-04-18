@@ -136,6 +136,8 @@ Typical flow:
 - staff dashboard loads
 - partner dashboard loads
 - public creator profile pages load
+- official merch storefront, product detail, cart, and checkout load
+- admin official merch and merch orders modules load
 - support page responds and degrades gracefully if OpenAI is disabled
 - upload handling is either persistent or intentionally limited
 
@@ -164,6 +166,9 @@ Verify:
 - staff overview
 - partner overview
 - creator profile pages
+- official merch storefront
+- product detail, cart, checkout, and order lookup
+- admin official merch and merch orders
 - upload route
 - support route
 

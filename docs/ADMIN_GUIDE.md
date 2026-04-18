@@ -10,7 +10,7 @@ System Admin users oversee:
 - sponsors, sponsor packages, submissions, and sponsor inventory
 - creators, media events, gallery media, and content
 - inquiries and support lead follow-up
-- shop products and shop orders
+- official merch products and merch orders
 - settings and executive reports
 
 ## Core Admin Areas
@@ -39,8 +39,22 @@ System Admin users oversee:
 1. Review new inquiries and support leads
 2. Review sponsor submissions and sponsor records
 3. Check creator, gallery, and public content changes
-4. Review reports, settings, and notifications
-5. Review email automation failures if `EMAIL_WEBHOOK_URL` is configured
+4. Review official merch stock, featured drops, and open merch orders
+5. Review reports, settings, and notifications
+6. Review email automation failures if `EMAIL_WEBHOOK_URL` is configured
+
+## Official Merch Admin
+
+Use `/admin/products` to create and update official merch products with:
+
+- product images
+- prices and compare-at prices
+- stock levels
+- size and color options
+- material, fit, and care details
+- featured and published flags
+
+Use `/admin/orders` to review merch orders, selected variants, shipping details, payment method, payment status, and fulfillment status.
 
 ## Support Oversight
 

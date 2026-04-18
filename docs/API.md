@@ -23,6 +23,8 @@ Important behavior note:
 Commerce behavior note:
 
 - the current cart is stored client-side and does not have a dedicated `/api/cart` route
+- checkout accepts official merch variants through each item `variantLabel`
+- supported checkout payment methods are `COD`, `GCASH_MANUAL`, `MAYA_MANUAL`, `BANK_TRANSFER`, `CARD_MANUAL`, and `CASH`
 - `/account/orders` is a page-level email lookup flow, not an API resource
 
 ## Auth And Shared Protected Routes
@@ -95,8 +97,8 @@ Admin module routes exist for:
 - product services
 - reports
 - settings
-- shop orders
-- shop products
+- merch orders
+- official merch products
 - sponsor inventory
 - sponsor packages
 - sponsor submissions
@@ -105,7 +107,7 @@ Admin module routes exist for:
 
 Some admin modules expose collection and item endpoints that are thin form-backed CRUD handlers rather than a fully uniform REST surface.
 
-Shop admin endpoints specifically include:
+Official merch admin endpoints specifically include:
 
 - `GET /api/admin/shop-products`
 - `POST /api/admin/shop-products`
