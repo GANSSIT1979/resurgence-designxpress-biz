@@ -1,57 +1,93 @@
 # TESTING
 
-Updated: 2026-04-16
+## Testing Strategy
 
-## Recommended Command Checks
+This project benefits from three layers:
 
-### Local Bootstrap
+1. smoke testing
+2. role workflow testing
+3. regression testing after schema or UI refactors
 
-```bash
-npm install
-npm run prisma:generate
-npm run db:push
-npm run db:seed
-```
-
-### Support Verification
-
-```bash
-npm run support:verify -- --base-url=http://localhost:3000
-```
-
-## Route Smoke Tests
+## Local Smoke Tests
 
 Verify these pages load:
 
 - `/`
-- `/login`
-- `/contact`
+- `/about`
+- `/services`
+- `/sponsors`
 - `/sponsor/apply`
+- `/contact`
 - `/support`
-- `/api/health`
+- `/login`
 
-## Role Smoke Tests
+## Auth Tests
 
-- Admin can open `/admin`
-- Cashier can open `/cashier`
-- Sponsor can open `/sponsor/dashboard`
-- Staff can open `/staff`
-- Partner can open `/partner`
+Verify login for:
+- System Admin
+- Cashier
+- Sponsor
+- Staff
+- Partner
 
-## AI Support Checks
+Expected:
+- each role lands on the correct dashboard
+- logout clears session cookie
 
-- ask one sponsorship question
-- ask one events question
-- ask one custom apparel question
-- ask one partnership question
-- save lead details through the support lead form
+## Admin Tests
 
-## Current Verification Status
+Verify:
+- admin overview loads
+- sponsor applications list renders
+- inquiries page renders
+- gallery page renders
+- CRUD surfaces load without missing delegate errors
 
-As of 2026-04-16:
+## Cashier Tests
 
-- targeted support-route documentation and route wiring were updated
-- `npx tsc --noEmit` still fails in unrelated legacy modules
-- `npm run build` still fails on the missing `@/lib/sponsor-server` import
+Verify:
+- overview loads
+- invoice page loads
+- receipt page loads
+- reports page loads
+- values use schema-aligned fields such as `number` and `balanceDue`
 
-That means focused feature testing can continue, but repository-wide green verification is still pending.
+## Sponsor Tests
+
+Verify:
+- sponsor overview loads for linked sponsor user
+- applications page loads
+- deliverables page loads
+- billing page does not crash when invoice data is absent
+- profile page loads and saves JSON safely
+
+## Support Tests
+
+If AI is disabled:
+- support page still loads
+- endpoint returns controlled disabled-state message
+
+If AI is enabled:
+- session endpoint works
+- message endpoint saves messages
+- lead capture flips `leadCaptured` when submitted
+
+## Recommended Manual Regression Checklist
+
+After any large patch:
+- `npm run prisma:generate`
+- restart dev server
+- login and logout
+- open each dashboard
+- test sponsor apply form
+- test contact form
+- test support page
+- test one CRUD page from admin and cashier
+
+## Automated Testing Future Direction
+
+Add:
+- unit tests for auth helpers
+- route tests for protected APIs
+- integration tests for form workflows
+- Playwright or Cypress for end-to-end dashboard flows

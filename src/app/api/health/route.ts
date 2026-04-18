@@ -1,6 +1,5 @@
 import { db } from "@/lib/db";
 import { ok } from "@/lib/api-utils";
-import { getSupportRouteStatus } from "@/lib/openai-support";
 
 export async function GET() {
   const [userCount, sponsorCount, packageCount] = await Promise.all([
@@ -8,13 +7,11 @@ export async function GET() {
     db.sponsor.count(),
     db.sponsorPackage.count()
   ]);
-  const support = getSupportRouteStatus();
 
   return ok({
     status: "ok",
     database: "connected",
     aiConfigured: Boolean(process.env.OPENAI_API_KEY),
-    support,
     counts: {
       users: userCount,
       sponsors: sponsorCount,

@@ -9,39 +9,6 @@ type ChatMessage = {
   createdAt: string;
 };
 
-type SupportStatus = {
-  chatkitReady: boolean;
-  webhookReady: boolean;
-  productionReady: boolean;
-};
-
-const quickActions = [
-  {
-    key: "sponsorships",
-    label: "Sponsorships",
-    starterPrompt:
-      "I want to ask about RESURGENCE sponsorship packages and what brand exposure is available.",
-  },
-  {
-    key: "events",
-    label: "Events",
-    starterPrompt:
-      "We want to collaborate on a basketball event and need booking or activation details.",
-  },
-  {
-    key: "custom-apparel",
-    label: "Custom Apparel",
-    starterPrompt:
-      "We need custom jerseys or uniforms and want to ask about design, pricing, and turnaround.",
-  },
-  {
-    key: "partnerships",
-    label: "Partnerships",
-    starterPrompt:
-      "We want to explore a partnership with RESURGENCE and need to know the right next steps.",
-  },
-];
-
 function getConversationId() {
   const key = "resurgence_conversation_id";
   const existing = window.localStorage.getItem(key);
@@ -69,12 +36,6 @@ export function SupportChatWidget() {
   });
   const [leadSaving, setLeadSaving] = useState(false);
   const [leadDone, setLeadDone] = useState("");
-  const [routeLabel, setRouteLabel] = useState("General Support");
-  const [supportStatus, setSupportStatus] = useState<SupportStatus>({
-    chatkitReady: false,
-    webhookReady: false,
-    productionReady: false,
-  });
 
   useEffect(() => {
     const id = getConversationId();
@@ -96,12 +57,6 @@ export function SupportChatWidget() {
         if (cancelled) return;
         setMessages(json.messages || []);
         setLeadCaptured(Boolean(json.leadCaptured));
-        setRouteLabel(json.routeLabel || "General Support");
-        setSupportStatus({
-          chatkitReady: Boolean(json.chatkitReady),
-          webhookReady: Boolean(json.webhookReady),
-          productionReady: Boolean(json.productionReady),
-        });
         setLeadForm((current) => ({
           ...current,
           fullName: json.lead?.visitorName || current.fullName,
@@ -171,7 +126,6 @@ export function SupportChatWidget() {
 
       setMessages((current) => [...current, assistantReply]);
       setLeadCaptured(Boolean(json.leadCaptured));
-      setRouteLabel(json.routeLabel || "General Support");
       if (json.leadCaptured) {
         setLeadOpen(false);
       } else if (/full name|organization|email address|mobile number|follow-up/i.test(String(json.output || ""))) {
@@ -218,39 +172,14 @@ export function SupportChatWidget() {
           <div className="eyebrow">Live Support Desk</div>
           <div className="card-title">RESURGENCE Customer Service</div>
         </div>
-        <div className="inline-actions">
-          <div className={leadCaptured ? "status-pill status-success" : "status-pill"}>
-            {leadCaptured ? "Lead captured" : "General inquiry mode"}
-          </div>
-          <div className="status-pill">{routeLabel}</div>
+        <div className={leadCaptured ? "status-pill status-success" : "status-pill"}>
+          {leadCaptured ? "Lead captured" : "General inquiry mode"}
         </div>
       </div>
 
       <p className="muted">
         Ask about sponsorship packages, partnership opportunities, basketball events, custom jerseys, or merchandise.
       </p>
-
-      <div className="inline-actions" style={{ marginBottom: 14, flexWrap: "wrap" }}>
-        {quickActions.map((category) => (
-          <button
-            key={category.key}
-            className="button button-secondary"
-            type="button"
-            onClick={() => setInput(category.starterPrompt)}
-            disabled={loading || booting}
-          >
-            {category.label}
-          </button>
-        ))}
-      </div>
-
-      <div className="muted" style={{ marginBottom: 14 }}>
-        {supportStatus.productionReady
-          ? "OpenAI workflow and webhook are configured for production verification."
-          : supportStatus.chatkitReady
-            ? "OpenAI workflow is configured. Finish webhook setup to complete production readiness."
-            : "OpenAI workflow publishing is still pending. The support desk can still capture leads while configuration is completed."}
-      </div>
 
       {booting ? <div className="muted">Loading support desk...</div> : null}
       {error ? <div className="error-text">{error}</div> : null}

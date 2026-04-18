@@ -7,10 +7,26 @@
     "dev": "npm run prisma:prepare && next dev",
     "build": "npm run prisma:prepare && prisma generate && next build",
     "start": "next start",
+<<<<<<< HEAD
     "db:push": "npm run prisma:prepare && prisma db push",
     "db:seed": "npm run prisma:prepare && tsx prisma/seed.ts",
     "db:migrate": "npm run prisma:prepare && prisma migrate dev",
     "postinstall": "npm run prisma:prepare && prisma generate"
+=======
+    "lint": "next lint",
+    "prisma:prepare": "node scripts/prepare-prisma.mjs",
+    "prisma:generate": "npm run prisma:prepare && npx prisma generate",
+    "db:push": "npm run prisma:prepare && npx prisma db push",
+    "db:migrate": "npm run prisma:prepare && npx prisma migrate dev",
+    "db:seed": "npm run prisma:prepare && npx tsx prisma/seed.ts",
+    "db:reset": "npm run prisma:prepare && npx prisma db push --force-reset && npx tsx prisma/seed.ts",
+    "postinstall": "npm run prisma:generate",
+    "doctor": "node scripts/local-preflight.mjs",
+    "setup:windows": "node scripts/windows-setup.mjs"
+  },
+  "prisma": {
+    "seed": "npx tsx prisma/seed.ts"
+>>>>>>> parent of d975526 (commit)
   },
   "dependencies": {
     "@openai/chatkit-react": "^0.0.0",

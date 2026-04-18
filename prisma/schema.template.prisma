@@ -13,7 +13,6 @@ enum Role {
   SPONSOR
   STAFF
   PARTNER
-  CREATOR
 }
 
 enum UserStatus {
@@ -76,120 +75,6 @@ enum EmailQueueStatus {
   PENDING
   SENT
   FAILED
-}
-enum QuoteStatus {
-  DRAFT
-  SENT
-  APPROVED
-  REJECTED
-  CANCELLED
-}
-
-enum CatalogType {
-  SUBLI
-  DTF
-}
-
-enum PricingMode {
-  PREMIUM
-  RESELLER
-  R_PRICE
-  STORE_PRICE
-  STORE
-  AGENT
-  SRP
-}
-
-model ProductCatalogItem {
-  id            String          @id @default(cuid())
-  externalId    String?
-  catalogType   CatalogType
-  name          String
-  description   String?
-  fabricProduct String?
-  printType     String?
-  sizesLabel    String?
-  isActive      Boolean         @default(true)
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-
-  flatPrices    ProductFlatPrice[]
-  tierPrices    ProductTierPrice[]
-  quoteItems    QuoteItem[]
-
-  @@index([catalogType])
-  @@index([externalId])
-}
-
-model ProductFlatPrice {
-  id          String             @id @default(cuid())
-  productId   String
-  pricingMode PricingMode
-  amount      Decimal
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
-
-  product     ProductCatalogItem @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  @@unique([productId, pricingMode])
-}
-
-model ProductTierPrice {
-  id          String             @id @default(cuid())
-  productId   String
-  pricingMode PricingMode
-  sizeLabel   String
-  minQty      Int
-  maxQty      Int?
-  amount      Decimal
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
-
-  product     ProductCatalogItem @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  @@index([productId, pricingMode, sizeLabel, minQty, maxQty])
-}
-
-model Quote {
-  id           String       @id @default(cuid())
-  quoteNumber  String       @unique
-  customerName String
-  companyName  String?
-  email        String?
-  phone        String?
-  address      String?
-  notes        String?
-  subtotal     Decimal
-  discount     Decimal      @default(0)
-  vatRate      Decimal      @default(0)
-  vatAmount    Decimal      @default(0)
-  total        Decimal
-  status       QuoteStatus  @default(DRAFT)
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-
-  items        QuoteItem[]
-}
-
-model QuoteItem {
-  id            String              @id @default(cuid())
-  quoteId       String
-  productId     String?
-  catalogType   CatalogType?
-  pricingMode   PricingMode?
-  itemName      String
-  description   String?
-  sizeLabel     String?
-  qty           Int
-  unitPrice     Decimal
-  lineTotal     Decimal
-  createdAt     DateTime            @default(now())
-  updatedAt     DateTime            @updatedAt
-
-  quote         Quote               @relation(fields: [quoteId], references: [id], onDelete: Cascade)
-  product       ProductCatalogItem? @relation(fields: [productId], references: [id], onDelete: SetNull)
-
-  @@index([quoteId])
 }
 
 model User {
@@ -524,5 +409,4 @@ model ChatMessage {
 
   @@index([conversationId, createdAt])
 }
-
 

@@ -1,63 +1,97 @@
-# RESURGENCE Documentation
+# RESURGENCE Powered by DesignXpress
 
-Updated: 2026-04-16
+Production-oriented full-stack sponsorship and business platform built with Next.js App Router, TypeScript, Prisma, JWT cookie authentication, and a responsive multi-role dashboard system.
 
-## Snapshot
+## Documentation Map
 
-RESURGENCE Powered by DesignXpress is a Next.js + Prisma multi-role platform for sponsorship operations, creator management, partner coordination, cashier workflows, and AI-assisted customer service.
+- [INSTALL.md](sandbox:/mnt/data/resurgence-docs/INSTALL.md)
+- [QUICKSTART.md](sandbox:/mnt/data/resurgence-docs/QUICKSTART.md)
+- [ARCHITECTURE.md](sandbox:/mnt/data/resurgence-docs/ARCHITECTURE.md)
+- [API.md](sandbox:/mnt/data/resurgence-docs/API.md)
+- [DATABASE.md](sandbox:/mnt/data/resurgence-docs/DATABASE.md)
+- [DEPLOYMENT.md](sandbox:/mnt/data/resurgence-docs/DEPLOYMENT.md)
+- [CONFIGURATION.md](sandbox:/mnt/data/resurgence-docs/CONFIGURATION.md)
+- [SECURITY.md](sandbox:/mnt/data/resurgence-docs/SECURITY.md)
+- [TESTING.md](sandbox:/mnt/data/resurgence-docs/TESTING.md)
+- [TROUBLESHOOTING.md](sandbox:/mnt/data/resurgence-docs/TROUBLESHOOTING.md)
+- [CHANGELOG.md](sandbox:/mnt/data/resurgence-docs/CHANGELOG.md)
+- [USER_GUIDE.md](sandbox:/mnt/data/resurgence-docs/USER_GUIDE.md)
+- [ADMIN_GUIDE.md](sandbox:/mnt/data/resurgence-docs/ADMIN_GUIDE.md)
+- [ROADMAP.md](sandbox:/mnt/data/resurgence-docs/ROADMAP.md)
 
-## Current Repository State
+## Platform Summary
 
-- Public website pages and multi-role dashboards are present in the active `src/` application.
-- Prisma is configured through `prisma/schema.template.prisma` and prepared by `scripts/prepare-prisma.mjs`.
-- Demo users are seeded with hashed passwords.
-- AI customer service routes now cover `/support`, `/api/chatkit/session`, `/api/chatkit/message`, and `/api/openai/webhook`.
-- The repository is not fully build-green yet. As of 2026-04-16, `npm run build` stops on a missing `@/lib/sponsor-server` import and `npx tsc --noEmit` still reports legacy schema and route drift in unrelated modules.
+This project includes:
 
-## Canonical Docs
+- public website pages for Home, About, Services, Sponsors, Sponsor Apply, Contact, and Support
+- role-based dashboards for System Admin, Cashier, Sponsor, Staff, and Partner
+- sponsor applications, sponsor profiles, sponsor deliverables, gallery/media, creator network, and sponsor inventory
+- cashier workflows for invoices, receipts, transactions, and reports
+- JWT cookie authentication with seeded demo users
+- Prisma persistence with SQLite for local development and PostgreSQL-ready deployment strategy
+- optional AI support for the Support page
 
-- [INSTALL.md](./INSTALL.md)
-- [QUICKSTART.md](./QUICKSTART.md)
-- [ARCHITECTURE.md](./ARCHITECTURE.md)
-- [API.md](./API.md)
-- [DATABASE.md](./DATABASE.md)
-- [DEPLOYMENT.md](./DEPLOYMENT.md)
-- [CONFIGURATION.md](./CONFIGURATION.md)
-- [SECURITY.md](./SECURITY.md)
-- [TESTING.md](./TESTING.md)
-- [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)
-- [CHANGELOG.md](./CHANGELOG.md)
-- [USER_GUIDE.md](./USER_GUIDE.md)
-- [ADMIN_GUIDE.md](./ADMIN_GUIDE.md)
-- [ROADMAP.md](./ROADMAP.md)
-- [AI_SUPPORT_PRODUCTION.md](./AI_SUPPORT_PRODUCTION.md)
+## Current Stack
 
-## Recommended Read Order
+- Next.js App Router
+- TypeScript
+- Prisma ORM
+- SQLite local development
+- PostgreSQL production target
+- JSON Web Token cookie sessions
+- Recharts for dashboard charts
+- optional OpenAI Agents integration
 
-1. `INSTALL.md`
-2. `QUICKSTART.md`
-3. `CONFIGURATION.md`
-4. `DATABASE.md`
-5. `API.md`
-6. `AI_SUPPORT_PRODUCTION.md`
-7. `TROUBLESHOOTING.md`
-8. `ROADMAP.md`
+## Current Database Model Snapshot
 
-## Primary Working Areas
+The current schema includes these main models:
 
-- Public pages: Home, About, Services, Sponsors, Sponsor Apply, Contact, Support, Creator profiles
-- Dashboards: Admin, Cashier, Sponsor, Staff, Partner, Creator
-- Finance: invoices, transactions, receipts, summary and revenue monitoring routes
-- Support: chat session bootstrap, route-aware messaging, lead capture, signed OpenAI webhook verification
-- CMS: sponsors, partners, creators, gallery, media events, products and services, settings
+- User
+- Counter
+- Setting
+- ContentSection
+- ProductService
+- Inquiry
+- SponsorPackage
+- Sponsor
+- SponsorProfile
+- SponsorApplication
+- SponsorDeliverable
+- Partner
+- CreatorProfile
+- MediaEvent
+- GalleryMedia
+- SponsorInventoryItem
+- Invoice
+- CashierTransaction
+- Receipt
+- ReportSnapshot
+- Notification
+- EmailQueue
+- ChatConversation
+- ChatMessage
 
-## Known Repair Themes
+## Important Notes
 
-- Sponsor portal typing and missing `sponsor-server` helper
-- Legacy content and gallery delegates that do not yet match the active Prisma schema
-- Cashier route field names that still reference older invoice and receipt shapes
-- Creator and dashboard typing mismatches in a few legacy pages
+- The current Prisma schema uses `SponsorApplication`, not `SponsorSubmission`.
+- The current invoice fields are `number`, `totalAmount`, and `balanceDue`.
+- The current receipt field is `number`.
+- Optional AI support should degrade safely when `@openai/agents` or `OPENAI_API_KEY` is not configured.
+- If you are using the newer premium dashboard layer, keep the shared components and CSS layers aligned together.
 
-## Documentation Policy
+## Recommended First Read Order
 
-The `docs/` folder is the canonical documentation set. Root-level patch notes are retained as historical implementation notes and should not override these documents.
+1. INSTALL.md
+2. QUICKSTART.md
+3. CONFIGURATION.md
+4. DATABASE.md
+5. TROUBLESHOOTING.md
+6. DEPLOYMENT.md
+
+## Project Goals
+
+- make sponsorship workflows operational, not just presentational
+- support public inquiries and sponsor applications
+- give administrators and cashiers real day-to-day tools
+- provide a professional sponsor-facing portal
+- stay modular so future AI, reporting, and automation layers can be added safely

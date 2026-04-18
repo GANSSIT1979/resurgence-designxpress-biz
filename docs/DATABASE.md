@@ -1,60 +1,141 @@
 # DATABASE
 
-Updated: 2026-04-16
+## Current Provider Strategy
 
-## Provider Strategy
+Local development:
+- SQLite
 
-- Local development: SQLite
-- Production target: PostgreSQL
+Production target:
+- PostgreSQL
 
-## Prisma Source of Truth
+## Prisma Datasource Pattern
 
-- template schema: `prisma/schema.template.prisma`
-- generated schema: `prisma/schema.prisma`
-- prepare script: `scripts/prepare-prisma.mjs`
+The checked-in schema may use SQLite locally, while your provider-aware setup can prepare the schema for PostgreSQL in production.
 
-Use the npm scripts so Prisma always runs against the prepared schema.
+## Enums
 
-## Major Model Areas
+Current enums include:
 
-### Identity and Access
+- Role
+- UserStatus
+- InquiryStatus
+- SubmissionStatus
+- SponsorStatus
+- PartnerStatus
+- PackageStatus
+- DeliverableStatus
+- InvoiceStatus
+- TransactionType
+- EmailQueueStatus
 
-- `User`
-- `Setting`
-- `Notification`
-- `EmailQueue`
+## Core Models
 
-### Sponsorship and Partnerships
+### User
+Tracks login, role, status, and optional sponsor or partner linkage.
 
-- `Sponsor`
-- `SponsorPackage`
-- `SponsorProfile`
-- `SponsorApplication`
-- `SponsorDeliverable`
-- `Partner`
+### Sponsor
+Main sponsor business record. Links to:
+- SponsorPackage
+- SponsorProfile
+- SponsorDeliverable
+- Invoice
+- User
+- SponsorApplication
 
-### Creator and Media
+### SponsorApplication
+The current application model used for sponsor submissions. Key fields:
+- sponsorName
+- contactName
+- email
+- phone
+- company
+- packageInterest
+- message
+- status
+- sponsorId
 
-- `CreatorProfile`
-- `MediaEvent`
-- `GalleryMedia`
-- `SponsorInventoryItem`
+### SponsorDeliverable
+Tracks sponsor commitments and status progression.
 
-### Finance
+### Invoice
+Key fields:
+- number
+- sponsorId
+- customerName
+- issuedAt
+- dueDate
+- totalAmount
+- balanceDue
+- status
+- notes
 
-- `Invoice`
-- `CashierTransaction`
-- `Receipt`
-- `Counter`
+### Receipt
+Key fields:
+- number
+- invoiceId
+- amount
+- issuedAt
+- notes
 
-### Support and Intake
+### CashierTransaction
+Tracks collections, refunds, and adjustments linked to invoices.
 
-- `Inquiry`
-- `ChatConversation`
-- `ChatMessage`
-- `ReportSnapshot`
+### Inquiry
+Stores public and support contact requests.
 
-## Local Database Commands
+### CreatorProfile
+Stores creator bio, stats, story, image, slug, and social links JSON.
+
+### GalleryMedia / MediaEvent
+Stores media assets and optional event grouping.
+
+### ChatConversation / ChatMessage
+Stores support chat session state and message history.
+
+## Important Delegate Names
+
+Current Prisma delegate names:
+
+- `db.user`
+- `db.counter`
+- `db.setting`
+- `db.contentSection`
+- `db.productService`
+- `db.inquiry`
+- `db.sponsorPackage`
+- `db.sponsor`
+- `db.sponsorProfile`
+- `db.sponsorApplication`
+- `db.sponsorDeliverable`
+- `db.partner`
+- `db.creatorProfile`
+- `db.mediaEvent`
+- `db.galleryMedia`
+- `db.sponsorInventoryItem`
+- `db.invoice`
+- `db.cashierTransaction`
+- `db.receipt`
+- `db.reportSnapshot`
+- `db.notification`
+- `db.emailQueue`
+- `db.chatConversation`
+- `db.chatMessage`
+
+## Frequent Schema Alignment Errors
+
+Wrong:
+- `db.sponsorSubmission`
+- `invoiceNumber`
+- `balance`
+- `receiptNumber`
+
+Correct:
+- `db.sponsorApplication`
+- `number`
+- `balanceDue`
+- `number`
+
+## Local Reset Commands
 
 ```bash
 npm run prisma:generate
@@ -62,16 +143,12 @@ npm run db:push
 npm run db:seed
 ```
 
-## Known Schema Drift
+## Production Migration Guidance
 
-Some legacy pages and API routes still reference delegates or field names that are not part of the active Prisma schema. The current documentation reflects the schema, not the stale legacy references.
+Before production rollout:
 
-Examples of drift still being cleaned up:
-
-- `pageContent` delegate references
-- older sponsor profile helper assumptions
-- older cashier field names such as `invoiceNumber` and `receiptNumber`
-
-## Recommendation
-
-Treat the database layer as authoritative. When a page, route, or note conflicts with Prisma, follow the schema and update the code path rather than the documentation.
+- confirm PostgreSQL provider preparation
+- run migrations against staging first
+- validate decimal handling for money fields
+- verify upload path strategy
+- verify role-scoped data access

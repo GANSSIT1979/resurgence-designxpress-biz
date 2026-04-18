@@ -32,6 +32,51 @@ enum UserRole {
   SPONSOR
   STAFF
   PARTNER
+<<<<<<< HEAD
+=======
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum InquiryStatus {
+  NEW
+  REVIEWED
+  CLOSED
+}
+
+enum SubmissionStatus {
+  NEW
+  UNDER_REVIEW
+  APPROVED
+  DECLINED
+}
+
+enum SponsorStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum PartnerStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum PackageStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum DeliverableStatus {
+  PENDING
+  IN_PROGRESS
+  DELIVERED
+  APPROVED
+  OVERDUE
+>>>>>>> parent of d975526 (commit)
 }
 
 enum InvoiceStatus {
@@ -60,6 +105,7 @@ enum CashierTransactionKind {
 
 enum DeliverableStatus {
   PENDING
+<<<<<<< HEAD
   IN_PROGRESS
   SUBMITTED
   APPROVED
@@ -116,6 +162,10 @@ enum EmailAutomationStatus {
   SENT
   FAILED
   SKIPPED
+=======
+  SENT
+  FAILED
+>>>>>>> parent of d975526 (commit)
 }
 
 model User {
@@ -670,6 +720,7 @@ model AppSetting {
   @@index([group])
 }
 
+<<<<<<< HEAD
 
 enum ShopOrderStatus {
   PENDING
@@ -779,3 +830,5 @@ model ShopOrderItem {
   @@index([orderId])
   @@index([productId])
 }
+=======
+>>>>>>> parent of d975526 (commit)

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import OpenAI from 'openai';
 import { NextResponse } from 'next/server';
 
@@ -41,4 +42,15 @@ export async function POST(request: Request) {
     const message = error instanceof Error ? error.message : 'Invalid webhook signature.';
     return NextResponse.json({ error: message }, { status: 400 });
   }
+=======
+import { NextRequest } from "next/server";
+import { ok } from "@/lib/api-utils";
+
+export async function POST(_request: NextRequest) {
+  return ok({
+    received: true,
+    ready: true,
+    message: "Webhook placeholder endpoint is active."
+  });
+>>>>>>> parent of d975526 (commit)
 }

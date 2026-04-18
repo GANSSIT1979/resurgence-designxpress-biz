@@ -7,7 +7,7 @@ type DashboardLink = {
 };
 
 type DashboardShellProps = {
-  title?: string;
+  title: string;
   subtitle?: string;
   links: DashboardLink[];
   children: ReactNode;
@@ -29,7 +29,7 @@ export function DashboardShell({
               <div className="sidebar-subtitle">{subtitle || "Role-based dashboard"}</div>
             </div>
 
-            <nav className="sidebar-nav" aria-label={`${title || "Dashboard"} navigation`}>
+            <nav className="sidebar-nav" aria-label={`${title} navigation`}>
               {links.map((link) => (
                 <Link key={link.href} href={link.href}>
                   {link.label}
@@ -40,24 +40,22 @@ export function DashboardShell({
         </aside>
 
         <main className="dashboard-main">
-          {title ? (
-            <section className="dashboard-hero-card">
-              <div>
-                <div className="eyebrow">Dashboard Workspace</div>
-                <h1 className="dashboard-page-title">{title}</h1>
-                {subtitle ? <p className="dashboard-page-subtitle">{subtitle}</p> : null}
-              </div>
+          <section className="dashboard-hero-card">
+            <div>
+              <div className="eyebrow">Dashboard Workspace</div>
+              <h1 className="dashboard-page-title">{title}</h1>
+              {subtitle ? <p className="dashboard-page-subtitle">{subtitle}</p> : null}
+            </div>
 
-              <div className="dashboard-hero-actions">
-                <Link href="/support" className="button button-secondary button-small">
-                  Support
-                </Link>
-                <Link href="/contact" className="button button-small">
-                  Contact Team
-                </Link>
-              </div>
-            </section>
-          ) : null}
+            <div className="dashboard-hero-actions">
+              <Link href="/support" className="button button-secondary button-small">
+                Support
+              </Link>
+              <Link href="/contact" className="button button-small">
+                Contact Team
+              </Link>
+            </div>
+          </section>
 
           <div className="dashboard-content-stack">{children}</div>
         </main>

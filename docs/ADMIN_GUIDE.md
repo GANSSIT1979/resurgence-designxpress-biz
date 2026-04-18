@@ -1,47 +1,80 @@
 # ADMIN GUIDE
 
-Updated: 2026-04-16
-
-## Admin Scope
+## Admin Role Scope
 
 System Admin users oversee:
 
-- sponsor applications and sponsor records
-- creator profiles
-- gallery and media events
-- inquiries and support lead follow-up
-- users and roles
-- settings and reports
-- revenue monitoring and finance visibility
+* sponsor applications
+* sponsor records
+* creators
+* gallery and media
+* inquiries
+* users and roles
+* settings
+* reports
 
-## Core Admin Areas
+## Core Admin Pages
 
-- `/admin`
-- `/admin/users`
-- `/admin/inquiries`
-- `/admin/gallery`
-- `/admin/creator-network`
-- `/admin/settings`
-- `/admin/reports`
+Typical entry points:
 
-## Daily Admin Checklist
+* `/admin`
+* `/admin/sponsor-submissions`
+* `/admin/inquiries`
+* `/admin/gallery`
 
-1. Review new inquiries and support leads
-2. Review sponsor applications
-3. Check settings and contact values
-4. Review report snapshots and finance summaries
-5. Review any OpenAI support webhook failures if production AI support is enabled
+## Reviewing Sponsor Applications
 
-## Support Oversight
+The current schema uses `SponsorApplication`.
 
-The support desk can create:
+Statuses:
 
-- conversation history in Prisma
-- lead capture records
-- inquiry records
-- email queue records
-- admin notifications
+* `NEW`
+* `UNDER\_REVIEW`
+* `APPROVED`
+* `DECLINED`
 
-## Current Caveat
+Use the admin submissions page to:
 
-Some admin modules still sit inside the broader stabilization backlog because of older schema assumptions. Use the active Prisma schema and route handlers as the authority while those pages are being repaired.
+* review inbound records
+* update status
+* keep the approval pipeline current
+
+## Managing Inquiries
+
+The current inquiry statuses are:
+
+* `NEW`
+* `REVIEWED`
+* `CLOSED`
+
+Use the admin inquiries page to:
+
+* review messages
+* update statuses
+* maintain follow-up visibility
+
+## Managing Gallery Assets
+
+Use gallery CMS to:
+
+* upload or assign image paths
+* set titles and captions
+* mark featured assets
+* keep homepage-ready visuals current
+
+## Operational Advice
+
+After any large UI or schema update:
+
+1. regenerate Prisma Client
+2. reload the admin dashboard
+3. confirm the overview page loads without missing delegate errors
+4. confirm submissions, inquiries, and gallery pages load
+
+## Admin Safety Notes
+
+* do not rename Prisma delegates in code casually
+* keep schema and generated client aligned
+* prefer shared components over page-level one-off UI changes
+* validate role-based access on admin-only routes
+
