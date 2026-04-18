@@ -7,12 +7,20 @@ import { StatusBadge } from "@/components/status-badge";
 export const dynamic = "force-dynamic";
 
 export default async function AdminInquiriesPage() {
-  const inquiries = await db.inquiry.findMany({
+  const rawItems = await db.inquiry.findMany({
     take: 100,
     orderBy: { createdAt: "desc" },
   });
 
-  const newCount = inquiries.filter((item) => String(item.status || "").toUpperCase() === "NEW").length;
+  const inquiries = rawItems.map((item) => ({
+    ...item,
+    createdAt: item.createdAt?.toISOString?.() ?? String(item.createdAt ?? ""),
+    updatedAt: item.updatedAt?.toISOString?.() ?? null,
+  }));
+
+  const newCount = rawItems.filter(
+    (item) => String(item.status || "").toUpperCase() === "NEW"
+  ).length;
 
   return (
     <DashboardPageOrchestrator
@@ -24,6 +32,7 @@ export default async function AdminInquiriesPage() {
         { href: "/admin/inquiries", label: "Inquiries", exact: true, count: inquiries.length },
         { href: "/admin/sponsor-submissions", label: "Applications" },
         { href: "/admin/gallery", label: "Gallery" },
+        { href: "/admin/settings", label: "Settings" },
       ]}
       actions={
         <Link href="/support" className="button button-small">
@@ -53,6 +62,8 @@ export default async function AdminInquiriesPage() {
         title="Inquiries"
         subtitle="Update inquiry statuses and maintain follow-up visibility for contact and support workflows."
         endpoint="/api/admin/inquiries"
+        savedViewScope="/api/admin/inquiries"
+        initialItems={inquiries}
         columns={[
           { key: "name", label: "Name" },
           { key: "email", label: "Email" },
@@ -74,6 +85,7 @@ export default async function AdminInquiriesPage() {
           },
         ]}
         emptyMessage="No inquiry records are available yet."
+        statusField="status"
       />
     </DashboardPageOrchestrator>
   );

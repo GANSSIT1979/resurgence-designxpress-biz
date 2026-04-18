@@ -1,80 +1,65 @@
 # CONFIGURATION
 
+Updated: 2026-04-16
+
 ## Core Environment Variables
 
 ### Database
-- `PRISMA_DB_PROVIDER`
-- `DATABASE_URL`
 
-Examples:
-
-Local SQLite:
 ```env
 PRISMA_DB_PROVIDER=sqlite
 DATABASE_URL="file:./dev.db"
 ```
 
-Production PostgreSQL:
+Production:
+
 ```env
 PRISMA_DB_PROVIDER=postgresql
-DATABASE_URL="postgresql://user:password@host:5432/dbname"
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DB?schema=public"
 ```
 
-### Auth
-- `AUTH_SECRET`
+### Authentication
 
-Example:
 ```env
-AUTH_SECRET="replace-this-with-a-long-random-secret"
-```
-
-### Site
-- `NEXT_PUBLIC_SITE_URL`
-
-Example:
-```env
+AUTH_SECRET="replace-with-a-strong-random-secret"
 NEXT_PUBLIC_SITE_URL="http://localhost:3000"
+PORT=3000
 ```
 
-## Optional AI Variables
-
-- `OPENAI_API_KEY`
-- `OPENAI_DEFAULT_MODEL`
-- `OPENAI_WORKFLOW_ID`
-- `OPENAI_WEBHOOK_SECRET`
-
-If these are not set, the support layer should either be disabled or gracefully degraded.
-
-## Upload Behavior
-
-Local uploads are expected under:
-- `/public/uploads`
-
-If you move to cloud storage later, document the new provider and update upload logic accordingly.
-
-## Recommended .env Sections
+### AI Customer Service
 
 ```env
-# Database
-PRISMA_DB_PROVIDER=sqlite
-DATABASE_URL="file:./dev.db"
-
-# Auth
-AUTH_SECRET="change-me"
-
-# Site
-NEXT_PUBLIC_SITE_URL="http://localhost:3000"
-
-# Optional AI
 OPENAI_API_KEY=""
-OPENAI_DEFAULT_MODEL="gpt-4.1-mini"
 OPENAI_WORKFLOW_ID=""
+OPENAI_WORKFLOW_VERSION=""
 OPENAI_WEBHOOK_SECRET=""
+OPENAI_DEFAULT_MODEL="gpt-4.1-mini"
 ```
 
-## Configuration Warnings
+## Prisma Configuration Flow
 
-- never commit real secrets
-- do not reuse development secrets in production
-- if schema/provider preparation is automated, confirm it before deploy
-- if JWT verification is used in middleware, keep auth helpers compatible with that runtime
+- source template: `prisma/schema.template.prisma`
+- generated working schema: `prisma/schema.prisma`
+- prepare script: `scripts/prepare-prisma.mjs`
+
+Run Prisma commands through the provided npm scripts so the schema is prepared correctly before generate, push, migrate, or seed.
+
+## Upload Configuration
+
+- upload API: `POST /api/upload`
+- local storage path: `public/uploads`
+- current accepted file types: `jpeg`, `png`, `webp`, `gif`, `svg`
+- current size limit: `5 MB`
+
+## Support Route Configuration
+
+- `/support` is the public entry point
+- `/api/chatkit/session` exposes readiness metadata and ChatKit session creation
+- `/api/openai/webhook` expects a valid OpenAI webhook signature when production support is enabled
+
+## Current Advice
+
+- keep local development on SQLite
+- switch production deployments to PostgreSQL
+- set all OpenAI support variables together when enabling production AI support
+- move uploads to durable object storage before long-term production use

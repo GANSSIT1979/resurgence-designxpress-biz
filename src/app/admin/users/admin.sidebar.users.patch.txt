@@ -1,0 +1,31 @@
+Add Users as a first-class admin navigation item in the same nav/tabs array used by the admin sidebar.
+
+If your admin layout uses DashboardShell with a navItems array, make sure it includes:
+
+{
+  href: "/admin",
+  label: "Overview"
+},
+{
+  href: "/admin/sponsor-submissions",
+  label: "Applications"
+},
+{
+  href: "/admin/gallery",
+  label: "Gallery"
+},
+{
+  href: "/admin/inquiries",
+  label: "Inquiries"
+},
+{
+  href: "/admin/users",
+  label: "Users"
+},
+{
+  href: "/admin/settings",
+  label: "Settings"
+}
+
+If the sidebar is defined in src/app/admin/layout.tsx, insert the Users item there.
+If it is defined inside components/dashboard-shell.tsx, insert the Users item in the admin nav config there.

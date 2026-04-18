@@ -1,44 +1,18 @@
-# Alias and DashboardShell Fix
+# Alias And Dashboard Shell Fix
 
-This patch fixes the root import problem for the `src/` app structure.
+Updated: 2026-04-16
 
-## What it does
+## Purpose
 
-1. Restores the TypeScript / Next alias:
-   - `@/*` -> `./src/*`
+This historical note covers the earlier pass that normalized `@/*` imports and stabilized the shared dashboard shell structure.
 
-2. Adds a standalone component:
-   - `src/components/dashboard-shell.tsx`
+## Current State
 
-## Why this matters
+- the active application continues to use `@/*` path aliases into `src/`
+- shared dashboard patterns remain part of the active dashboard implementation
+- this note is retained for history, not as the main source of truth
 
-Your project contains many imports like:
+## Canonical Docs
 
-- `@/lib/db`
-- `@/lib/auth`
-- `@/components/dashboard-shell`
-- `@/components/kpi-grid`
-
-If the alias is missing or wrong, Next.js will fail with repeated
-`Module not found` errors across pages, layouts, and API routes.
-
-## Apply
-
-Replace or create:
-
-- `tsconfig.json`
-- `src/components/dashboard-shell.tsx`
-
-Then restart the dev server.
-
-## Restart steps
-
-```powershell
-Remove-Item -Recurse -Force .next -ErrorAction SilentlyContinue
-npm run dev
-```
-
-## Important
-
-If `tsconfig.json` already has other important custom settings,
-merge the `baseUrl` and `paths` section instead of overwriting the whole file.
+- `docs/ARCHITECTURE.md`
+- `docs/ADMIN_GUIDE.md`

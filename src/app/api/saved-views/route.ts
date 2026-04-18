@@ -18,7 +18,17 @@ export async function GET(request: NextRequest) {
   const scope = request.nextUrl.searchParams.get("scope");
   if (!scope) return fail("Scope is required.", 400);
 
-  const items = await db.savedView.findMany({
+  const savedViewDelegate = (db as unknown as {
+    savedView?: {
+      findMany: (args: Record<string, unknown>) => Promise<unknown[]>;
+    };
+  }).savedView;
+
+  if (!savedViewDelegate?.findMany) {
+    return ok({ items: [] });
+  }
+
+  const items = await savedViewDelegate.findMany({
     where: {
       userId: auth.user!.id,
       scope,
@@ -41,7 +51,17 @@ export async function POST(request: NextRequest) {
 
   if (!scope || !name) return fail("Scope and name are required.", 400);
 
-  const item = await db.savedView.create({
+  const savedViewDelegate = (db as unknown as {
+    savedView?: {
+      create: (args: { data: Record<string, unknown> }) => Promise<unknown>;
+    };
+  }).savedView;
+
+  if (!savedViewDelegate?.create) {
+    return fail("Saved views are not enabled in the database yet.", 400);
+  }
+
+  const item = await savedViewDelegate.create({
     data: {
       userId: auth.user!.id,
       scope,

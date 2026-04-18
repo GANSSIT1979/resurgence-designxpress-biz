@@ -1,128 +1,77 @@
 # ARCHITECTURE
 
-## High-Level Overview
+Updated: 2026-04-16
 
-The system is organized into four layers:
+## High-Level Layers
 
-1. Public Experience
-2. Role-Based Dashboard Experience
-3. API and Business Logic
-4. Persistence and External Services
+1. Public experience
+2. Role-based dashboards
+3. API and business logic
+4. Prisma persistence
+5. External integrations
 
-## Public Layer
+## Public Experience
 
-Main public pages:
+Main public routes include:
 
-- Home
-- About
-- Services
-- Sponsors
-- Sponsor Apply
-- Contact
-- Support
+- `/`
+- `/about`
+- `/services`
+- `/sponsors`
+- `/sponsor/apply`
+- `/contact`
+- `/support`
+- `/creator/[slug]`
 
-Public workflows:
+## Dashboard Experience
 
-- inquiry submission
-- sponsor application submission
-- creator profile browsing
-- gallery browsing
-- AI support entry point
-
-## Dashboard Layer
-
-Protected dashboard areas:
+Primary dashboard entry points:
 
 - `/admin`
 - `/cashier`
 - `/sponsor/dashboard`
 - `/staff`
 - `/partner`
+- `/creator/dashboard`
 
-Each dashboard uses a shared navigation shell and should progressively use common orchestration, form, and semantics components.
+## Server Layer
 
-## Business Modules
+The application uses Next.js App Router route handlers for:
 
-### Admin
-- sponsor applications
-- sponsors
-- inquiries
-- creator network
-- gallery
-- content and settings
-- user and role management
-- reports
+- auth
+- form submissions
+- support session and message flows
+- admin CRUD surfaces
+- sponsor portal data
+- cashier finance operations
 
-### Cashier
-- invoices
-- transactions
-- receipts
-- reporting
+## Persistence Layer
 
-### Sponsor
-- overview
-- applications
-- deliverables
-- billing
-- profile
+The application persists business data through Prisma and the prepared schema flow:
 
-## Authentication Model
+- `prisma/schema.template.prisma`
+- `scripts/prepare-prisma.mjs`
+- `prisma/schema.prisma`
 
-- JWT signed session token
-- HTTP-only cookie
-- role-based routing and access rules
-- sponsor and partner linkage through foreign keys on `User`
+## AI Support Flow
 
-## Data Flow
+Current support path:
 
-Typical request flow:
+1. Visitor opens `/support`
+2. Frontend requests readiness and conversation state from `/api/chatkit/session`
+3. Messages are posted to `/api/chatkit/message`
+4. Business details are saved through `/api/chatkit/lead`
+5. Production ChatKit sessions can be created through `/api/chatkit/session`
+6. OpenAI background events return to `/api/openai/webhook`
 
-1. user opens page
-2. page calls server-side Prisma query or API route
-3. auth helper validates session when protected
-4. Prisma reads or writes records
-5. page renders UI or API returns JSON
+## External Services
 
-## Optional AI Layer
+- OpenAI for workflow-backed support
+- PostgreSQL for production deployment
+- local filesystem uploads during local development
 
-The support workflow can integrate with an AI support agent. This layer should be optional and should not block the rest of the application from building.
+## Current Architectural Debt
 
-Recommended behavior:
-
-- if AI dependencies are missing, support page still loads
-- if API key is missing, return a controlled disabled-state response
-- store chat session state in `ChatConversation` and `ChatMessage`
-
-## Current Shared UI Strategy
-
-Current premium system layers:
-
-- dashboard shell
-- page orchestrator
-- CRUD manager
-- chart card
-- data table
-- premium form layer
-- status and semantics layer
-
-These should be used consistently instead of custom page-by-page UI fragments.
-
-## Deployment Modes
-
-### Local Development
-- SQLite
-- Prisma schema push
-- seeded demo data
-
-### Production
-- PostgreSQL
-- hosted app on Vercel, Railway, Render, Docker, or similar
-- environment variables managed by deployment provider
-
-## Recommended Folder Philosophy
-
-- `src/app` for pages and routes
-- `src/components` for reusable UI
-- `src/lib` for auth, db, helpers, and integrations
-- `prisma` for schema and seed logic
-- `public/uploads` for local uploaded media
+- a few routes still reference older helpers or schema shapes
+- some historical notes describe earlier patch packs rather than the current repository state
+- the active application is in `src/`, while archived or nested subprojects still exist alongside it

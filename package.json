@@ -17,7 +17,8 @@
     "db:reset": "npm run prisma:prepare && npx prisma db push --force-reset && npx tsx prisma/seed.ts",
     "postinstall": "npm run prisma:generate",
     "doctor": "node scripts/local-preflight.mjs",
-    "setup:windows": "node scripts/windows-setup.mjs"
+    "setup:windows": "node scripts/windows-setup.mjs",
+    "support:verify": "node scripts/verify-support-routes.mjs"
   },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"

@@ -1,15 +1,19 @@
 # Login Fix Notes
 
-Replace these files in your project:
+Updated: 2026-04-16
 
-- `lib/auth.ts`
-- `app/api/auth/login/route.ts`
-- `app/api/auth/logout/route.ts`
-- `app/login/page.tsx`
-- `middleware.ts`
+## Purpose
 
-This patch fixes:
-- successful login not redirecting to the assigned dashboard
-- stale cookies keeping users on the wrong state
-- `next` redirect handling for protected pages like `/sponsor/dashboard`
-- inactive users being blocked correctly
+This note records the authentication pass that improved login redirects, session cleanup, and role-aware routing.
+
+## Current State
+
+- demo accounts are hashed
+- auth remains JWT cookie based
+- stale session cleanup is still part of the current expected auth flow
+
+## Canonical Docs
+
+- `docs/SECURITY.md`
+- `docs/USER_GUIDE.md`
+- `docs/TROUBLESHOOTING.md`

@@ -1,42 +1,95 @@
-import { NextRequest } from "next/server";
-import { InvoiceStatus, Role } from "@prisma/client";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { fail, ok, parseNumber, parseOptionalDate, requireApiRole } from "@/lib/api-utils";
+import { invoiceSchema } from "@/lib/validation";
+import { logActivity } from "@/lib/audit";
 
-export async function GET(request: NextRequest) {
-  const auth = await requireApiRole(request, [Role.CASHIER, Role.SYSTEM_ADMIN]);
-  if (auth.error) return auth.error;
-
-  const items = await db.invoice.findMany({
-    orderBy: { createdAt: "desc" },
-  });
-
-  return ok({ items });
+function serializeInvoice(item: any) {
+  return {
+    ...item,
+    createdAt: item.createdAt?.toISOString?.() ?? null,
+    updatedAt: item.updatedAt?.toISOString?.() ?? null,
+    issueDate: item.issueDate?.toISOString?.() ?? null,
+    dueDate: item.dueDate?.toISOString?.() ?? null,
+  };
 }
 
-export async function POST(request: NextRequest) {
-  const auth = await requireApiRole(request, [Role.CASHIER, Role.SYSTEM_ADMIN]);
-  if (auth.error) return auth.error;
+function toDate(value: unknown) {
+  if (!value || typeof value !== "string") return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
 
-  const body = await request.json().catch(() => null);
-  if (!body || typeof body !== "object") return fail("Invalid request body.", 400);
+export async function GET() {
+  try {
+    const items = await db.invoice.findMany({
+      orderBy: [{ issueDate: "desc" }, { createdAt: "desc" }],
+    });
 
-  const customerName = String(body.customerName || "").trim();
-  if (!customerName) return fail("Customer name is required.", 400);
+    return NextResponse.json({ items: items.map(serializeInvoice) });
+  } catch (error) {
+    console.error("GET /api/cashier/invoices error:", error);
+    return NextResponse.json({ items: [] }, { status: 200 });
+  }
+}
 
-  const item = await db.invoice.create({
-    data: {
-      number: body.number ? String(body.number) : null,
-      sponsorId: body.sponsorId ? String(body.sponsorId) : null,
-      customerName,
-      issuedAt: parseOptionalDate(body.issuedAt) || new Date(),
-      dueDate: parseOptionalDate(body.dueDate),
-      totalAmount: parseNumber(body.totalAmount, 0),
-      balanceDue: parseNumber(body.balanceDue, parseNumber(body.totalAmount, 0)),
-      status: body.status && Object.values(InvoiceStatus).includes(body.status) ? body.status : InvoiceStatus.OPEN,
-      notes: body.notes ? String(body.notes) : null,
-    },
-  });
+export async function POST(request: Request) {
+  try {
+    const body = await request.json().catch(() => null);
+    const parsed = invoiceSchema.safeParse(body);
 
-  return ok({ item }, 201);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid invoice payload." },
+        { status: 400 }
+      );
+    }
+
+    const amount = Number(parsed.data.amount || 0);
+    const balanceAmount =
+      parsed.data.balanceAmount === undefined || parsed.data.balanceAmount === null
+        ? amount
+        : Number(parsed.data.balanceAmount);
+
+    const item = await db.invoice.create({
+      data: {
+        invoiceNumber: parsed.data.invoiceNumber,
+        sponsorId: parsed.data.sponsorId || null,
+        companyName: parsed.data.companyName,
+        contactName: parsed.data.contactName || null,
+        email: parsed.data.email || null,
+        tier: parsed.data.tier || null,
+        description: parsed.data.description,
+        amount,
+        balanceAmount,
+        status: parsed.data.status || "PENDING",
+        issueDate: toDate(parsed.data.issueDate) || new Date(),
+        dueDate: toDate(parsed.data.dueDate),
+        notes: parsed.data.notes || null,
+      },
+    });
+
+    await logActivity({
+      request,
+      action: "INVOICE_CREATED",
+      resource: "invoice",
+      resourceId: item.id,
+      targetLabel: item.invoiceNumber,
+      metadata: {
+        invoiceNumber: item.invoiceNumber,
+        sponsorId: item.sponsorId,
+        companyName: item.companyName,
+        amount: item.amount,
+        balanceAmount: item.balanceAmount,
+        status: item.status,
+      },
+    });
+
+    return NextResponse.json({ item: serializeInvoice(item) }, { status: 201 });
+  } catch (error) {
+    console.error("POST /api/cashier/invoices error:", error);
+    return NextResponse.json(
+      { error: "Unable to create invoice." },
+      { status: 400 }
+    );
+  }
 }

@@ -1,0 +1,19 @@
+// Add these fields to your existing CreatorProfile model
+
+contactNumber      String?
+address            String?
+dateOfBirth        String?
+jobDescription     String?
+position           String?
+height             String?
+
+facebookPage       String?
+facebookFollowers  String?
+tiktokPage         String?
+tiktokFollowers    String?
+instagramPage      String?
+instagramFollowers String?
+youtubePage        String?
+youtubeFollowers   String?
+
+trendingVideoUrl   String?

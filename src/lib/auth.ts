@@ -1,26 +1,24 @@
-import type { NextRequest } from "next/server";
+import { cookies } from "next/headers";
+import type { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
+import { db } from "@/lib/db";
 
 export const SESSION_COOKIE = "resurgence_session";
+export const SESSION_MAX_AGE = 60 * 60 * 24 * 7;
 
 export type AppRole =
   | "SYSTEM_ADMIN"
   | "CASHIER"
   | "SPONSOR"
   | "STAFF"
-  | "PARTNER";
+  | "PARTNER"
+  | "CREATOR";
 
 type JwtPayload = {
   userId: string;
   role: AppRole;
   email: string;
-};
-
-export type ApiUser = {
-  id: string;
-  email: string;
-  role: AppRole;
-  sponsorId: string | null;
 };
 
 function getAuthSecret() {
@@ -29,6 +27,25 @@ function getAuthSecret() {
     throw new Error("AUTH_SECRET is not set");
   }
   return secret;
+}
+
+function normalizeIdentifier(value: string) {
+  return value.trim().toLowerCase();
+}
+
+function isUserActive(user: Record<string, unknown>) {
+  if ("isActive" in user && user.isActive === false) return false;
+  if ("active" in user && user.active === false) return false;
+
+  if (
+    "status" in user &&
+    typeof user.status === "string" &&
+    user.status.toUpperCase() === "INACTIVE"
+  ) {
+    return false;
+  }
+
+  return true;
 }
 
 export function getDashboardPath(role: string) {
@@ -43,32 +60,19 @@ export function getDashboardPath(role: string) {
       return "/staff";
     case "PARTNER":
       return "/partner";
+    case "CREATOR":
+      return "/creator/dashboard";
     default:
       return "/login";
   }
 }
 
-function isUserActive(user: Record<string, unknown>) {
-  if ("isActive" in user && user.isActive === false) return false;
-  if ("active" in user && user.active === false) return false;
-  if ("status" in user && typeof user.status === "string" && user.status.toUpperCase() === "INACTIVE") {
-    return false;
-  }
-  return true;
+export async function hashPassword(password: string) {
+  return bcrypt.hash(password, 10);
 }
 
-function mapUserRecord(candidate: Record<string, unknown>, fallback?: Partial<JwtPayload>): ApiUser {
-  return {
-    id: String(candidate.id ?? fallback?.userId ?? ""),
-    email: String(candidate.email ?? fallback?.email ?? ""),
-    role: String(candidate.role ?? fallback?.role ?? "STAFF") as AppRole,
-    sponsorId:
-      typeof candidate.sponsorId === "string"
-        ? candidate.sponsorId
-        : candidate.sponsorId == null
-          ? null
-          : String(candidate.sponsorId),
-  };
+export async function verifyPassword(password: string, passwordHash: string) {
+  return bcrypt.compare(password, passwordHash);
 }
 
 export function signSession(payload: JwtPayload) {
@@ -86,24 +90,55 @@ export function verifySession(token: string): JwtPayload | null {
   }
 }
 
-export async function hashPassword(password: string) {
-  const bcryptModule = await import("bcryptjs");
-  const bcrypt = bcryptModule.default;
-  return bcrypt.hash(password, 10);
+function extractStoredPassword(candidate: Record<string, unknown>) {
+  if (typeof candidate.passwordHash === "string" && candidate.passwordHash) {
+    return candidate.passwordHash;
+  }
+
+  if (typeof candidate.password === "string" && candidate.password) {
+    return candidate.password;
+  }
+
+  return "";
 }
 
-export async function authenticateUser(email: string, password: string) {
-  const normalizedEmail = email.trim().toLowerCase();
+async function findUserByIdentifier(identifier: string) {
+  const normalized = normalizeIdentifier(identifier);
 
-  const [{ db }, bcryptModule] = await Promise.all([
-    import("./db"),
-    import("bcryptjs"),
-  ]);
+  const user = await (db.user as any).findFirst({
+    where: {
+      email: normalized,
+    },
+  });
 
-  const bcrypt = bcryptModule.default;
+  return user as Record<string, unknown> | null;
+}
+
+export async function authenticateUser(identifier: string, password: string) {
+  const normalized = normalizeIdentifier(identifier);
+  const user = await findUserByIdentifier(normalized);
+
+  if (!user) return null;
+  if (!isUserActive(user)) return null;
+
+  const passwordHash = extractStoredPassword(user);
+  if (!passwordHash) return null;
+
+  const passwordOk = await verifyPassword(password, passwordHash);
+  if (!passwordOk) return null;
+
+  return {
+    id: String(user.id),
+    email: String(user.email ?? normalized),
+    role: String(user.role) as AppRole,
+  };
+}
+
+async function getUserBySessionPayload(payload: JwtPayload | null) {
+  if (!payload) return null;
 
   const user = await db.user.findUnique({
-    where: { email: normalizedEmail },
+    where: { id: payload.userId },
   });
 
   if (!user) return null;
@@ -111,47 +146,25 @@ export async function authenticateUser(email: string, password: string) {
   const candidate = user as unknown as Record<string, unknown>;
   if (!isUserActive(candidate)) return null;
 
-  const passwordHash =
-    typeof candidate.passwordHash === "string"
-      ? candidate.passwordHash
-      : typeof candidate.password === "string"
-        ? candidate.password
-        : "";
-
-  if (!passwordHash) return null;
-
-  const passwordOk = await bcrypt.compare(password, passwordHash);
-  if (!passwordOk) return null;
-
-  return mapUserRecord(candidate, {
-    email: normalizedEmail,
-    role: String(candidate.role) as AppRole,
-    userId: String(candidate.id),
-  });
+  return {
+    id: String(candidate.id),
+    email: String(candidate.email ?? payload.email),
+    role: String(candidate.role ?? payload.role) as AppRole,
+    name:
+      typeof candidate.name === "string"
+        ? candidate.name
+        : typeof candidate.displayName === "string"
+          ? candidate.displayName
+          : "",
+  };
 }
 
 export async function getCurrentUser() {
-  const [{ cookies }, { db }] = await Promise.all([
-    import("next/headers"),
-    import("./db"),
-  ]);
-
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
   if (!token) return null;
 
   const decoded = verifySession(token);
-  if (!decoded) return null;
-
-  const user = await db.user.findUnique({
-    where: { id: decoded.userId },
-  });
-
-  if (!user) return null;
-
-  const candidate = user as unknown as Record<string, unknown>;
-  if (!isUserActive(candidate)) return null;
-
-  return mapUserRecord(candidate, decoded);
+  return getUserBySessionPayload(decoded);
 }
 
 export async function getApiUser(request: NextRequest) {
@@ -159,18 +172,33 @@ export async function getApiUser(request: NextRequest) {
   if (!token) return null;
 
   const decoded = verifySession(token);
-  if (!decoded) return null;
+  return getUserBySessionPayload(decoded);
+}
 
-  const { db } = await import("./db");
-
-  const user = await db.user.findUnique({
-    where: { id: decoded.userId },
+export function setSessionCookie(res: NextResponse, token: string) {
+  res.cookies.set({
+    name: SESSION_COOKIE,
+    value: token,
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: SESSION_MAX_AGE,
   });
 
-  if (!user) return null;
+  return res;
+}
 
-  const candidate = user as unknown as Record<string, unknown>;
-  if (!isUserActive(candidate)) return null;
+export function clearSessionCookie(res: NextResponse) {
+  res.cookies.set({
+    name: SESSION_COOKIE,
+    value: "",
+    path: "/",
+    maxAge: 0,
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+  });
 
-  return mapUserRecord(candidate, decoded);
+  return res;
 }

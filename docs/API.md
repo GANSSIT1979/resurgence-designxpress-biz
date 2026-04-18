@@ -1,121 +1,85 @@
 # API
 
-## API Design Notes
+Updated: 2026-04-16
 
-This project mixes:
+## Overview
 
-- server-rendered Prisma usage directly in pages
-- API routes for forms, auth, uploads, and module CRUD
+The active application mixes server-rendered Prisma pages with route handlers under `src/app/api`. The list below focuses on the active route groups in the main `src/` application.
 
-## Core Route Groups
+## Auth
 
-### Auth
 - `POST /api/auth/login`
 - `POST /api/auth/logout`
+- `GET /api/auth/me`
 
-### Public Forms
-- inquiry submission route
-- sponsor application submission route
+## Public Intake
 
-### Support / AI
+- `POST /api/inquiries`
+- `POST /api/sponsor-applications`
+- `GET /api/health`
+- `POST /api/upload`
+
+## AI Customer Service
+
+- `GET /api/chatkit/session`
 - `POST /api/chatkit/session`
 - `POST /api/chatkit/message`
 - `POST /api/chatkit/lead`
-- optional `POST /api/openai/webhook`
+- `GET /api/openai/webhook`
+- `POST /api/openai/webhook`
 
-### Cashier
-- invoice CRUD routes
-- receipt CRUD routes
-- transaction CRUD routes
+### Support Behavior
+
+- `/api/chatkit/session` returns readiness metadata on `GET`
+- `/api/chatkit/session` creates either a conversation bootstrap or an OpenAI ChatKit session on `POST`
+- `/api/chatkit/message` classifies requests into sponsorships, events, custom apparel, or partnerships
+- `/api/openai/webhook` verifies OpenAI webhook signatures before accepting events
+
+## Sponsor Routes
+
+- `GET /api/sponsor/applications`
+- `GET /api/sponsor/billing`
+- `GET /api/sponsor/deliverables`
+- `GET /api/sponsor/packages`
+- `GET /api/sponsor/profile`
+- `POST /api/sponsor/profile`
+
+## Cashier Routes
+
 - `GET /api/cashier/reports/summary`
+- `GET /api/cashier/invoices`
+- `POST /api/cashier/invoices`
+- `GET /api/cashier/transactions`
+- `POST /api/cashier/transactions`
+- `GET /api/cashier/receipts`
+- `POST /api/cashier/receipts`
+- revenue monitoring routes for admin and cashier are also present
 
-### Sponsor
-- sponsor profile route
-- sponsor deliverables route
-- sponsor application route
+## Admin Routes
 
-### Admin
-- admin-facing CRUD routes for gallery, inquiries, sponsor applications, and related modules
+The admin surface includes route groups for:
 
-## Response Conventions
+- content
+- creator network
+- gallery and gallery media
+- inquiries
+- media events
+- partners
+- products and services
+- reports
+- revenue monitoring
+- settings
+- sponsor inventory
+- sponsor packages
+- sponsor submissions
+- sponsors
+- users
+- activity logs
+- saved views
+- bulk actions
 
-Recommended JSON response shape:
+## Current Caveats
 
-```json
-{
-  "ok": true,
-  "item": {},
-  "items": []
-}
-```
-
-Error shape:
-
-```json
-{
-  "ok": false,
-  "error": "Readable error message"
-}
-```
-
-## Authentication Rules
-
-Protected routes should:
-
-- validate the session cookie
-- resolve the current user
-- enforce role access
-- scope sponsor users to their own records
-
-## Schema-Aligned Names
-
-Important current API/data alignment:
-
-- use `SponsorApplication`
-- not `SponsorSubmission`
-- use invoice `number`
-- use invoice `balanceDue`
-- use receipt `number`
-
-## Suggested CRUD Coverage
-
-### Inquiry
-- list
-- get one
-- update status
-- delete
-
-### SponsorApplication
-- list
-- get one
-- create
-- update status
-- delete
-
-### GalleryMedia
-- list
-- create
-- update
-- delete
-
-### Invoice
-- list
-- create
-- update
-- delete
-
-### Receipt
-- list
-- create
-- update
-- delete
-
-### CashierTransaction
-- list
-- create
-- update
-- delete
-
-## API Stability Guidance
-
-When refactoring UI layers, keep API paths stable and let page components adapt to the route outputs. This reduces regression risk.
+- Some admin and sponsor routes still reference older delegate or field names and are part of the current stabilization backlog.
+- As of 2026-04-16, `npm run build` stops first on `src/app/api/sponsor/profile/route.ts` because `@/lib/sponsor-server` is missing.
+- Use the active Prisma schema as the source of truth when route assumptions and docs conflict.

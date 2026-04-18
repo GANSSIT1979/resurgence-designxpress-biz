@@ -1,0 +1,26 @@
+/// Add this relation field inside your existing User model:
+///
+/// activityLogs ActivityLog[] @relation("ActivityActor")
+
+model ActivityLog {
+  id               String    @id @default(cuid())
+  actorId          String?
+  actor            User?     @relation("ActivityActor", fields: [actorId], references: [id], onDelete: SetNull)
+  actorEmail       String
+  actorDisplayName String?
+  actorRole        UserRole?
+  action           String
+  resource         String
+  resourceId       String?
+  targetLabel      String?
+  metadataJson     String?
+  ipAddress        String?
+  userAgent        String?
+  createdAt        DateTime  @default(now())
+
+  @@index([actorId, createdAt])
+  @@index([actorEmail, createdAt])
+  @@index([actorRole, createdAt])
+  @@index([resource, createdAt])
+  @@index([action, createdAt])
+}

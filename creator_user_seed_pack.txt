@@ -1,0 +1,18 @@
+CREATOR USER SEED PACK
+
+PLAIN LOGIN REFERENCE
+Jake Anilao              | jake.anilao       | Jake@2026Resurgence!
+Joshua Dollente          | joshua.dollente   | Joshua@2026Resurgence!
+Gabriel Dimalanta        | gabriel.dimalanta | Gabriel@2026Resurgence!
+Angelo Deciembre         | angelo.deciembre  | Angelo@2026Resurgence!
+Marlon Villamin Facundo  | marlon.facundo    | Marlon@2026Resurgence!
+
+FILES INCLUDED
+- creator_user_seeds.json
+- creator_user_seeds_postgres.sql
+- creator_user_seeds_sqlite.sql
+
+NOTES
+- Password hashes already use the same scrypt format as the password utility.
+- Replace the .local emails with real emails before production.
+- Force password reset on first login if possible.

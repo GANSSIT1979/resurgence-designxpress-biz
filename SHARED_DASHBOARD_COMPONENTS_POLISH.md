@@ -1,20 +1,17 @@
 # Shared Dashboard Components Polish
 
-Replace:
-- `src/components/CrudManager.tsx` or `src/components/crud-manager.tsx`
-- `src/components/ChartCard.tsx` or `src/components/chart-card.tsx`
-- `src/components/DataTable.tsx` or `src/components/data-table.tsx`
+Updated: 2026-04-16
 
-Notes:
-- file names in your project may be lowercase; match the import path actually used
-- these versions are styled to match the premium dashboard shell
-- `CrudManager` supports common config props for endpoint, fields, columns, and defaults
-- `ChartCard` supports bar, area, and line chart styles
-- `DataTable` supports `rows` or `items`
+## Purpose
 
-After replacing files:
+This note tracks the shared component pass for CRUD tables, chart cards, and dashboard data presentation.
 
-```powershell
-Remove-Item -Recurse -Force .next -ErrorAction SilentlyContinue
-npm run dev
-```
+## Current State
+
+- shared dashboard components are still part of the active app
+- styling and reuse are no longer the main blocker; schema and typing repairs are
+
+## Canonical Docs
+
+- `docs/ARCHITECTURE.md`
+- `docs/ROADMAP.md`

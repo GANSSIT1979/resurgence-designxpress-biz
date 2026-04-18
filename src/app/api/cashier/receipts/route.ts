@@ -1,38 +1,87 @@
-import { NextRequest } from "next/server";
-import { Role } from "@prisma/client";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { fail, ok, parseNumber, parseOptionalDate, requireApiRole } from "@/lib/api-utils";
+import { receiptSchema } from "@/lib/validation";
+import { logActivity } from "@/lib/audit";
 
-export async function GET(request: NextRequest) {
-  const auth = await requireApiRole(request, [Role.CASHIER, Role.SYSTEM_ADMIN]);
-  if (auth.error) return auth.error;
-
-  const items = await db.receipt.findMany({
-    orderBy: { createdAt: "desc" },
-  });
-
-  return ok({ items });
+function serializeReceipt(item: any) {
+  return {
+    ...item,
+    createdAt: item.createdAt?.toISOString?.() ?? null,
+    updatedAt: item.updatedAt?.toISOString?.() ?? null,
+    issuedAt: item.issuedAt?.toISOString?.() ?? null,
+  };
 }
 
-export async function POST(request: NextRequest) {
-  const auth = await requireApiRole(request, [Role.CASHIER, Role.SYSTEM_ADMIN]);
-  if (auth.error) return auth.error;
+function toDate(value: unknown) {
+  if (!value || typeof value !== "string") return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
 
-  const body = await request.json().catch(() => null);
-  if (!body || typeof body !== "object") return fail("Invalid request body.", 400);
+export async function GET() {
+  try {
+    const items = await db.receipt.findMany({
+      orderBy: [{ issuedAt: "desc" }, { createdAt: "desc" }],
+    });
 
-  const invoiceId = String(body.invoiceId || "").trim();
-  if (!invoiceId) return fail("Invoice ID is required.", 400);
+    return NextResponse.json({ items: items.map(serializeReceipt) });
+  } catch (error) {
+    console.error("GET /api/cashier/receipts error:", error);
+    return NextResponse.json({ items: [] }, { status: 200 });
+  }
+}
 
-  const item = await db.receipt.create({
-    data: {
-      number: body.number ? String(body.number) : null,
-      invoiceId,
-      amount: parseNumber(body.amount, 0),
-      issuedAt: parseOptionalDate(body.issuedAt) || new Date(),
-      notes: body.notes ? String(body.notes) : null,
-    },
-  });
+export async function POST(request: Request) {
+  try {
+    const body = await request.json().catch(() => null);
+    const parsed = receiptSchema.safeParse(body);
 
-  return ok({ item }, 201);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid receipt payload." },
+        { status: 400 }
+      );
+    }
+
+    const amount = Number(parsed.data.amount || 0);
+
+    const item = await db.receipt.create({
+      data: {
+        receiptNumber: parsed.data.receiptNumber,
+        invoiceId: parsed.data.invoiceId || null,
+        transactionId: parsed.data.transactionId || null,
+        companyName: parsed.data.companyName,
+        receivedFrom: parsed.data.receivedFrom,
+        amount,
+        paymentMethod: parsed.data.paymentMethod,
+        issuedAt: toDate(parsed.data.issuedAt) || new Date(),
+        notes: parsed.data.notes || null,
+      },
+    });
+
+    await logActivity({
+      request,
+      action: "RECEIPT_CREATED",
+      resource: "receipt",
+      resourceId: item.id,
+      targetLabel: item.receiptNumber,
+      metadata: {
+        receiptNumber: item.receiptNumber,
+        invoiceId: item.invoiceId,
+        transactionId: item.transactionId,
+        companyName: item.companyName,
+        receivedFrom: item.receivedFrom,
+        amount: item.amount,
+        paymentMethod: item.paymentMethod,
+      },
+    });
+
+    return NextResponse.json({ item: serializeReceipt(item) }, { status: 201 });
+  } catch (error) {
+    console.error("POST /api/cashier/receipts error:", error);
+    return NextResponse.json(
+      { error: "Unable to create receipt." },
+      { status: 400 }
+    );
+  }
 }

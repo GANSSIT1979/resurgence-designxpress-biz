@@ -7,12 +7,18 @@ import { StatusBadge } from "@/components/status-badge";
 export const dynamic = "force-dynamic";
 
 export default async function AdminGalleryPage() {
-  const media = await db.galleryMedia.findMany({
+  const rawItems = await db.galleryMedia.findMany({
     take: 100,
     orderBy: { createdAt: "desc" },
   });
 
-  const featured = media.filter((item) => Boolean(item.featured)).length;
+  const media = rawItems.map((item) => ({
+    ...item,
+    createdAt: item.createdAt?.toISOString?.() ?? String(item.createdAt ?? ""),
+    updatedAt: item.updatedAt?.toISOString?.() ?? null,
+  }));
+
+  const featured = rawItems.filter((item) => Boolean(item.featured)).length;
 
   return (
     <DashboardPageOrchestrator
@@ -24,6 +30,7 @@ export default async function AdminGalleryPage() {
         { href: "/admin/gallery", label: "Gallery", exact: true, count: media.length },
         { href: "/admin/sponsor-submissions", label: "Applications" },
         { href: "/admin/inquiries", label: "Inquiries" },
+        { href: "/admin/settings", label: "Settings" },
       ]}
       actions={
         <Link href="/admin" className="button button-secondary button-small">
@@ -53,6 +60,8 @@ export default async function AdminGalleryPage() {
         title="Gallery Media"
         subtitle="Manage images, captions, descriptions, and featured media for the public website."
         endpoint="/api/admin/gallery"
+        savedViewScope="/api/admin/gallery"
+        initialItems={media}
         columns={[
           { key: "title", label: "Title" },
           { key: "caption", label: "Caption" },
@@ -64,9 +73,15 @@ export default async function AdminGalleryPage() {
           { name: "caption", label: "Caption" },
           { name: "description", label: "Description", type: "textarea" },
           { name: "image", label: "Image", type: "image" },
-          { name: "featured", label: "Featured", type: "select", options: ["true", "false"] },
+          {
+            name: "featured",
+            label: "Featured",
+            type: "select",
+            options: ["true", "false"],
+          },
         ]}
         emptyMessage="No gallery media is available yet."
+        statusField="featured"
       />
     </DashboardPageOrchestrator>
   );

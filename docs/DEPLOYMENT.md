@@ -1,106 +1,76 @@
 # DEPLOYMENT
 
-## Supported Targets
+Updated: 2026-04-16
+
+## Recommended Production Baseline
+
+- Node.js 20.x
+- PostgreSQL
+- Prisma prepared from `prisma/schema.template.prisma`
+- strong `AUTH_SECRET`
+- object storage for uploads instead of local disk
+
+## Required Environment Variables
+
+```env
+PRISMA_DB_PROVIDER=postgresql
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DB?schema=public"
+AUTH_SECRET="use-a-long-random-secret"
+NEXT_PUBLIC_SITE_URL="https://your-domain.example"
+
+OPENAI_API_KEY=""
+OPENAI_WORKFLOW_ID=""
+OPENAI_WORKFLOW_VERSION=""
+OPENAI_WEBHOOK_SECRET=""
+OPENAI_DEFAULT_MODEL="gpt-4.1-mini"
+```
+
+## Build Steps
+
+```bash
+npm install
+npm run prisma:generate
+npm run build
+```
+
+## Deployment Readiness Note
+
+The documentation reflects the intended deployment path, but the repository is not yet fully deployment-ready. As of 2026-04-16:
+
+- `npx tsc --noEmit` still fails in legacy modules
+- `npm run build` stops first on the missing `@/lib/sponsor-server` helper
+
+Treat deployment as blocked until those code issues are repaired.
+
+## AI Support Production Steps
+
+1. Publish the OpenAI Agent Builder workflow
+2. Save the workflow ID to `OPENAI_WORKFLOW_ID`
+3. Optionally pin a deployed version in `OPENAI_WORKFLOW_VERSION`
+4. Create an OpenAI project webhook for `/api/openai/webhook`
+5. Save the signing secret to `OPENAI_WEBHOOK_SECRET`
+6. Run:
+
+```bash
+npm run support:verify -- --base-url=https://your-domain.example --webhook-secret=whsec_...
+```
+
+## Platform Notes
+
+- `/public/uploads` is acceptable for local work, not serious production storage
+- Prisma commands should always go through the npm scripts so the prepared schema stays in sync
+- use a managed PostgreSQL service for production
+
+## Recommended Hosts
 
 - Vercel
 - Railway
 - Render
-- Docker
-- VPS or custom Node hosting
+- Docker or VPS hosting
 
-## Production Basics
+## Before You Cut Over
 
-Required production steps:
-
-1. set production environment variables
-2. point database to PostgreSQL
-3. generate Prisma Client
-4. run migrations or schema deployment
-5. build and start the app
-
-## Environment Baseline
-
-Required or commonly used variables:
-
-- `DATABASE_URL`
-- `AUTH_SECRET`
-- `NEXT_PUBLIC_SITE_URL`
-- `PRISMA_DB_PROVIDER`
-- optional AI keys and webhooks
-
-See [CONFIGURATION.md](sandbox:/mnt/data/resurgence-docs/CONFIGURATION.md)
-
-## Vercel
-
-Typical flow:
-
-1. push repository to GitHub
-2. import project into Vercel
-3. configure environment variables
-4. connect PostgreSQL or external database
-5. build and deploy
-
-Important:
-- make sure build scripts run Prisma generate
-- if using file uploads, do not rely on ephemeral filesystem storage for long-term persistence
-
-## Railway / Render
-
-Typical flow:
-
-1. connect repository
-2. provision PostgreSQL
-3. set environment variables
-4. run build command
-5. run start command
-
-Recommended:
-- use persistent object storage for uploaded media in production
-- keep `public/uploads` only for local or temporary workflows unless you add persistent disk support
-
-## Docker
-
-Typical pattern:
-
-- install dependencies
-- generate Prisma Client
-- build Next.js app
-- run production server
-
-Make sure:
-- `DATABASE_URL` is injected at runtime
-- Prisma client is generated during build or container startup
-- migrations are handled intentionally
-
-## Release Checklist
-
-- build passes
-- Prisma generate passes
-- schema matches generated client
-- login works
-- admin dashboard loads
-- cashier dashboard loads
-- sponsor dashboard loads
-- support page degrades gracefully if AI is disabled
-- uploads are either persistent or intentionally limited
-
-## Production Storage Guidance
-
-Local:
-- `public/uploads`
-
-Production:
-- prefer object storage such as S3-compatible storage, Cloudflare R2, or similar
-
-## Post-Deployment Validation
-
-Verify:
-- homepage
-- login
-- protected routes
-- contact and sponsor apply forms
-- admin overview
-- cashier overview
-- sponsor overview
-- upload route
-- support route
+- finish the current build stabilization backlog
+- replace demo secrets and demo accounts
+- verify support routes in staging
+- verify sponsor, cashier, and admin critical paths in staging

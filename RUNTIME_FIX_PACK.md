@@ -1,20 +1,18 @@
 # Runtime Fix Pack
 
-Replace:
+Updated: 2026-04-16
 
-- `src/lib/auth.ts`
-- `src/lib/ai/resurgence-agent.ts`
+## Purpose
 
-Fixes included:
-- adds `getApiUser`
-- adds `hashPassword`
-- keeps sponsorId available on auth user objects
-- removes unsupported `reasoning.effort` model parameter from the Agents SDK config
-- returns cleaner runtime errors from the AI route
+This note represents the runtime cleanup pass that targeted auth helpers and support runtime behavior.
 
-After replacing files:
+## Current State
 
-```powershell
-Remove-Item -Recurse -Force .next -ErrorAction SilentlyContinue
-npm run dev
-```
+- runtime cleanup from earlier passes remains reflected in the active codebase
+- newer AI support notes supersede the older partial-runtime notes
+
+## Canonical Docs
+
+- `docs/API.md`
+- `docs/AI_SUPPORT_PRODUCTION.md`
+- `docs/TROUBLESHOOTING.md`

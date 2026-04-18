@@ -36,6 +36,9 @@
     ".next/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "resurgence-fullstack",
+    "resurgence-shop-module",
+    "resurgence_webapp"
   ]
 }

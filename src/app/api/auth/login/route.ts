@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  authenticateUser,
-  getDashboardPath,
-  SESSION_COOKIE,
-  signSession,
-} from "../../../../lib/auth";
+import { authenticateUser, getDashboardPath, SESSION_COOKIE, signSession } from "@/lib/auth";
+import { logActivity } from "@/lib/audit";
 
 function safeRedirectTarget(nextValue: string | null, role: string) {
   if (!nextValue || !nextValue.startsWith("/")) {
@@ -35,6 +31,16 @@ export async function POST(req: NextRequest) {
     const user = await authenticateUser(email, password);
 
     if (!user) {
+      await logActivity({
+        request: req,
+        actorEmail: email,
+        actorRole: null,
+        action: "LOGIN_FAILED",
+        resource: "auth",
+        targetLabel: email,
+        metadata: { reason: "INVALID_CREDENTIALS" },
+      });
+
       return NextResponse.json(
         { ok: false, error: "Invalid email or password." },
         { status: 401 }
@@ -63,6 +69,17 @@ export async function POST(req: NextRequest) {
       secure: process.env.NODE_ENV === "production",
       path: "/",
       maxAge: 60 * 60 * 24 * 7,
+    });
+
+    await logActivity({
+      request: req,
+      actorId: user.id,
+      actorEmail: user.email,
+      actorRole: user.role,
+      action: "LOGIN_SUCCESS",
+      resource: "auth",
+      targetLabel: user.email,
+      metadata: { redirectTo },
     });
 
     return res;

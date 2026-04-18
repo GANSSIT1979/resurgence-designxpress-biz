@@ -1,26 +1,37 @@
-import { NextRequest } from "next/server";
-import { Role } from "@prisma/client";
+import { NextResponse } from 'next/server';
 import { db } from "@/lib/db";
-import { ok, requireApiRole } from "@/lib/api-utils";
-import { parsePayload } from "@/lib/parse";
+import { pageContentSchema } from '@/lib/validation';
+import { logActivity } from '@/lib/audit';
 
-export async function GET(request: NextRequest) {
-  const auth = await requireApiRole(request, [Role.SYSTEM_ADMIN]);
-  if (auth.error) return auth.error;
+export async function POST(request: Request) {
+  const body = await request.json().catch(() => null);
+  const parsed = pageContentSchema.safeParse(body);
 
-  const items = await (db as any).contentSection.findMany({
-    orderBy: { createdAt: "desc" }
-  });
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Invalid content payload.' }, { status: 400 });
+  }
 
-  return ok({ items });
+  try {
+    const item = await db.pageContent.create({ data: parsed.data });
+
+    await logActivity({
+      request,
+      action: 'CONTENT_CREATED',
+      resource: 'page-content',
+      resourceId: item.id,
+      targetLabel: item.key,
+      metadata: {
+        key: item.key,
+        title: item.title,
+        subtitle: item.subtitle,
+        ctaLabel: item.ctaLabel,
+        ctaHref: item.ctaHref,
+      },
+    });
+
+    return NextResponse.json({ item }, { status: 201 });
+  } catch {
+    return NextResponse.json({ error: 'Content key must be unique.' }, { status: 400 });
+  }
 }
 
-export async function POST(request: NextRequest) {
-  const auth = await requireApiRole(request, [Role.SYSTEM_ADMIN]);
-  if (auth.error) return auth.error;
-
-  const body = await request.json();
-  const data = parsePayload(body);
-  const item = await (db as any).contentSection.create({ data });
-  return ok({ item });
-}

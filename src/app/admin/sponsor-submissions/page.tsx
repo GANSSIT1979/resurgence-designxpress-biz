@@ -7,15 +7,24 @@ import { StatusBadge } from "@/components/status-badge";
 export const dynamic = "force-dynamic";
 
 export default async function AdminSponsorSubmissionsPage() {
-  const items = await db.sponsorApplication.findMany({
+  const rawItems = await db.sponsorApplication.findMany({
     take: 100,
     orderBy: { createdAt: "desc" },
   });
 
-  const reviewCount = items.filter((item) =>
+  const items = rawItems.map((item) => ({
+    ...item,
+    createdAt: item.createdAt?.toISOString?.() ?? String(item.createdAt ?? ""),
+    updatedAt: item.updatedAt?.toISOString?.() ?? null,
+  }));
+
+  const reviewCount = rawItems.filter((item) =>
     ["NEW", "UNDER_REVIEW"].includes(String(item.status || "").toUpperCase())
   ).length;
-  const approved = items.filter((item) => String(item.status || "").toUpperCase() === "APPROVED").length;
+
+  const approvedCount = rawItems.filter(
+    (item) => String(item.status || "").toUpperCase() === "APPROVED"
+  ).length;
 
   return (
     <DashboardPageOrchestrator
@@ -24,9 +33,15 @@ export default async function AdminSponsorSubmissionsPage() {
       subtitle="Review incoming sponsor applications, update statuses, and keep the approval pipeline visible."
       tabs={[
         { href: "/admin", label: "Overview" },
-        { href: "/admin/sponsor-submissions", label: "Applications", exact: true, count: items.length },
+        {
+          href: "/admin/sponsor-submissions",
+          label: "Applications",
+          exact: true,
+          count: items.length,
+        },
         { href: "/admin/gallery", label: "Gallery" },
         { href: "/admin/inquiries", label: "Inquiries" },
+        { href: "/admin/settings", label: "Settings" },
       ]}
       actions={
         <Link href="/admin" className="button button-small">
@@ -44,7 +59,7 @@ export default async function AdminSponsorSubmissionsPage() {
             <div className="dashboard-stat-label">In review</div>
           </div>
           <div className="dashboard-stat-card">
-            <div className="dashboard-stat-value">{approved}</div>
+            <div className="dashboard-stat-value">{approvedCount}</div>
             <div className="dashboard-stat-label">Approved</div>
           </div>
           <div className="dashboard-stat-card">
@@ -60,6 +75,8 @@ export default async function AdminSponsorSubmissionsPage() {
         title="Sponsor Applications"
         subtitle="Maintain sponsor application records and update their current review state."
         endpoint="/api/sponsor-applications"
+        savedViewScope="/api/sponsor-applications"
+        initialItems={items}
         columns={[
           { key: "sponsorName", label: "Sponsor Name" },
           { key: "company", label: "Company" },
@@ -83,6 +100,7 @@ export default async function AdminSponsorSubmissionsPage() {
           { name: "message", label: "Message", type: "textarea" },
         ]}
         emptyMessage="No sponsor applications are available yet."
+        statusField="status"
       />
     </DashboardPageOrchestrator>
   );

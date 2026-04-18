@@ -1,103 +1,64 @@
 # INSTALL
 
-## System Requirements
+Updated: 2026-04-16
 
-Recommended:
+## Requirements
 
 - Node.js 20.x
 - npm 10+
-- Windows PowerShell, macOS Terminal, or Linux shell
 - SQLite for local development
-- PostgreSQL for production deployment
+- PostgreSQL for production deployments
+- OpenAI credentials only if you are enabling production AI support
 
 ## Install Steps
 
-### 1. Clone or extract the project
-
-```bash
-git clone <your-repository-url>
-cd resurgence-fullstack
-```
-
-### 2. Copy environment variables
-
 ```bash
 cp .env.example .env
-```
-
-On Windows PowerShell:
-
-```powershell
-Copy-Item .env.example .env
-```
-
-### 3. Install dependencies
-
-```bash
 npm install
-```
-
-### 4. Generate Prisma Client
-
-```bash
 npm run prisma:generate
-```
-
-### 5. Push schema to the local database
-
-```bash
 npm run db:push
-```
-
-### 6. Seed demo data
-
-```bash
 npm run db:seed
-```
-
-### 7. Start development server
-
-```bash
 npm run dev
 ```
 
-### 8. Open the site
-
-- http://localhost:3000
-
-## Recommended Node Version
-
-Use Node 20.x for best compatibility. If you are currently on Node 24 and see warnings only, the app may still work, but Node 20 is the safer supported baseline.
-
-## Windows Notes
-
-If `prisma` or `tsx` is not recognized:
-
-- run `npm install` first
-- use `npx prisma generate`
-- use `npx tsx prisma/seed.ts`
-
-If PowerShell blocks scripts:
+Windows PowerShell equivalent:
 
 ```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-```
-
-## If Prisma Client Fails to Initialize
-
-Run:
-
-```bash
-npm run prisma:generate
-```
-
-Then restart the dev server.
-
-## If You Changed the Schema
-
-Always run:
-
-```bash
+Copy-Item .env.example .env
+npm install
 npm run prisma:generate
 npm run db:push
+npm run db:seed
+npm run dev
 ```
+
+## First Local Checks
+
+- Open `http://localhost:3000`
+- Open `http://localhost:3000/login`
+- Open `http://localhost:3000/support`
+- Open `http://localhost:3000/api/health`
+
+## Demo Accounts
+
+- System Admin: `admin@resurgence.local` / `Admin123!`
+- Cashier: `cashier@resurgence.local` / `Cashier123!`
+- Sponsor: `sponsor@resurgence.local` / `Sponsor123!`
+- Staff: `staff@resurgence.local` / `Staff123!`
+- Partner: `partner@resurgence.local` / `Partner123!`
+
+## Optional AI Support Setup
+
+If you are preparing the AI customer service flow, also set:
+
+```env
+OPENAI_API_KEY=""
+OPENAI_WORKFLOW_ID=""
+OPENAI_WORKFLOW_VERSION=""
+OPENAI_WEBHOOK_SECRET=""
+OPENAI_DEFAULT_MODEL="gpt-4.1-mini"
+```
+
+## Important Current Note
+
+The repository can be installed and run locally, but the entire codebase is not fully repaired yet. As of 2026-04-16, some legacy modules still fail full typecheck and production build. See `TROUBLESHOOTING.md` for the active blockers.

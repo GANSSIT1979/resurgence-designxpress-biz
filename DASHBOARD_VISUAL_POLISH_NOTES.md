@@ -1,26 +1,17 @@
-# Dashboard Visual Polish Pack
+# Dashboard Visual Polish Notes
 
-This pack gives sponsor, admin, and cashier areas one consistent premium design language.
+Updated: 2026-04-16
 
-Included:
-- full replacement `src/app/globals.css`
-- upgraded `src/components/dashboard-shell.tsx`
+## Purpose
 
-Highlights:
-- premium glassmorphism sidebar and hero card
-- stronger KPI card treatment
-- cleaner tables, forms, and CRUD surfaces
-- consistent spacing and typography
-- responsive dashboard behavior
-- shared support/contact actions in dashboard hero
+This note captures the UI pass that pushed the dashboards toward a more premium shared design language.
 
-Replace:
-- `src/app/globals.css`
-- `src/components/dashboard-shell.tsx`
+## Current State
 
-Then restart:
+- shared dashboard styling remains part of the active application
+- visual polish is secondary to the current build stabilization work
 
-```powershell
-Remove-Item -Recurse -Force .next -ErrorAction SilentlyContinue
-npm run dev
-```
+## Canonical Docs
+
+- `docs/ARCHITECTURE.md`
+- `docs/ROADMAP.md`

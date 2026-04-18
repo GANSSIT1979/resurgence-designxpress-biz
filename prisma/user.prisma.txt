@@ -1,0 +1,66 @@
+// Patch your existing Prisma schema with the following additions/adaptations.
+
+// 1) Extend UserRole enum if CREATOR is not present yet.
+// enum UserRole {
+//   SYSTEM_ADMIN
+//   CASHIER
+//   SPONSOR
+//   PARTNER
+//   STAFF
+//   CREATOR
+// }
+
+// 2) Extend your existing User model.
+// Add these fields if they do not exist yet:
+//
+// username         String?         @unique
+// creatorProfileId String?         @unique
+// partnerId        String?
+// creatorProfile   CreatorProfile? @relation(fields: [creatorProfileId], references: [id])
+// partner          Partner?        @relation(fields: [partnerId], references: [id])
+
+// 3) Extend your existing CreatorProfile model.
+// Add these fields if they do not exist yet:
+//
+// contactNumber        String?
+// address              String?
+// dateOfBirth          String?
+// jobDescription       String?
+// position             String?
+// height               String?
+//
+// facebookPage         String?
+// facebookFollowers    String?
+// tiktokPage           String?
+// tiktokFollowers      String?
+// instagramPage        String?
+// instagramFollowers   String?
+// youtubePage          String?
+// youtubeFollowers     String?
+//
+// trendingVideoUrl     String?
+// galleryJson          String?
+// videoLinksJson       String?
+//
+// contentCategories    String?
+// audienceProfile      String?
+// brandFocus           String?
+// creatorStyle         String?
+
+// 4) Extend your existing Partner model.
+// Add these fields if they do not exist yet:
+//
+// contactName          String?
+// contactEmail         String?
+// contactPhone         String?
+// address              String?
+// websiteUrl           String?
+// brandStory           String?
+// creatorFocus         String?
+// socialLinksJson      String?
+// galleryJson          String?
+// videoLinksJson       String?
+
+// Then run:
+// npm run prisma:generate
+// npm run db:push

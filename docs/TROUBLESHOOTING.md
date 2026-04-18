@@ -1,105 +1,62 @@
 # TROUBLESHOOTING
 
+Updated: 2026-04-16
+
 ## Prisma Client Not Initialized
 
-Error:
-- `@prisma/client did not initialize yet`
+Run:
 
-Fix:
 ```bash
 npm run prisma:generate
 ```
 
 Then restart the dev server.
 
-## Wrong Prisma Delegate Name
+## Build Stops On `@/lib/sponsor-server`
 
-Example error:
-- `Cannot read properties of undefined (reading 'findMany')`
+Current known build stop:
 
-Cause:
-- code uses a model delegate that does not exist in the generated client
+```text
+Module not found: Can't resolve '@/lib/sponsor-server'
+```
 
-Common example:
-- wrong: `db.sponsorSubmission`
-- correct: `db.sponsorApplication`
+This is a real repository blocker in `src/app/api/sponsor/profile/route.ts`. Restore or replace that helper before treating the build as deployment-ready.
 
-## Build Error: Cannot Resolve Alias
+## Typecheck Reports Many Legacy Errors
 
-Error:
-- `Module not found: Can't resolve '@/lib/db'`
+As of 2026-04-16, `npx tsc --noEmit` still reports legacy module drift, especially around:
 
-Fix:
-- ensure `tsconfig.json` maps `@/*` to `./src/*`
-- or convert affected imports to relative paths
-- keep project structure consistent under `src/`
+- sponsor profile assumptions
+- older cashier field names
+- content and gallery delegate mismatches
+- creator typing mismatches
 
-## Optional AI Build Errors
+Use the Prisma schema and active routes as the source of truth while repairing those files.
 
-Error:
-- `Can't resolve '@openai/agents'`
+## OpenAI Support Returns Not Configured
 
-Fix:
-- either install the optional package stack and align Zod versions
-- or keep the guarded optional-AI build path so the rest of the app runs without AI
+Check:
 
-## Unsupported AI Model Parameter
+- `OPENAI_API_KEY`
+- `OPENAI_WORKFLOW_ID`
+- `OPENAI_WEBHOOK_SECRET`
 
-Error:
-- `Unsupported parameter: reasoning.effort`
+If you also want to pin a release, set `OPENAI_WORKFLOW_VERSION`.
 
-Fix:
-- remove unsupported model parameters from the AI agent config
-- keep the model configuration conservative unless confirmed supported
+## Webhook Signature Fails
 
-## Login Loop
+- confirm the webhook targets `/api/openai/webhook`
+- confirm the secret stored in `OPENAI_WEBHOOK_SECRET` matches the OpenAI project webhook
+- rerun the verifier with `--webhook-secret=whsec_...`
 
-Possible causes:
-- stale cookies
-- login route not setting cookie correctly
-- middleware unable to verify cookie
-- client-side redirect racing cookie availability
+## Support Route Classification Looks Wrong
 
-Fixes:
-- clear localhost cookies
-- use full navigation after login if needed
-- verify auth helper compatibility with middleware runtime
+Use the quick verification prompts in `/support` or run:
 
-## JSON Parse Error on res.json()
-
-Error:
-- `Unexpected end of JSON input`
-
-Cause:
-- API route returned empty or invalid JSON
-
-Fix:
-- always return JSON from routes expected by the client
-- use safer client parsers for optional/empty responses
-
-## CSS Suddenly Breaks Near Bottom of File
-
-Cause:
-- broken nested `@media` blocks
-- missing closing braces
-
-Fix:
-- validate the bottom of `globals.css`
-- prefer replacing with a known-good finalized version if needed
-
-## Windows Install Issues
-
-If `prisma` is not recognized:
 ```bash
-npx prisma generate
+npm run support:verify -- --base-url=http://localhost:3000
 ```
 
-If `tsx` is not recognized:
-```bash
-npx tsx prisma/seed.ts
-```
+## Session Or Login Looks Stale
 
-If PowerShell blocks execution:
-```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-```
+Clear cookies for the local domain, then sign in again.

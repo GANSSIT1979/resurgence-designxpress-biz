@@ -1,7 +1,14 @@
 import { SectionTitle } from "@/components/section-title";
 import { SupportChatWidget } from "@/components/support-chat-widget";
+import { getSupportRouteStatus, supportVerificationScenarios } from "@/lib/openai-support";
+import { getPublicSettings } from "@/lib/settings";
 
-export default function SupportPage() {
+export default async function SupportPage() {
+  const [settings, status] = await Promise.all([
+    getPublicSettings(),
+    Promise.resolve(getSupportRouteStatus()),
+  ]);
+
   return (
     <div className="page-shell">
       <div className="container">
@@ -18,10 +25,11 @@ export default function SupportPage() {
             <div className="card">
               <div className="card-title">What the support desk handles</div>
               <ul className="feature-list">
-                <li>Sponsorship package questions</li>
-                <li>Partnership and basketball event collaboration inquiries</li>
-                <li>Custom jerseys, uniforms, and merchandise support</li>
-                <li>General follow-up and business coordination</li>
+                {supportVerificationScenarios.map((category) => (
+                  <li key={category.key}>
+                    <strong>{category.label}:</strong> {category.description}
+                  </li>
+                ))}
               </ul>
             </div>
 
@@ -36,12 +44,21 @@ export default function SupportPage() {
             </div>
 
             <div className="card">
-              <div className="card-title">Environment readiness</div>
+              <div className="card-title">Production readiness</div>
               <ul className="feature-list">
-                <li>OPENAI_API_KEY</li>
-                <li>OPENAI_WORKFLOW_ID</li>
-                <li>OPENAI_WEBHOOK_SECRET</li>
-                <li>NEXT_PUBLIC_SITE_URL</li>
+                <li>{status.chatkitReady ? "ChatKit workflow configured" : "ChatKit workflow still needs publishing"}</li>
+                <li>{status.webhookReady ? "Webhook signing secret configured" : "Webhook signing secret still missing"}</li>
+                <li>{status.hasWorkflowVersion ? "Workflow version pinned in env" : "Workflow version will use latest deployed build"}</li>
+                <li>Team routing contact: {settings.contactEmail}</li>
+              </ul>
+            </div>
+
+            <div className="card">
+              <div className="card-title">Required routes for production</div>
+              <ul className="feature-list">
+                <li>`/support` for the public support desk</li>
+                <li>`/api/chatkit/session` for workflow readiness and ChatKit session creation</li>
+                <li>`/api/openai/webhook` for signed OpenAI webhook delivery</li>
               </ul>
             </div>
           </div>

@@ -17,15 +17,26 @@ export async function PUT(request: NextRequest, { params }: Params) {
   const auth = await requireApiRole(request, allowedRoles);
   if (auth.error) return auth.error;
 
+  const savedViewDelegate = (db as unknown as {
+    savedView?: {
+      findUnique: (args: { where: { id: string } }) => Promise<any>;
+      update: (args: { where: { id: string }; data: Record<string, unknown> }) => Promise<any>;
+    };
+  }).savedView;
+
+  if (!savedViewDelegate?.findUnique || !savedViewDelegate?.update) {
+    return fail("Saved views are not enabled in the database yet.", 400);
+  }
+
   const { id } = await params;
-  const existing = await db.savedView.findUnique({ where: { id } });
+  const existing = await savedViewDelegate.findUnique({ where: { id } });
   if (!existing) return fail("Saved view not found.", 404);
   if (existing.userId !== auth.user!.id) return fail("Forbidden.", 403);
 
   const body = await request.json().catch(() => null);
   if (!body || typeof body !== "object") return fail("Invalid request body.", 400);
 
-  const item = await db.savedView.update({
+  const item = await savedViewDelegate.update({
     where: { id },
     data: {
       name: body.name ? String(body.name) : undefined,
@@ -43,11 +54,22 @@ export async function DELETE(request: NextRequest, { params }: Params) {
   const auth = await requireApiRole(request, allowedRoles);
   if (auth.error) return auth.error;
 
+  const savedViewDelegate = (db as unknown as {
+    savedView?: {
+      findUnique: (args: { where: { id: string } }) => Promise<any>;
+      delete: (args: { where: { id: string } }) => Promise<any>;
+    };
+  }).savedView;
+
+  if (!savedViewDelegate?.findUnique || !savedViewDelegate?.delete) {
+    return fail("Saved views are not enabled in the database yet.", 400);
+  }
+
   const { id } = await params;
-  const existing = await db.savedView.findUnique({ where: { id } });
+  const existing = await savedViewDelegate.findUnique({ where: { id } });
   if (!existing) return fail("Saved view not found.", 404);
   if (existing.userId !== auth.user!.id) return fail("Forbidden.", 403);
 
-  await db.savedView.delete({ where: { id } });
+  await savedViewDelegate.delete({ where: { id } });
   return ok({ deleted: true });
 }

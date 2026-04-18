@@ -1,80 +1,47 @@
 # ADMIN GUIDE
 
-## Admin Role Scope
+Updated: 2026-04-16
+
+## Admin Scope
 
 System Admin users oversee:
 
-* sponsor applications
-* sponsor records
-* creators
-* gallery and media
-* inquiries
-* users and roles
-* settings
-* reports
+- sponsor applications and sponsor records
+- creator profiles
+- gallery and media events
+- inquiries and support lead follow-up
+- users and roles
+- settings and reports
+- revenue monitoring and finance visibility
 
-## Core Admin Pages
+## Core Admin Areas
 
-Typical entry points:
+- `/admin`
+- `/admin/users`
+- `/admin/inquiries`
+- `/admin/gallery`
+- `/admin/creator-network`
+- `/admin/settings`
+- `/admin/reports`
 
-* `/admin`
-* `/admin/sponsor-submissions`
-* `/admin/inquiries`
-* `/admin/gallery`
+## Daily Admin Checklist
 
-## Reviewing Sponsor Applications
+1. Review new inquiries and support leads
+2. Review sponsor applications
+3. Check settings and contact values
+4. Review report snapshots and finance summaries
+5. Review any OpenAI support webhook failures if production AI support is enabled
 
-The current schema uses `SponsorApplication`.
+## Support Oversight
 
-Statuses:
+The support desk can create:
 
-* `NEW`
-* `UNDER\_REVIEW`
-* `APPROVED`
-* `DECLINED`
+- conversation history in Prisma
+- lead capture records
+- inquiry records
+- email queue records
+- admin notifications
 
-Use the admin submissions page to:
+## Current Caveat
 
-* review inbound records
-* update status
-* keep the approval pipeline current
-
-## Managing Inquiries
-
-The current inquiry statuses are:
-
-* `NEW`
-* `REVIEWED`
-* `CLOSED`
-
-Use the admin inquiries page to:
-
-* review messages
-* update statuses
-* maintain follow-up visibility
-
-## Managing Gallery Assets
-
-Use gallery CMS to:
-
-* upload or assign image paths
-* set titles and captions
-* mark featured assets
-* keep homepage-ready visuals current
-
-## Operational Advice
-
-After any large UI or schema update:
-
-1. regenerate Prisma Client
-2. reload the admin dashboard
-3. confirm the overview page loads without missing delegate errors
-4. confirm submissions, inquiries, and gallery pages load
-
-## Admin Safety Notes
-
-* do not rename Prisma delegates in code casually
-* keep schema and generated client aligned
-* prefer shared components over page-level one-off UI changes
-* validate role-based access on admin-only routes
-
+Some admin modules still sit inside the broader stabilization backlog because of older schema assumptions. Use the active Prisma schema and route handlers as the authority while those pages are being repaired.

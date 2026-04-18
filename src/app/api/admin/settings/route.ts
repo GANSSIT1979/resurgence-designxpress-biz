@@ -1,35 +1,75 @@
-import { NextRequest } from "next/server";
-import { Role } from "@prisma/client";
-import { db } from "@/lib/db";
-import { ok, requireApiRole } from "@/lib/api-utils";
+import { NextResponse } from "next/server";
+import { adminSettingsSchema } from "@/lib/validation";
+import { getPublicSettings, upsertAppSettings } from "@/lib/settings";
+import { logActivity, summarizeChanges } from "@/lib/audit";
 
-export async function GET(request: NextRequest) {
-  const auth = await requireApiRole(request, [Role.SYSTEM_ADMIN]);
-  if (auth.error) return auth.error;
+export async function GET() {
+  try {
+    const settings = await getPublicSettings();
+    return NextResponse.json({ settings });
+  } catch (error) {
+    console.error("GET /api/admin/settings error:", error);
 
-  const records = await db.setting.findMany();
-  const settings = Object.fromEntries(
-    records.map((item) => [item.key, typeof item.value === "string" ? item.value : JSON.stringify(item.value, null, 2)])
-  );
-  return ok({ settings });
+    return NextResponse.json(
+      {
+        settings: {
+          contactName: "RESURGENCE Team",
+          contactEmail: "support@resurgence.designxpress.biz",
+          contactPhone: "+63 966 405 7004",
+          contactAddress: "Caloocan City, Philippines",
+          adminTitle: "RESURGENCE Admin",
+          adminSubtitle: "Powered by DesignXpress",
+          reportFooter: "RESURGENCE Powered by DesignXpress",
+        },
+      },
+      { status: 200 }
+    );
+  }
 }
 
-export async function POST(request: NextRequest) {
-  const auth = await requireApiRole(request, [Role.SYSTEM_ADMIN]);
-  if (auth.error) return auth.error;
+export async function PUT(request: Request) {
+  const body = await request.json().catch(() => null);
+  const parsed = adminSettingsSchema.safeParse(body);
 
-  const body = await request.json();
-  const settings = body.settings || {};
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Invalid settings payload." },
+      { status: 400 }
+    );
+  }
 
-  await Promise.all(
-    Object.entries(settings).map(([key, value]) =>
-      db.setting.upsert({
-        where: { key },
-        update: { value: String(value) },
-        create: { key, value: String(value) }
-      })
-    )
-  );
+  try {
+    const before = await getPublicSettings();
+    const settings = await upsertAppSettings(parsed.data);
+    const after = { ...before, ...settings };
 
-  return ok({ success: true });
+    await logActivity({
+      request,
+      action: "SETTINGS_UPDATED",
+      resource: "app-setting",
+      targetLabel: "public-admin-settings",
+      metadata: summarizeChanges(
+        before as unknown as Record<string, unknown>,
+        after as unknown as Record<string, unknown>,
+        [
+          "contactName",
+          "contactEmail",
+          "contactPhone",
+          "contactAddress",
+          "adminTitle",
+          "adminSubtitle",
+          "reportFooter",
+        ]
+      ),
+    });
+
+    return NextResponse.json({ settings });
+  } catch (error) {
+    console.error("PUT /api/admin/settings error:", error);
+
+    return NextResponse.json(
+      { error: "Unable to save settings." },
+      { status: 400 }
+    );
+  }
 }
