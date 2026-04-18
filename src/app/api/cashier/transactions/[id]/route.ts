@@ -1,46 +1,31 @@
-import { Decimal, Role, TransactionType } from "@prisma/client";
-import { NextRequest } from "next/server";
-import { db } from "@/lib/db";
-import { ok, requireApiRole } from "@/lib/api-utils";
-import { recalculateInvoice } from "@/lib/invoice";
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { cashierTransactionSchema } from '@/lib/validation';
+import { buildTransactionPayload, serializeTransaction, syncLinkedInvoice } from '@/lib/cashier-api';
 
-export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await requireApiRole(request, [Role.CASHIER, Role.SYSTEM_ADMIN]);
-  if (auth.error) return auth.error;
-
-  const { id } = await params;
-  const existing = await db.cashierTransaction.findUnique({ where: { id } });
-  if (!existing) return Response.json({ error: "Transaction not found" }, { status: 404 });
-
-  const body = await request.json();
-
-  const item = await db.cashierTransaction.update({
-    where: { id },
-    data: {
-      invoiceId: body.invoiceId,
-      type: body.type as TransactionType,
-      amount: new Decimal(Number(body.amount || 0)),
-      reference: body.reference || null,
-      notes: body.notes || null
-    }
-  });
-
-  if (body.invoiceId && body.invoiceId !== existing.invoiceId) {
-    await recalculateInvoice(existing.invoiceId);
-    await recalculateInvoice(body.invoiceId);
-  } else {
-    await recalculateInvoice(existing.invoiceId);
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await params;
+    const existing = await prisma.cashierTransaction.findUnique({ where: { id } });
+    const parsed = cashierTransactionSchema.parse(await request.json());
+    const payload = await buildTransactionPayload(parsed);
+    const item = await prisma.cashierTransaction.update({ where: { id }, data: payload });
+    await syncLinkedInvoice(existing?.invoiceId);
+    await syncLinkedInvoice(item.invoiceId);
+    return NextResponse.json({ item: serializeTransaction(item) });
+  } catch {
+    return NextResponse.json({ error: 'Unable to update transaction.' }, { status: 400 });
   }
-  return ok({ item });
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await requireApiRole(request, [Role.CASHIER, Role.SYSTEM_ADMIN]);
-  if (auth.error) return auth.error;
-
-  const { id } = await params;
-  const existing = await db.cashierTransaction.findUnique({ where: { id } });
-  await db.cashierTransaction.delete({ where: { id } });
-  if (existing) await recalculateInvoice(existing.invoiceId);
-  return ok({ success: true });
+export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await params;
+    const existing = await prisma.cashierTransaction.findUnique({ where: { id } });
+    await prisma.cashierTransaction.delete({ where: { id } });
+    await syncLinkedInvoice(existing?.invoiceId);
+    return NextResponse.json({ ok: true });
+  } catch {
+    return NextResponse.json({ error: 'Unable to delete transaction.' }, { status: 400 });
+  }
 }

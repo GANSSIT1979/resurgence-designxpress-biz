@@ -1,173 +1,118 @@
-import Link from "next/link";
-import { db } from "@/lib/db";
-import { currencyPHP } from "@/lib/format";
-import { ChartCard } from "@/components/chart-card";
-import { DashboardPageOrchestrator } from "@/components/dashboard-page-orchestrator";
-import { EmptyStatePanel } from "@/components/empty-state-panel";
-import { StatusBadge } from "@/components/status-badge";
+import { NotificationCenter } from '@/components/notification-center';
+import { RoleShell } from '@/components/role-shell';
+import { getAutomationInbox } from '@/lib/notifications';
+import { prisma } from '@/lib/prisma';
+import { cashierNavItems, formatCurrency, formatDate } from '@/lib/cashier';
+import { getCurrentSessionUser } from '@/lib/session-server';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
-async function getCashierSnapshot() {
-  try {
-    const [invoices, receipts, transactions] = await Promise.all([
-      db.invoice.findMany({ take: 100, orderBy: { createdAt: "desc" } }),
-      db.receipt.findMany({ take: 100, orderBy: { createdAt: "desc" } }),
-      db.cashierTransaction.findMany({ take: 100, orderBy: { createdAt: "desc" } }),
-    ]);
+export default async function CashierDashboardPage() {
+  const sessionContext = await getCurrentSessionUser();
+  const [invoices, transactions, receipts] = await Promise.all([
+    prisma.invoice.findMany({ orderBy: [{ issueDate: 'desc' }, { createdAt: 'desc' }], take: 5 }),
+    prisma.cashierTransaction.findMany({ orderBy: [{ transactionDate: 'desc' }, { createdAt: 'desc' }], take: 5 }),
+    prisma.receipt.findMany({ orderBy: [{ issuedAt: 'desc' }, { createdAt: 'desc' }], take: 5 }),
+  ]);
 
-    return { invoices, receipts, transactions };
-  } catch (error) {
-    console.error("Cashier snapshot load failed:", error);
-    return null;
-  }
-}
-
-export default async function CashierPage() {
-  const snapshot = await getCashierSnapshot();
-
-  if (!snapshot) {
-    return (
-      <EmptyStatePanel
-        title="Cashier dashboard unavailable"
-        description="The financial module could not load right now. Retry after the database connection is restored."
-      />
-    );
-  }
-
-  const outstanding = snapshot.invoices.reduce((sum, invoice) => {
-    const balance = Number(invoice.balanceDue ?? 0);
-    return sum + (Number.isFinite(balance) ? balance : 0);
-  }, 0);
-
-  const collected = snapshot.transactions
-    .filter((item) => String(item.type || "").toUpperCase() === "COLLECTION")
-    .reduce((sum, item) => sum + Number(item.amount ?? 0), 0);
-
-  const chartData = [
-    { label: "Invoices", value: snapshot.invoices.length },
-    { label: "Receipts", value: snapshot.receipts.length },
-    { label: "Transactions", value: snapshot.transactions.length },
-  ];
+  const today = new Date().toISOString().slice(0, 10);
+  const todayCollections = transactions
+    .filter((item) => item.kind === 'COLLECTION' && item.transactionDate.toISOString().slice(0, 10) === today)
+    .reduce((sum, item) => sum + item.amount, 0);
+  const pendingReceivables = invoices.reduce((sum, item) => sum + item.balanceAmount, 0);
+  const paidInvoices = invoices.filter((item) => item.status === 'PAID').length;
+  const overdueInvoices = invoices.filter((item) => item.status === 'OVERDUE').length;
+  const inbox = sessionContext ? await getAutomationInbox(sessionContext.user.role, sessionContext.user.id, 6) : { notifications: [], emails: [] };
 
   return (
-    <DashboardPageOrchestrator
-      eyebrow="Finance Operations"
-      title="Cash collections and billing visibility"
-      subtitle="Track invoice movement, transaction records, receipts, and collection health from one finance-ready workspace."
-      tabs={[
-        { href: "/cashier", label: "Overview", exact: true },
-        { href: "/cashier/invoices", label: "Invoices", count: snapshot.invoices.length },
-        { href: "/cashier/receipts", label: "Receipts", count: snapshot.receipts.length },
-        { href: "/cashier/reports", label: "Reports" },
-      ]}
-      actions={
-        <>
-          <Link href="/cashier/invoices" className="button button-secondary button-small">
-            Open Invoices
-          </Link>
-          <Link href="/cashier/reports" className="button button-small">
-            View Reports
-          </Link>
-        </>
-      }
-      metrics={
-        <div className="grid-4">
-          <div className="dashboard-stat-card">
-            <div className="dashboard-stat-value">{snapshot.invoices.length}</div>
-            <div className="dashboard-stat-label">Invoices</div>
-          </div>
-          <div className="dashboard-stat-card">
-            <div className="dashboard-stat-value">{snapshot.transactions.length}</div>
-            <div className="dashboard-stat-label">Transactions</div>
-          </div>
-          <div className="dashboard-stat-card">
-            <div className="dashboard-stat-value">{currencyPHP(collected)}</div>
-            <div className="dashboard-stat-label">Collections logged</div>
-          </div>
-          <div className="dashboard-stat-card">
-            <div className="dashboard-stat-value">{currencyPHP(outstanding)}</div>
-            <div className="dashboard-stat-label">Outstanding balance</div>
-          </div>
+    <main>
+      <RoleShell
+        roleLabel="Cashier"
+        title="Collections and Sponsor Billing Overview"
+        description="Manage real invoices, transactions, receipts, and summary finance reporting for RESURGENCE sponsorship operations."
+        navItems={cashierNavItems as any}
+        currentPath="/cashier"
+      >
+        <div className="card-grid grid-4">
+          <div className="panel"><strong>{formatCurrency(todayCollections)}</strong><div className="helper">Today's collections</div></div>
+          <div className="panel"><strong>{formatCurrency(pendingReceivables)}</strong><div className="helper">Outstanding receivables</div></div>
+          <div className="panel"><strong>{paidInvoices}</strong><div className="helper">Paid invoices</div></div>
+          <div className="panel"><strong>{overdueInvoices}</strong><div className="helper">Overdue invoices</div></div>
         </div>
-      }
-    >
-      <div className="grid-2">
-        <ChartCard
-          title="Finance workload"
-          subtitle="Snapshot of invoice, receipt, and transaction volume."
-          data={chartData}
-          type="area"
-          xKey="label"
-          dataKey="value"
-        />
 
-        <section className="card">
-          <div className="card-title">Recent receipts</div>
-          {snapshot.receipts.length ? (
-            <div className="list-stack">
-              {snapshot.receipts.slice(0, 5).map((receipt) => (
-                <div key={receipt.id} className="list-item">
-                  <div>
-                    <strong style={{ display: "block", marginBottom: 6 }}>
-                      {receipt.number || "Receipt"}
-                    </strong>
-                    <div className="muted">{currencyPHP(String(receipt.amount ?? 0))}</div>
-                  </div>
-                  <StatusBadge label="ISSUED" tone="success" />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <EmptyStatePanel
-              title="No receipts issued yet"
-              description="Receipt records will appear here after cashier processing."
-            />
-          )}
-        </section>
-      </div>
-
-      <section className="card">
-        <div className="card-title">Latest invoices</div>
-        {snapshot.invoices.length ? (
-          <div className="table-wrap">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Invoice</th>
-                  <th>Customer</th>
-                  <th>Total</th>
-                  <th>Balance</th>
-                </tr>
-              </thead>
-              <tbody>
-                {snapshot.invoices.slice(0, 6).map((invoice) => (
-                  <tr key={invoice.id}>
-                    <td>{invoice.number || "—"}</td>
-                    <td>{invoice.customerName || "—"}</td>
-                    <td>{currencyPHP(String(invoice.totalAmount ?? 0))}</td>
-                    <td>
-                      <StatusBadge
-                        label={
-                          Number(invoice.balanceDue ?? 0) > 0
-                            ? `DUE ${currencyPHP(String(invoice.balanceDue ?? 0))}`
-                            : "PAID"
-                        }
-                        tone={Number(invoice.balanceDue ?? 0) > 0 ? "warning" : "success"}
-                      />
-                    </td>
+        <div className="card-grid grid-2" style={{ marginTop: 20 }}>
+          <section className="card">
+            <div className="section-kicker">Latest Transactions</div>
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>No.</th>
+                    <th>Company</th>
+                    <th>Amount</th>
+                    <th>Date</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <EmptyStatePanel
-            title="No invoices yet"
-            description="Invoice records will appear here once the cashier module starts processing billings."
+                </thead>
+                <tbody>
+                  {transactions.map((item) => (
+                    <tr key={item.id}>
+                      <td>{item.transactionNumber}</td>
+                      <td>{item.companyName}</td>
+                      <td>{formatCurrency(item.amount)}</td>
+                      <td>{formatDate(item.transactionDate)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section className="card">
+            <div className="section-kicker">Open Invoices</div>
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Invoice</th>
+                    <th>Balance</th>
+                    <th>Status</th>
+                    <th>Due</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {invoices.map((item) => (
+                    <tr key={item.id}>
+                      <td>{item.invoiceNumber}<div className="helper">{item.companyName}</div></td>
+                      <td>{formatCurrency(item.balanceAmount)}</td>
+                      <td>{item.status.replaceAll('_', ' ')}</td>
+                      <td>{formatDate(item.dueDate)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+
+        <div className="card-grid grid-2" style={{ marginTop: 20 }}>
+          <section className="card">
+            <div className="section-kicker">Receipt Activity</div>
+            <p className="section-copy">{receipts.length} receipts are currently recorded in the system. Use the Receipts module to issue and maintain official acknowledgement entries for sponsor payments.</p>
+          </section>
+          <section className="card">
+            <div className="section-kicker">Cashier Workflow</div>
+            <p className="section-copy">Recommended flow: create invoice → record collection or adjustment → issue receipt → review reports. Linked invoice balances update automatically when transactions are posted.</p>
+          </section>
+        </div>
+
+        <div style={{ marginTop: 20 }}>
+          <NotificationCenter
+            title="Finance alerts and automated emails"
+            notifications={inbox.notifications}
+            emails={inbox.emails}
           />
-        )}
-      </section>
-    </DashboardPageOrchestrator>
+        </div>
+      </RoleShell>
+    </main>
   );
 }

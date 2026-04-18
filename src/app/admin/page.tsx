@@ -1,226 +1,118 @@
-import Link from "next/link";
-import { db } from "@/lib/db";
+import { AdminShell } from '@/components/admin-shell';
+import { NotificationCenter } from '@/components/notification-center';
+import { getAutomationInbox } from '@/lib/notifications';
+import { prisma } from '@/lib/prisma';
+import { sponsorshipStats } from '@/lib/resurgence';
+import { getCurrentSessionUser } from '@/lib/session-server';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
-export default async function AdminPage() {
-  const [sponsors, applications, creators, inquiries, users] = await Promise.all([
-    db.sponsor.findMany({ where: { status: "ACTIVE" } }),
-    db.sponsorApplication.findMany({ orderBy: { createdAt: "desc" }, take: 6 }),
-    db.creatorProfile.findMany({ orderBy: { fullName: "asc" } }),
-    db.inquiry.findMany({ orderBy: { createdAt: "desc" }, take: 8 }),
-    db.user.findMany({ orderBy: { createdAt: "desc" } }),
+export default async function AdminDashboardPage() {
+  const sessionContext = await getCurrentSessionUser();
+  const [
+    sponsorCount,
+    partnerCount,
+    inquiryCount,
+    openInquiries,
+    submissionCount,
+    pendingSubmissions,
+    contentCount,
+    creatorCount,
+    inventoryCount,
+    templateCount,
+    userCount,
+    galleryEventCount,
+    productServiceCount,
+    reportCount,
+    shopProductCount,
+    shopOrderCount,
+    inbox,
+  ] = await Promise.all([
+    prisma.sponsor.count(),
+    prisma.partner.count(),
+    prisma.inquiry.count(),
+    prisma.inquiry.count({ where: { status: { in: ['NEW', 'UNDER_REVIEW', 'PENDING_RESPONSE'] } } }),
+    prisma.sponsorSubmission.count(),
+    prisma.sponsorSubmission.count({ where: { status: { in: ['SUBMITTED', 'UNDER_REVIEW', 'NEEDS_REVISION'] } } }),
+    prisma.pageContent.count(),
+    prisma.creatorProfile.count(),
+    prisma.sponsorInventoryCategory.count(),
+    prisma.sponsorPackageTemplate.count(),
+    prisma.user.count(),
+    prisma.mediaEvent.count(),
+    prisma.productService.count(),
+    prisma.adminReport.count(),
+    prisma.shopProduct.count(),
+    prisma.shopOrder.count(),
+    sessionContext ? getAutomationInbox(sessionContext.user.role, sessionContext.user.id, 6) : Promise.resolve({ notifications: [], emails: [] }),
   ]);
 
-  const reviewCount = applications.filter(
-    (item) => item.status === "UNDER_REVIEW" || item.status === "PENDING",
-  ).length;
-
-  const userRoleCounts = {
-    admin: users.filter((item) => item.role === "SYSTEM_ADMIN").length,
-    creator: users.filter((item) => item.role === "CREATOR").length,
-    sponsor: users.filter((item) => item.role === "SPONSOR").length,
-    staff: users.filter((item) => item.role === "STAFF").length,
-  };
-
   return (
-    <div className="dashboard-content-stack">
-      <section className="dashboard-hero-card">
-        <div>
-          <div className="eyebrow">Dashboard Workspace</div>
-          <h1 className="dashboard-page-title">System Admin Dashboard</h1>
-          <p className="dashboard-page-subtitle">
-            Oversee sponsorship operations, content modules, creator assets, inquiry flow,
-            user access, and business workflows from one command surface.
-          </p>
+    <main>
+      <AdminShell
+        title="2026 Sponsorship Operations Overview"
+        description="Monitor the entire RESURGENCE sponsorship engine, keep the CMS aligned with the proposal deck, and manage the full role-based platform from one place."
+        currentPath="/admin"
+      >
+        <div className="card-grid grid-4">
+          <div className="panel"><strong>{userCount}</strong><div className="helper">Total users</div></div>
+          <div className="panel"><strong>{sponsorCount}</strong><div className="helper">Sponsor packages / records</div></div>
+          <div className="panel"><strong>{creatorCount}</strong><div className="helper">Creator profiles</div></div>
+          <div className="panel"><strong>{inventoryCount}</strong><div className="helper">Inventory categories</div></div>
+          <div className="panel"><strong>{templateCount}</strong><div className="helper">Package templates</div></div>
+          <div className="panel"><strong>{galleryEventCount}</strong><div className="helper">Gallery events</div></div>
+          <div className="panel"><strong>{productServiceCount}</strong><div className="helper">Products & services</div></div>
+          <div className="panel"><strong>{reportCount}</strong><div className="helper">Saved admin reports</div></div>
+          <div className="panel"><strong>{shopProductCount}</strong><div className="helper">Shop products</div></div>
+          <div className="panel"><strong>{shopOrderCount}</strong><div className="helper">Shop orders</div></div>
+          <div className="panel"><strong>{submissionCount}</strong><div className="helper">Sponsor submissions</div></div>
+          <div className="panel"><strong>{pendingSubmissions}</strong><div className="helper">Pending sponsor reviews</div></div>
+          <div className="panel"><strong>{openInquiries}</strong><div className="helper">Open inquiries</div></div>
         </div>
 
-        <div className="dashboard-hero-actions">
-          <Link href="/support" className="button button-secondary button-small">
-            Support
-          </Link>
-          <Link href="/contact" className="button button-small">
-            Contact Team
-          </Link>
-        </div>
-      </section>
-
-      <section className="dashboard-surface">
-        <div className="eyebrow">Executive Overview</div>
-        <h2 className="dashboard-section-title">Business control center</h2>
-        <p className="dashboard-section-subtitle">
-          Monitor sponsor growth, creator operations, inquiry flow, user roles, and content readiness
-          across the RESURGENCE platform.
-        </p>
-
-        <div className="inline-actions" style={{ justifyContent: "flex-end", marginBottom: 14 }}>
-          <Link href="/admin/sponsor-submissions" className="button button-secondary button-small">
-            Review Queue
-          </Link>
-          <Link href="/admin/settings" className="button button-small">
-            Platform Settings
-          </Link>
-        </div>
-
-        <div className="inline-actions" style={{ marginBottom: 18 }}>
-          <Link href="/admin" className="button button-secondary button-small">Overview</Link>
-          <Link href="/admin/sponsor-submissions" className="button button-secondary button-small">
-            Applications {reviewCount ? `(${reviewCount})` : ""}
-          </Link>
-          <Link href="/admin/gallery" className="button button-secondary button-small">
-            Gallery ({creators.length})
-          </Link>
-          <Link href="/admin/inquiries" className="button button-secondary button-small">
-            Inquiries ({inquiries.length})
-          </Link>
-          <Link href="/admin/users" className="button button-small">
-            Users ({users.length})
-          </Link>
-          <Link href="/admin/settings" className="button button-secondary button-small">
-            Settings
-          </Link>
-        </div>
-
-        <div className="grid-4" style={{ marginBottom: 20 }}>
-          <div className="card">
-            <div className="kpi-value">{sponsors.length}</div>
-            <div className="muted">Active sponsors</div>
-          </div>
-          <div className="card">
-            <div className="kpi-value">{reviewCount}</div>
-            <div className="muted">Applications in review</div>
-          </div>
-          <div className="card">
-            <div className="kpi-value">{creators.length}</div>
-            <div className="muted">Creator profiles</div>
-          </div>
-          <div className="card">
-            <div className="kpi-value">{users.length}</div>
-            <div className="muted">Platform users</div>
-          </div>
-        </div>
-
-        <div className="grid-2">
-          <div className="card">
-            <div className="card-title">Operational modules</div>
-            <p className="muted">Jump directly into the highest-priority admin modules.</p>
-            <div className="list-stack">
-              <Link href="/admin/sponsor-submissions" className="list-item">
-                <div>
-                  <strong>Sponsor Applications</strong>
-                  <div className="muted">Review and approve incoming sponsorship requests.</div>
-                </div>
-                <span className="status-pill">{reviewCount} open</span>
-              </Link>
-
-              <Link href="/admin/gallery" className="list-item">
-                <div>
-                  <strong>Gallery</strong>
-                  <div className="muted">Maintain media assets and event-backed visual content.</div>
-                </div>
-                <span className="status-pill">{creators.length} creator assets</span>
-              </Link>
-
-              <Link href="/admin/inquiries" className="list-item">
-                <div>
-                  <strong>Inquiries</strong>
-                  <div className="muted">Track public contact submissions and support readiness.</div>
-                </div>
-                <span className="status-pill">{inquiries.length} recent</span>
-              </Link>
-
-              <Link href="/admin/users" className="list-item">
-                <div>
-                  <strong>Users & Roles</strong>
-                  <div className="muted">Create, edit, delete, and manage role-based access.</div>
-                </div>
-                <span className="status-pill">{users.length} users</span>
-              </Link>
-
-              <Link href="/admin/settings" className="list-item">
-                <div>
-                  <strong>Platform Settings</strong>
-                  <div className="muted">Control public-facing defaults and operational settings.</div>
-                </div>
-                <span className="status-pill">Configured</span>
-              </Link>
+        <div className="card-grid grid-2" style={{ marginTop: 20 }}>
+          <section className="card">
+            <div className="section-kicker">Sponsorship Positioning</div>
+            <h2 style={{ marginTop: 0 }}>Deck-aligned business summary</h2>
+            <div className="card-grid grid-3" style={{ marginTop: 18 }}>
+              <div className="panel"><strong>{sponsorshipStats.combinedFollowers}</strong><div className="helper">Combined followers</div></div>
+              <div className="panel"><strong>{sponsorshipStats.activePlatforms}</strong><div className="helper">Active platforms</div></div>
+              <div className="panel"><strong>{sponsorshipStats.creatorCount}</strong><div className="helper">High-engagement creators</div></div>
             </div>
-          </div>
+            <p className="section-copy" style={{ marginTop: 18 }}>
+              The admin CMS now governs creator network content, sponsor inventory sections, tier-based package templates, sponsor-facing wording, and fresh-install fallback readiness.
+            </p>
+          </section>
 
-          <div className="card">
-            <div className="card-title">User role distribution</div>
-            <p className="muted">Keep user creation and permissions visible from the main admin dashboard.</p>
-
-            <div className="grid-2">
-              <div className="card" style={{ padding: 18 }}>
-                <div className="kpi-value">{userRoleCounts.admin}</div>
-                <div className="muted">System Admin</div>
-              </div>
-              <div className="card" style={{ padding: 18 }}>
-                <div className="kpi-value">{userRoleCounts.creator}</div>
-                <div className="muted">Creators</div>
-              </div>
-              <div className="card" style={{ padding: 18 }}>
-                <div className="kpi-value">{userRoleCounts.sponsor}</div>
-                <div className="muted">Sponsors</div>
-              </div>
-              <div className="card" style={{ padding: 18 }}>
-                <div className="kpi-value">{userRoleCounts.staff}</div>
-                <div className="muted">Staff</div>
-              </div>
+          <section className="card">
+            <div className="section-kicker">Content Readiness</div>
+            <h2 style={{ marginTop: 0 }}>Live site and seeded deck structure are aligned.</h2>
+            <p className="section-copy">
+              Public pages pull sponsor content, creator content, sponsor inventory, and CMS sections from the database so fresh installs immediately reflect the 2026 sponsorship proposal.
+            </p>
+            <div className="panel" style={{ marginTop: 16 }}>
+              <strong>{contentCount}</strong>
+              <div className="helper">Editable CMS sections</div>
             </div>
-
-            <div className="inline-actions" style={{ marginTop: 18 }}>
-              <Link href="/admin/users" className="button button-small">
-                Open Users Module
-              </Link>
-              <Link href="/admin/creator-network" className="button button-secondary button-small">
-                Creator Network
-              </Link>
+            <div className="panel" style={{ marginTop: 16 }}>
+              <strong>{partnerCount}</strong>
+              <div className="helper">Partners tracked in the platform</div>
             </div>
-          </div>
+            <div className="panel" style={{ marginTop: 16 }}>
+              <strong>{inquiryCount}</strong>
+              <div className="helper">Total inquiries captured from the public site</div>
+            </div>
+          </section>
         </div>
 
-        <div className="grid-2" style={{ marginTop: 20 }}>
-          <div className="card">
-            <div className="card-title">Recent sponsor applications</div>
-            {applications.length ? (
-              <div className="list-stack">
-                {applications.slice(0, 5).map((item) => (
-                  <div key={item.id} className="list-item">
-                    <div>
-                      <strong>{item.sponsorName}</strong>
-                      <div className="muted">{item.email}</div>
-                    </div>
-                    <span className="status-pill">{item.status}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="empty-state">No sponsor applications yet.</div>
-            )}
-          </div>
-
-          <div className="card">
-            <div className="card-title">Recent inquiries</div>
-            {inquiries.length ? (
-              <div className="list-stack">
-                {inquiries.slice(0, 5).map((item) => (
-                  <div key={item.id} className="list-item">
-                    <div>
-                      <strong>{item.subject || item.name}</strong>
-                      <div className="muted">{item.email}</div>
-                    </div>
-                    <span className="status-pill">{item.status || "NEW"}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="empty-state">No inquiries yet.</div>
-            )}
-          </div>
+        <div style={{ marginTop: 20 }}>
+          <NotificationCenter
+            title="Executive workflow inbox"
+            notifications={inbox.notifications}
+            emails={inbox.emails}
+          />
         </div>
-      </section>
-    </div>
+      </AdminShell>
+    </main>
   );
 }

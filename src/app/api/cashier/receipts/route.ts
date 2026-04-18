@@ -1,87 +1,58 @@
-import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { receiptSchema } from "@/lib/validation";
-import { logActivity } from "@/lib/audit";
-
-function serializeReceipt(item: any) {
-  return {
-    ...item,
-    createdAt: item.createdAt?.toISOString?.() ?? null,
-    updatedAt: item.updatedAt?.toISOString?.() ?? null,
-    issuedAt: item.issuedAt?.toISOString?.() ?? null,
-  };
-}
-
-function toDate(value: unknown) {
-  if (!value || typeof value !== "string") return null;
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? null : date;
-}
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { formatCurrency } from '@/lib/cashier';
+import { receiptSchema } from '@/lib/validation';
+import { buildReceiptPayload, serializeReceipt } from '@/lib/cashier-api';
+import { createWorkflowAutomation } from '@/lib/notifications';
 
 export async function GET() {
-  try {
-    const items = await db.receipt.findMany({
-      orderBy: [{ issuedAt: "desc" }, { createdAt: "desc" }],
-    });
-
-    return NextResponse.json({ items: items.map(serializeReceipt) });
-  } catch (error) {
-    console.error("GET /api/cashier/receipts error:", error);
-    return NextResponse.json({ items: [] }, { status: 200 });
-  }
+  const items = await prisma.receipt.findMany({ orderBy: [{ issuedAt: 'desc' }, { createdAt: 'desc' }] });
+  return NextResponse.json({ items: items.map(serializeReceipt) });
 }
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json().catch(() => null);
-    const parsed = receiptSchema.safeParse(body);
+    const parsed = receiptSchema.parse(await request.json());
+    const payload = await buildReceiptPayload(parsed);
+    const item = await prisma.receipt.create({ data: payload });
+    const invoice = item.invoiceId ? await prisma.invoice.findUnique({ where: { id: item.invoiceId } }) : null;
 
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Invalid receipt payload." },
-        { status: 400 }
-      );
-    }
-
-    const amount = Number(parsed.data.amount || 0);
-
-    const item = await db.receipt.create({
-      data: {
-        receiptNumber: parsed.data.receiptNumber,
-        invoiceId: parsed.data.invoiceId || null,
-        transactionId: parsed.data.transactionId || null,
-        companyName: parsed.data.companyName,
-        receivedFrom: parsed.data.receivedFrom,
-        amount,
-        paymentMethod: parsed.data.paymentMethod,
-        issuedAt: toDate(parsed.data.issuedAt) || new Date(),
-        notes: parsed.data.notes || null,
-      },
+    await createWorkflowAutomation({
+      notifications: [
+        {
+          recipientRole: 'CASHIER',
+          title: `Receipt ${item.receiptNumber} issued`,
+          message: `${item.companyName} receipt was issued for ${formatCurrency(item.amount)}.`,
+          level: 'SUCCESS',
+          href: '/cashier/receipts',
+          metadata: { receiptId: item.id, invoiceId: item.invoiceId },
+        },
+        {
+          recipientRole: 'SYSTEM_ADMIN',
+          title: 'Sponsor receipt generated',
+          message: `${item.receiptNumber} is ready for sponsor finance records.`,
+          level: 'INFO',
+          href: '/admin/reports',
+          metadata: { receiptId: item.id, invoiceId: item.invoiceId },
+        },
+      ],
+      emails: invoice?.email
+        ? [
+            {
+              recipientRole: 'SPONSOR',
+              toEmail: invoice.email,
+              toName: invoice.contactName || item.receivedFrom,
+              subject: `Receipt ${item.receiptNumber} from RESURGENCE`,
+              bodyText: `Hi ${invoice.contactName || item.receivedFrom},\n\nReceipt ${item.receiptNumber} has been generated for ${formatCurrency(item.amount)}.`,
+              eventKey: 'receipt.created.contact',
+              relatedType: 'Receipt',
+              relatedId: item.id,
+            },
+          ]
+        : [],
     });
-
-    await logActivity({
-      request,
-      action: "RECEIPT_CREATED",
-      resource: "receipt",
-      resourceId: item.id,
-      targetLabel: item.receiptNumber,
-      metadata: {
-        receiptNumber: item.receiptNumber,
-        invoiceId: item.invoiceId,
-        transactionId: item.transactionId,
-        companyName: item.companyName,
-        receivedFrom: item.receivedFrom,
-        amount: item.amount,
-        paymentMethod: item.paymentMethod,
-      },
-    });
-
-    return NextResponse.json({ item: serializeReceipt(item) }, { status: 201 });
-  } catch (error) {
-    console.error("POST /api/cashier/receipts error:", error);
-    return NextResponse.json(
-      { error: "Unable to create receipt." },
-      { status: 400 }
-    );
+    return NextResponse.json({ item: serializeReceipt(item) });
+  } catch {
+    return NextResponse.json({ error: 'Unable to create receipt.' }, { status: 400 });
   }
 }

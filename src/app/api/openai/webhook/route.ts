@@ -1,118 +1,44 @@
-import { Role, UserStatus } from "@prisma/client";
-import OpenAI from "openai";
-import { NextRequest, NextResponse } from "next/server";
-import { ok } from "@/lib/api-utils";
-import { db } from "@/lib/db";
-import { getSupportRouteStatus } from "@/lib/openai-support";
+import OpenAI from 'openai';
+import { NextResponse } from 'next/server';
 
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-function getOpenAIClient() {
-  const apiKey = process.env.OPENAI_API_KEY?.trim();
-  if (!apiKey) return null;
+const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-  return new OpenAI({
-    apiKey,
-    webhookSecret: process.env.OPENAI_WEBHOOK_SECRET?.trim() || undefined,
-  });
-}
+export async function POST(request: Request) {
+  const webhookSecret = process.env.OPENAI_WEBHOOK_SECRET;
 
-async function notifyAdmins(title: string, message: string) {
-  const admins = await db.user.findMany({
-    where: {
-      role: Role.SYSTEM_ADMIN,
-      status: UserStatus.ACTIVE,
-    },
-    select: { id: true },
-  });
-
-  if (!admins.length) return;
-
-  await db.notification.createMany({
-    data: admins.map((admin) => ({
-      userId: admin.id,
-      title,
-      message,
-    })),
-  });
-}
-
-export async function GET() {
-  const status = getSupportRouteStatus();
-
-  return ok({
-    ready: status.webhookReady,
-    webhookRoute: "/api/openai/webhook",
-    ...status,
-  });
-}
-
-export async function POST(request: NextRequest) {
-  const status = getSupportRouteStatus();
-
-  if (!status.webhookReady) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: "OPENAI webhook verification is not configured.",
-        ...status,
-      },
-      { status: 503 },
-    );
-  }
-
-  const client = getOpenAIClient();
-  if (!client) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: "OPENAI_API_KEY is not set.",
-        ...status,
-      },
-      { status: 503 },
-    );
+  if (!webhookSecret) {
+    return NextResponse.json({ error: 'Missing OPENAI_WEBHOOK_SECRET.' }, { status: 500 });
   }
 
   const rawBody = await request.text();
 
   try {
-    const event = await client.webhooks.unwrap(
-      rawBody,
-      request.headers,
-      process.env.OPENAI_WEBHOOK_SECRET?.trim(),
-    );
-
-    if (event.type === "response.failed") {
-      await notifyAdmins(
-        "OpenAI support response failed",
-        `OpenAI reported a failed response for ${event.data.id}.`,
-      );
-    }
-
-    if (event.type === "response.incomplete") {
-      await notifyAdmins(
-        "OpenAI support response incomplete",
-        `OpenAI reported an incomplete response for ${event.data.id}.`,
-      );
-    }
-
-    console.log("Verified OpenAI webhook event:", event.type, event.id);
-
-    return ok({
-      received: true,
-      verified: true,
-      eventId: event.id,
-      eventType: event.type,
+    const event = client.webhooks.unwrap(rawBody, request.headers, {
+      secret: webhookSecret,
     });
-  } catch (error) {
-    console.error("Invalid OpenAI webhook signature:", error);
 
-    return NextResponse.json(
-      {
-        ok: false,
-        error: "Invalid webhook signature.",
-      },
-      { status: 400 },
-    );
+    switch (event.type) {
+      case 'response.completed':
+        console.log('OpenAI webhook: response.completed', {
+          id: event.data?.id,
+        });
+        break;
+      case 'response.failed':
+        console.error('OpenAI webhook: response.failed', {
+          id: event.data?.id,
+          error: event.data,
+        });
+        break;
+      default:
+        console.log('OpenAI webhook received', { type: event.type });
+        break;
+    }
+
+    return NextResponse.json({ ok: true, type: event.type });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Invalid webhook signature.';
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 }

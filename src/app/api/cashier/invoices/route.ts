@@ -1,95 +1,56 @@
-import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { invoiceSchema } from "@/lib/validation";
-import { logActivity } from "@/lib/audit";
-
-function serializeInvoice(item: any) {
-  return {
-    ...item,
-    createdAt: item.createdAt?.toISOString?.() ?? null,
-    updatedAt: item.updatedAt?.toISOString?.() ?? null,
-    issueDate: item.issueDate?.toISOString?.() ?? null,
-    dueDate: item.dueDate?.toISOString?.() ?? null,
-  };
-}
-
-function toDate(value: unknown) {
-  if (!value || typeof value !== "string") return null;
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? null : date;
-}
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { formatCurrency } from '@/lib/cashier';
+import { invoiceSchema } from '@/lib/validation';
+import { buildInvoicePayload, serializeInvoice } from '@/lib/cashier-api';
+import { createWorkflowAutomation } from '@/lib/notifications';
 
 export async function GET() {
-  try {
-    const items = await db.invoice.findMany({
-      orderBy: [{ issueDate: "desc" }, { createdAt: "desc" }],
-    });
-
-    return NextResponse.json({ items: items.map(serializeInvoice) });
-  } catch (error) {
-    console.error("GET /api/cashier/invoices error:", error);
-    return NextResponse.json({ items: [] }, { status: 200 });
-  }
+  const items = await prisma.invoice.findMany({ orderBy: [{ issueDate: 'desc' }, { createdAt: 'desc' }] });
+  return NextResponse.json({ items: items.map(serializeInvoice) });
 }
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json().catch(() => null);
-    const parsed = invoiceSchema.safeParse(body);
-
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Invalid invoice payload." },
-        { status: 400 }
-      );
-    }
-
-    const amount = Number(parsed.data.amount || 0);
-    const balanceAmount =
-      parsed.data.balanceAmount === undefined || parsed.data.balanceAmount === null
-        ? amount
-        : Number(parsed.data.balanceAmount);
-
-    const item = await db.invoice.create({
-      data: {
-        invoiceNumber: parsed.data.invoiceNumber,
-        sponsorId: parsed.data.sponsorId || null,
-        companyName: parsed.data.companyName,
-        contactName: parsed.data.contactName || null,
-        email: parsed.data.email || null,
-        tier: parsed.data.tier || null,
-        description: parsed.data.description,
-        amount,
-        balanceAmount,
-        status: parsed.data.status || "PENDING",
-        issueDate: toDate(parsed.data.issueDate) || new Date(),
-        dueDate: toDate(parsed.data.dueDate),
-        notes: parsed.data.notes || null,
-      },
+    const parsed = invoiceSchema.parse(await request.json());
+    const payload = await buildInvoicePayload(parsed);
+    const item = await prisma.invoice.create({ data: payload });
+    await createWorkflowAutomation({
+      notifications: [
+        {
+          recipientRole: 'CASHIER',
+          title: `Invoice ${item.invoiceNumber} issued`,
+          message: `${item.companyName} was invoiced for ${formatCurrency(item.amount)}.`,
+          level: 'SUCCESS',
+          href: '/cashier/invoices',
+          metadata: { invoiceId: item.id },
+        },
+        {
+          recipientRole: 'SYSTEM_ADMIN',
+          title: 'New sponsorship invoice created',
+          message: `${item.invoiceNumber} was added for ${item.companyName}.`,
+          level: 'INFO',
+          href: '/admin/reports',
+          metadata: { invoiceId: item.id },
+        },
+      ],
+      emails: item.email
+        ? [
+            {
+              recipientRole: 'SPONSOR',
+              toEmail: item.email,
+              toName: item.contactName || item.companyName,
+              subject: `Invoice ${item.invoiceNumber} from RESURGENCE`,
+              bodyText: `Hi ${item.contactName || item.companyName},\n\nInvoice ${item.invoiceNumber} has been issued for ${formatCurrency(item.amount)}.\n\nDescription:\n${item.description}\n\nThank you for partnering with RESURGENCE Powered by DesignXpress.`,
+              eventKey: 'invoice.created.contact',
+              relatedType: 'Invoice',
+              relatedId: item.id,
+            },
+          ]
+        : [],
     });
-
-    await logActivity({
-      request,
-      action: "INVOICE_CREATED",
-      resource: "invoice",
-      resourceId: item.id,
-      targetLabel: item.invoiceNumber,
-      metadata: {
-        invoiceNumber: item.invoiceNumber,
-        sponsorId: item.sponsorId,
-        companyName: item.companyName,
-        amount: item.amount,
-        balanceAmount: item.balanceAmount,
-        status: item.status,
-      },
-    });
-
-    return NextResponse.json({ item: serializeInvoice(item) }, { status: 201 });
+    return NextResponse.json({ item: serializeInvoice(item) });
   } catch (error) {
-    console.error("POST /api/cashier/invoices error:", error);
-    return NextResponse.json(
-      { error: "Unable to create invoice." },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'Unable to create invoice.' }, { status: 400 });
   }
 }

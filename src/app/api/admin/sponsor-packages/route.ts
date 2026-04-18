@@ -1,26 +1,19 @@
-import { NextRequest } from "next/server";
-import { Role } from "@prisma/client";
-import { db } from "@/lib/db";
-import { ok, requireApiRole } from "@/lib/api-utils";
-import { parsePayload } from "@/lib/parse";
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { sponsorPackageTemplateSchema } from '@/lib/validation';
 
-export async function GET(request: NextRequest) {
-  const auth = await requireApiRole(request, [Role.SYSTEM_ADMIN]);
-  if (auth.error) return auth.error;
+export async function POST(request: Request) {
+  const body = await request.json().catch(() => null);
+  const parsed = sponsorPackageTemplateSchema.safeParse(body);
 
-  const items = await (db as any).sponsorPackage.findMany({
-    orderBy: { sortOrder: "desc" }
-  });
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Invalid payload.' }, { status: 400 });
+  }
 
-  return ok({ items });
-}
-
-export async function POST(request: NextRequest) {
-  const auth = await requireApiRole(request, [Role.SYSTEM_ADMIN]);
-  if (auth.error) return auth.error;
-
-  const body = await request.json();
-  const data = parsePayload(body);
-  const item = await (db as any).sponsorPackage.create({ data });
-  return ok({ item });
+  try {
+    const item = await prisma.sponsorPackageTemplate.create({ data: parsed.data });
+    return NextResponse.json({ item }, { status: 201 });
+  } catch {
+    return NextResponse.json({ error: 'Package template name must be unique.' }, { status: 400 });
+  }
 }

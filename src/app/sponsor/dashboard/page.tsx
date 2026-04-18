@@ -1,171 +1,184 @@
-import Link from "next/link";
-import { getCurrentUser } from "@/lib/auth";
-import { db } from "@/lib/db";
-import { DashboardPageOrchestrator } from "@/components/dashboard-page-orchestrator";
-import { EmptyStatePanel } from "@/components/empty-state-panel";
-import { StatusBadge } from "@/components/status-badge";
+import { NotificationCenter } from '@/components/notification-center';
+import { getAutomationInbox } from '@/lib/notifications';
+import { RoleShell } from '@/components/role-shell';
+import { prisma } from '@/lib/prisma';
+import { sponsorNavItems, formatCurrency, formatDate } from '@/lib/sponsor';
+import { buildSponsorInvoiceWhere, getCurrentSponsorContext } from '@/lib/sponsor-server';
 
-export const dynamic = "force-dynamic";
-
-async function getSponsorSnapshot() {
-  const user = await getCurrentUser();
-
-  if (!user?.sponsorId) return null;
-
-  try {
-    return await db.sponsor.findUnique({
-      where: { id: user.sponsorId },
-      include: {
-        deliverables: true,
-        applications: true,
-        package: true,
-        profile: true,
-        invoices: true,
-      },
-    });
-  } catch (error) {
-    console.error("Sponsor snapshot load failed:", error);
-    return null;
-  }
-}
+export const dynamic = 'force-dynamic';
 
 export default async function SponsorDashboardPage() {
-  const sponsor = await getSponsorSnapshot();
+  const context = await getCurrentSponsorContext();
 
-  if (!sponsor) {
+  if (!context) {
     return (
-      <EmptyStatePanel
-        title="Sponsor account not linked yet"
-        description="This sponsor login is active, but no sponsor record is currently attached to the account."
-        actions={<Link href="/contact" className="button">Contact Team</Link>}
-      />
+      <main>
+        <RoleShell roleLabel="Sponsor" title="Sponsor Portal Overview" description="Unable to load sponsor session." navItems={sponsorNavItems as any} currentPath="/sponsor/dashboard">
+          <section className="card"><p className="section-copy">Please sign in again to continue.</p></section>
+        </RoleShell>
+      </main>
     );
   }
 
-  const pendingDeliverables = sponsor.deliverables.filter((item) => String(item.status || "").toUpperCase() === "PENDING").length;
+  const invoiceWhere = buildSponsorInvoiceWhere(context.sponsorProfile);
+  const [applications, deliverables, invoices] = await Promise.all([
+    prisma.sponsorSubmission.findMany({ where: { sponsorProfileId: context.sponsorProfile.id }, orderBy: [{ createdAt: 'desc' }], take: 5 }),
+    prisma.sponsorDeliverable.findMany({ where: { sponsorProfileId: context.sponsorProfile.id }, orderBy: [{ dueDate: 'asc' }, { createdAt: 'desc' }], take: 6 }),
+    prisma.invoice.findMany({ where: invoiceWhere, orderBy: [{ issueDate: 'desc' }], take: 5 }),
+  ]);
+
+  const receipts = await prisma.receipt.findMany({
+    where: {
+      OR: [
+        { invoiceId: { in: invoices.map((item) => item.id) } },
+        { companyName: context.sponsorProfile.companyName },
+      ],
+    },
+    orderBy: [{ issuedAt: 'desc' }],
+    take: 5,
+  });
+
+  const outstanding = invoices.reduce((sum, item) => sum + item.balanceAmount, 0);
+  const totalInvoiced = invoices.reduce((sum, item) => sum + item.amount, 0);
+  const completedDeliverables = deliverables.filter((item) => item.status === 'COMPLETED').length;
+  const pendingApplications = applications.filter((item) => ['SUBMITTED', 'UNDER_REVIEW', 'NEEDS_REVISION'].includes(item.status)).length;
+  const inbox = await getAutomationInbox(context.user.role, context.user.id, 6);
 
   return (
-    <DashboardPageOrchestrator
-      eyebrow="Partner Workspace"
-      title={sponsor.name || "Sponsor Dashboard"}
-      subtitle="Track brand package details, partner deliverables, application history, invoice references, and profile readiness in a cleaner sponsor-facing workspace."
-      tabs={[
-        { href: "/sponsor/dashboard", label: "Overview", exact: true },
-        { href: "/sponsor/dashboard/applications", label: "Applications", count: sponsor.applications.length },
-        { href: "/sponsor/dashboard/deliverables", label: "Deliverables", count: sponsor.deliverables.length },
-        { href: "/sponsor/dashboard/billing", label: "Billing", count: sponsor.invoices.length },
-      ]}
-      actions={
-        <>
-          <Link href="/sponsor/dashboard/profile" className="button button-secondary button-small">
-            Update Profile
-          </Link>
-          <Link href="/support" className="button button-small">
-            Contact Support
-          </Link>
-        </>
-      }
-      metrics={
-        <div className="grid-4">
-          <div className="dashboard-stat-card">
-            <div className="dashboard-stat-value">{sponsor.package?.title || "—"}</div>
-            <div className="dashboard-stat-label">Package tier</div>
-          </div>
-          <div className="dashboard-stat-card">
-            <div className="dashboard-stat-value">{sponsor.applications.length}</div>
-            <div className="dashboard-stat-label">Applications</div>
-          </div>
-          <div className="dashboard-stat-card">
-            <div className="dashboard-stat-value">{sponsor.deliverables.length}</div>
-            <div className="dashboard-stat-label">Deliverables</div>
-          </div>
-          <div className="dashboard-stat-card">
-            <div className="dashboard-stat-value">{pendingDeliverables}</div>
-            <div className="dashboard-stat-label">Pending deliverables</div>
-          </div>
+    <main>
+      <RoleShell
+        roleLabel="Sponsor"
+        title="Sponsor Portal Overview"
+        description="Track package selection, application progress, deliverable completion, and billing readiness aligned with the 2026 sponsorship deck."
+        navItems={sponsorNavItems as any}
+        currentPath="/sponsor/dashboard"
+      >
+        <div className="card-grid grid-4">
+          <div className="panel"><strong>{context.sponsorProfile.preferredPackage?.name || 'Custom / Not set'}</strong><div className="helper">Preferred package</div></div>
+          <div className="panel"><strong>{pendingApplications}</strong><div className="helper">Open applications</div></div>
+          <div className="panel"><strong>{completedDeliverables}/{deliverables.length}</strong><div className="helper">Completed deliverables</div></div>
+          <div className="panel"><strong>{formatCurrency(outstanding)}</strong><div className="helper">Outstanding balance</div></div>
         </div>
-      }
-    >
-      <div className="grid-2">
-        <section className="card">
-          <div className="card-title">Sponsor profile snapshot</div>
-          <div className="list-stack">
-            <div className="list-item">
-              <div>
-                <strong style={{ display: "block", marginBottom: 6 }}>Company</strong>
-                <div className="muted">{sponsor.name || "—"}</div>
-              </div>
-              <StatusBadge label={sponsor.profile ? "Profile Ready" : "Profile Incomplete"} />
-            </div>
-            <div className="list-item">
-              <div>
-                <strong style={{ display: "block", marginBottom: 6 }}>Package</strong>
-                <div className="muted">{sponsor.package?.title || "No package assigned"}</div>
-              </div>
-              <StatusBadge label={sponsor.package?.status || "ACTIVE"} />
-            </div>
-          </div>
-        </section>
 
-        <section className="card">
-          <div className="card-title">Deliverables overview</div>
-          {sponsor.deliverables.length ? (
-            <div className="list-stack">
-              {sponsor.deliverables.slice(0, 5).map((item) => (
-                <div key={item.id} className="list-item">
-                  <div>
-                    <strong style={{ display: "block", marginBottom: 6 }}>
-                      {item.title || "Sponsor deliverable"}
-                    </strong>
-                    <div className="muted">{item.description || "No description available"}</div>
-                  </div>
-                  <StatusBadge label={String(item.status || "PENDING")} />
-                </div>
-              ))}
+        <div className="card-grid grid-2" style={{ marginTop: 20 }}>
+          <section className="card">
+            <div className="section-kicker">Sponsor Snapshot</div>
+            <h2 style={{ marginTop: 0 }}>{context.sponsorProfile.companyName}</h2>
+            <p className="section-copy">{context.sponsorProfile.brandSummary || 'Keep your sponsor profile updated so package recommendations, billing, and deliverables stay aligned.'}</p>
+            <div className="helper">Contact: {context.sponsorProfile.contactName} • {context.sponsorProfile.contactEmail}</div>
+            <div className="helper">Linked sponsor record: {context.sponsorProfile.sponsor?.name || 'Not linked yet'}</div>
+            <div className="helper">Total invoiced: {formatCurrency(totalInvoiced)}</div>
+          </section>
+          <section className="card">
+            <div className="section-kicker">Billing Snapshot</div>
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Invoice</th>
+                    <th>Status</th>
+                    <th>Balance</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {invoices.map((item) => (
+                    <tr key={item.id}>
+                      <td>{item.invoiceNumber}<div className="helper">{formatDate(item.issueDate)}</div></td>
+                      <td>{item.status.replaceAll('_', ' ')}</td>
+                      <td>{formatCurrency(item.balanceAmount)}</td>
+                    </tr>
+                  ))}
+                  {!invoices.length ? <tr><td colSpan={3}><span className="helper">No sponsor billing records yet.</span></td></tr> : null}
+                </tbody>
+              </table>
             </div>
-          ) : (
-            <EmptyStatePanel
-              title="No deliverables posted yet"
-              description="Your sponsorship deliverables will appear here once the RESURGENCE team publishes them."
-            />
-          )}
-        </section>
-      </div>
+          </section>
+        </div>
 
-      <section className="card">
-        <div className="card-title">Application history</div>
-        {sponsor.applications.length ? (
+        <div className="card-grid grid-2" style={{ marginTop: 20 }}>
+          <section className="card">
+            <div className="section-kicker">Recent Applications</div>
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Package</th>
+                    <th>Status</th>
+                    <th>Budget</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {applications.map((item) => (
+                    <tr key={item.id}>
+                      <td>{item.interestedPackage}<div className="helper">{item.category}</div></td>
+                      <td>{item.status.replaceAll('_', ' ')}</td>
+                      <td>{item.budgetRange}</td>
+                    </tr>
+                  ))}
+                  {!applications.length ? <tr><td colSpan={3}><span className="helper">No applications yet.</span></td></tr> : null}
+                </tbody>
+              </table>
+            </div>
+          </section>
+          <section className="card">
+            <div className="section-kicker">Recent Deliverables</div>
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Deliverable</th>
+                    <th>Status</th>
+                    <th>Due</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {deliverables.map((item) => (
+                    <tr key={item.id}>
+                      <td>{item.title}<div className="helper">{item.category}</div></td>
+                      <td>{item.status.replaceAll('_', ' ')}</td>
+                      <td>{formatDate(item.dueDate)}</td>
+                    </tr>
+                  ))}
+                  {!deliverables.length ? <tr><td colSpan={3}><span className="helper">No deliverables assigned yet.</span></td></tr> : null}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+
+        <section className="card" style={{ marginTop: 20 }}>
+          <div className="section-kicker">Receipt Activity</div>
           <div className="table-wrap">
-            <table className="table">
+            <table>
               <thead>
                 <tr>
-                  <th>Sponsor Name</th>
-                  <th>Company</th>
-                  <th>Package Interest</th>
-                  <th>Status</th>
+                  <th>Receipt</th>
+                  <th>Amount</th>
+                  <th>Issued</th>
                 </tr>
               </thead>
               <tbody>
-                {sponsor.applications.slice(0, 6).map((item) => (
+                {receipts.map((item) => (
                   <tr key={item.id}>
-                    <td>{item.sponsorName || item.contactName || "Application"}</td>
-                    <td>{item.company || "—"}</td>
-                    <td>{item.packageInterest || sponsor.package?.title || "—"}</td>
-                    <td>
-                      <StatusBadge label={String(item.status || "NEW")} />
-                    </td>
+                    <td>{item.receiptNumber}<div className="helper">{item.receivedFrom}</div></td>
+                    <td>{formatCurrency(item.amount)}</td>
+                    <td>{formatDate(item.issuedAt)}</td>
                   </tr>
                 ))}
+                {!receipts.length ? <tr><td colSpan={3}><span className="helper">No receipts yet.</span></td></tr> : null}
               </tbody>
             </table>
           </div>
-        ) : (
-          <EmptyStatePanel
-            title="No applications yet"
-            description="Application records tied to this sponsor account will appear here."
+        </section>
+
+        <div style={{ marginTop: 20 }}>
+          <NotificationCenter
+            title="Sponsor alerts and automated messages"
+            notifications={inbox.notifications}
+            emails={inbox.emails}
           />
-        )}
-      </section>
-    </DashboardPageOrchestrator>
+        </div>
+      </RoleShell>
+    </main>
   );
 }

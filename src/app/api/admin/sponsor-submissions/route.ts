@@ -1,26 +1,34 @@
-import { NextRequest } from "next/server";
-import { Role } from "@prisma/client";
-import { db } from "@/lib/db";
-import { ok, requireApiRole } from "@/lib/api-utils";
-import { parsePayload } from "@/lib/parse";
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { sponsorSubmissionSchema } from '@/lib/validation';
 
-export async function GET(request: NextRequest) {
-  const auth = await requireApiRole(request, [Role.SYSTEM_ADMIN]);
-  if (auth.error) return auth.error;
-
-  const items = await (db as any).sponsorApplication.findMany({
-    orderBy: { createdAt: "desc" }
+export async function GET() {
+  const items = await prisma.sponsorSubmission.findMany({
+    orderBy: [{ createdAt: 'desc' }],
   });
-
-  return ok({ items });
+  return NextResponse.json({ items });
 }
 
-export async function POST(request: NextRequest) {
-  const auth = await requireApiRole(request, [Role.SYSTEM_ADMIN]);
-  if (auth.error) return auth.error;
-
-  const body = await request.json();
-  const data = parsePayload(body);
-  const item = await (db as any).sponsorApplication.create({ data });
-  return ok({ item });
+export async function POST(request: Request) {
+  try {
+    const payload = sponsorSubmissionSchema.parse(await request.json());
+    const item = await prisma.sponsorSubmission.create({
+      data: {
+        companyName: payload.companyName,
+        contactName: payload.contactName,
+        email: payload.email,
+        phone: payload.phone || null,
+        websiteUrl: payload.websiteUrl || null,
+        category: payload.category,
+        interestedPackage: payload.interestedPackage,
+        budgetRange: payload.budgetRange,
+        timeline: payload.timeline || null,
+        message: payload.message,
+      },
+    });
+    return NextResponse.json({ item });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Invalid request.';
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
 }

@@ -1,204 +1,104 @@
-import { cookies } from "next/headers";
-import type { NextRequest, NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
-import bcrypt from "bcryptjs";
-import { db } from "@/lib/db";
+import { jwtVerify, SignJWT } from 'jose';
+import { NextRequest, NextResponse } from 'next/server';
+import { AppRole, roleMeta, rolePrefixes } from '@/lib/resurgence';
+import { getRequiredPermission, hasPermission } from '@/lib/permissions';
 
-export const SESSION_COOKIE = "resurgence_session";
-export const SESSION_MAX_AGE = 60 * 60 * 24 * 7;
+export const COOKIE_NAME = 'resurgence_admin_session';
 
-export type AppRole =
-  | "SYSTEM_ADMIN"
-  | "CASHIER"
-  | "SPONSOR"
-  | "STAFF"
-  | "PARTNER"
-  | "CREATOR";
-
-type JwtPayload = {
-  userId: string;
-  role: AppRole;
+type SessionPayload = {
   email: string;
+  role: AppRole;
+  displayName?: string;
 };
 
-function getAuthSecret() {
-  const secret = process.env.AUTH_SECRET;
-  if (!secret) {
-    throw new Error("AUTH_SECRET is not set");
-  }
-  return secret;
+function getJwtSecret() {
+  const value = process.env.JWT_SECRET || 'change-this-super-secret-key';
+  return new TextEncoder().encode(value);
 }
 
-function normalizeIdentifier(value: string) {
-  return value.trim().toLowerCase();
+export async function signSession(payload: SessionPayload) {
+  return new SignJWT(payload)
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('7d')
+    .sign(getJwtSecret());
 }
 
-function isUserActive(user: Record<string, unknown>) {
-  if ("isActive" in user && user.isActive === false) return false;
-  if ("active" in user && user.active === false) return false;
+export async function verifySession(token?: string) {
+  if (!token) return null;
 
-  if (
-    "status" in user &&
-    typeof user.status === "string" &&
-    user.status.toUpperCase() === "INACTIVE"
-  ) {
-    return false;
-  }
-
-  return true;
-}
-
-export function getDashboardPath(role: string) {
-  switch (role) {
-    case "SYSTEM_ADMIN":
-      return "/admin";
-    case "CASHIER":
-      return "/cashier";
-    case "SPONSOR":
-      return "/sponsor/dashboard";
-    case "STAFF":
-      return "/staff";
-    case "PARTNER":
-      return "/partner";
-    case "CREATOR":
-      return "/creator/dashboard";
-    default:
-      return "/login";
-  }
-}
-
-export async function hashPassword(password: string) {
-  return bcrypt.hash(password, 10);
-}
-
-export async function verifyPassword(password: string, passwordHash: string) {
-  return bcrypt.compare(password, passwordHash);
-}
-
-export function signSession(payload: JwtPayload) {
-  return jwt.sign(payload, getAuthSecret(), {
-    algorithm: "HS256",
-    expiresIn: "7d",
-  });
-}
-
-export function verifySession(token: string): JwtPayload | null {
   try {
-    return jwt.verify(token, getAuthSecret()) as JwtPayload;
+    const { payload } = await jwtVerify(token, getJwtSecret());
+    const role = payload.role;
+    if (typeof payload.email !== 'string' || typeof role !== 'string' || !(role in roleMeta)) {
+      return null;
+    }
+
+    return {
+      email: payload.email,
+      role: role as AppRole,
+      displayName: typeof payload.displayName === 'string' ? payload.displayName : undefined,
+    };
   } catch {
     return null;
   }
 }
 
-function extractStoredPassword(candidate: Record<string, unknown>) {
-  if (typeof candidate.passwordHash === "string" && candidate.passwordHash) {
-    return candidate.passwordHash;
-  }
-
-  if (typeof candidate.password === "string" && candidate.password) {
-    return candidate.password;
-  }
-
-  return "";
+export async function verifyAdminSession(token?: string) {
+  const payload = await verifySession(token);
+  if (!payload || payload.role !== 'SYSTEM_ADMIN') return null;
+  return payload;
 }
 
-async function findUserByIdentifier(identifier: string) {
-  const normalized = normalizeIdentifier(identifier);
-
-  const user = await (db.user as any).findFirst({
-    where: {
-      email: normalized,
-    },
-  });
-
-  return user as Record<string, unknown> | null;
+export async function isAuthenticatedRequest(request: NextRequest) {
+  const token = request.cookies.get(COOKIE_NAME)?.value;
+  const payload = await verifySession(token);
+  return Boolean(payload);
 }
 
-export async function authenticateUser(identifier: string, password: string) {
-  const normalized = normalizeIdentifier(identifier);
-  const user = await findUserByIdentifier(normalized);
-
-  if (!user) return null;
-  if (!isUserActive(user)) return null;
-
-  const passwordHash = extractStoredPassword(user);
-  if (!passwordHash) return null;
-
-  const passwordOk = await verifyPassword(password, passwordHash);
-  if (!passwordOk) return null;
-
-  return {
-    id: String(user.id),
-    email: String(user.email ?? normalized),
-    role: String(user.role) as AppRole,
-  };
-}
-
-async function getUserBySessionPayload(payload: JwtPayload | null) {
-  if (!payload) return null;
-
-  const user = await db.user.findUnique({
-    where: { id: payload.userId },
-  });
-
-  if (!user) return null;
-
-  const candidate = user as unknown as Record<string, unknown>;
-  if (!isUserActive(candidate)) return null;
-
-  return {
-    id: String(candidate.id),
-    email: String(candidate.email ?? payload.email),
-    role: String(candidate.role ?? payload.role) as AppRole,
-    name:
-      typeof candidate.name === "string"
-        ? candidate.name
-        : typeof candidate.displayName === "string"
-          ? candidate.displayName
-          : "",
-  };
-}
-
-export async function getCurrentUser() {
-  const token = (await cookies()).get(SESSION_COOKIE)?.value;
-  if (!token) return null;
-
-  const decoded = verifySession(token);
-  return getUserBySessionPayload(decoded);
-}
-
-export async function getApiUser(request: NextRequest) {
-  const token = request.cookies.get(SESSION_COOKIE)?.value;
-  if (!token) return null;
-
-  const decoded = verifySession(token);
-  return getUserBySessionPayload(decoded);
-}
-
-export function setSessionCookie(res: NextResponse, token: string) {
-  res.cookies.set({
-    name: SESSION_COOKIE,
+export function setSessionCookie(response: NextResponse, token: string) {
+  response.cookies.set({
+    name: COOKIE_NAME,
     value: token,
     httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: SESSION_MAX_AGE,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    path: '/',
+    maxAge: 60 * 60 * 24 * 7,
   });
-
-  return res;
 }
 
-export function clearSessionCookie(res: NextResponse) {
-  res.cookies.set({
-    name: SESSION_COOKIE,
-    value: "",
-    path: "/",
-    maxAge: 0,
+export function clearSessionCookie(response: NextResponse) {
+  response.cookies.set({
+    name: COOKIE_NAME,
+    value: '',
     httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    path: '/',
+    maxAge: 0,
   });
+}
 
-  return res;
+export function getAdminCredentials() {
+  return {
+    email: process.env.ADMIN_EMAIL || 'admin@resurgence.local',
+    passwordHash: process.env.ADMIN_PASSWORD_HASH || '',
+    password: process.env.ADMIN_PASSWORD || '',
+  };
+}
+
+export function isPathAllowedForRole(pathname: string, role: AppRole, method = 'GET') {
+  if (role === 'SYSTEM_ADMIN') return true;
+
+  const requiredPermission = getRequiredPermission(pathname, method);
+  if (!requiredPermission) {
+    return rolePrefixes[role].some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+  }
+
+  return hasPermission(role, requiredPermission);
+}
+
+export function getLoginRedirect(role: AppRole) {
+  return roleMeta[role].defaultRoute;
 }

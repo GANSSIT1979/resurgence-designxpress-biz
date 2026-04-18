@@ -1,27 +1,31 @@
-import { randomBytes, scryptSync, timingSafeEqual } from "crypto";
+import { randomBytes, scryptSync, timingSafeEqual } from 'crypto';
 
+const HASH_VERSION = 'scryptv1';
 const KEY_LENGTH = 64;
 
-export function hashPassword(password: string) {
-  const salt = randomBytes(16).toString("hex");
-  const derived = scryptSync(password, salt, KEY_LENGTH).toString("hex");
-  return `scrypt:${salt}:${derived}`;
+export function isPasswordHash(value: string) {
+  return value.startsWith(`${HASH_VERSION}$`);
 }
 
-export function verifyPassword(password: string, stored: string) {
-  if (!stored) return false;
+export function hashPassword(password: string) {
+  const salt = randomBytes(16).toString('hex');
+  const derivedKey = scryptSync(password, salt, KEY_LENGTH).toString('hex');
+  return `${HASH_VERSION}$${salt}$${derivedKey}`;
+}
 
-  if (!stored.startsWith("scrypt:")) {
-    return false;
+export function verifyPassword(password: string, storedValue: string) {
+  if (!storedValue) return false;
+
+  if (!isPasswordHash(storedValue)) {
+    return storedValue === password;
   }
 
-  const [, salt, expectedHex] = stored.split(":");
-  if (!salt || !expectedHex) return false;
+  const [, salt, expected] = storedValue.split('$');
+  if (!salt || !expected) return false;
 
-  const derived = scryptSync(password, salt, KEY_LENGTH);
-  const expected = Buffer.from(expectedHex, "hex");
+  const derivedKey = scryptSync(password, salt, KEY_LENGTH);
+  const expectedBuffer = Buffer.from(expected, 'hex');
 
-  if (derived.length !== expected.length) return false;
-
-  return timingSafeEqual(derived, expected);
+  if (derivedKey.length !== expectedBuffer.length) return false;
+  return timingSafeEqual(derivedKey, expectedBuffer);
 }

@@ -1,11 +1,23 @@
-import { CrudManager } from "@/components/crud-manager";
+import { AdminShell } from '@/components/admin-shell';
+import { SponsorInventoryManager } from '@/components/forms/sponsor-inventory-manager';
+import { prisma } from '@/lib/prisma';
 
-export default function Page() {
+export const dynamic = 'force-dynamic';
+
+export default async function SponsorInventoryPage() {
+  const initialItems = await prisma.sponsorInventoryCategory.findMany({
+    orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
+  });
+
   return (
-    <CrudManager
-      title="Sponsor Inventory"
-      endpoint="/api/admin/sponsor-inventory"
-      fields={[{"key": "title", "label": "Title", "type": "text", "required": true}, {"key": "category", "label": "Category", "type": "text", "required": true}, {"key": "description", "label": "Description", "type": "textarea", "required": true}, {"key": "value", "label": "Value", "type": "number", "required": true}, {"key": "image", "label": "Image", "type": "image"}, {"key": "packageApplicability", "label": "Package Applicability JSON", "type": "json", "required": true}, {"key": "active", "label": "Active", "type": "checkbox"}]}
-    />
+    <main>
+      <AdminShell
+        title="Sponsor Inventory CMS"
+        description="Manage Branding Assets, Digital Integration, On-Ground Activation, and Commercial Support sections used across the sponsorship deck and public site."
+        currentPath="/admin/sponsor-inventory"
+      >
+        <SponsorInventoryManager initialItems={initialItems} />
+      </AdminShell>
+    </main>
   );
 }

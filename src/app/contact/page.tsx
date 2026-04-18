@@ -1,30 +1,35 @@
-import { PublicContactForm } from "@/components/public-contact-form";
-import { SectionTitle } from "@/components/section-title";
+import { InquiryForm } from '@/components/forms/inquiry-form';
+import { getContentMap } from '@/lib/site';
+import { getPublicSettings } from '@/lib/settings';
 
-export default function ContactPage() {
+export const dynamic = 'force-dynamic';
+
+export default async function ContactPage() {
+  const [contentMap, settings] = await Promise.all([getContentMap(), getPublicSettings()]);
+  const contact = contentMap['contact.details'];
+
   return (
-    <div className="page-shell">
-      <div className="container">
-        <div className="grid-2">
-          <div>
-            <SectionTitle
-              eyebrow="Contact"
-              title="Reach the RESURGENCE business team"
-              subtitle="Use this inquiry channel for sponsor packages, partnerships, creator campaigns, and operational support."
-            />
-            <div className="card">
-              <div className="card-title">Contact Jake</div>
-              <p className="muted">Business and sponsorship coordination for RESURGENCE Powered by DesignXpress.</p>
-              <ul className="feature-list">
-                <li>Email-backed inquiry workflow</li>
-                <li>Admin review queue</li>
-                <li>Support-ready escalation path</li>
-              </ul>
-            </div>
+    <main className="section">
+      <div className="container split">
+        <div>
+          <div className="section-kicker">{contact.subtitle}</div>
+          <h1 className="section-title">{contact.title}</h1>
+          <p className="section-copy">{contact.body}</p>
+          <div className="panel" style={{ marginTop: 24 }}>
+            <div className="section-kicker">Business Details</div>
+            <div className="helper">Contact: {settings.contactName}</div>
+            <div className="helper">Email: {settings.contactEmail}</div>
+            <div className="helper">Phone: {settings.contactPhone}</div>
+            <div className="helper">Address: {settings.contactAddress}</div>
           </div>
-          <PublicContactForm />
+        </div>
+
+        <div className="card">
+          <div className="section-kicker">Inquiry Form</div>
+          <h2 style={{ marginBottom: 12 }}>Request a proposal or partnership discussion.</h2>
+          <InquiryForm />
         </div>
       </div>
-    </div>
+    </main>
   );
 }

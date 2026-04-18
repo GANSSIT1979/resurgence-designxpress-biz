@@ -1,39 +1,83 @@
-"use client";
+import { AdminShell } from '@/components/admin-shell';
+import { AdminReportsManager } from '@/components/forms/admin-reports-manager';
+import { prisma } from '@/lib/prisma';
 
-import { useState } from "react";
+export const dynamic = 'force-dynamic';
 
-export default function ReportsPage() {
-  const [message, setMessage] = useState("");
+export default async function ReportsPage() {
+  const [submissions, approved, pending, inquiries, packages, creators, productServices, galleryEvents, savedReports, users, submissionStatusCounts, inquiryStatusCounts] = await Promise.all([
+    prisma.sponsorSubmission.count(),
+    prisma.sponsorSubmission.count({ where: { status: { in: ['APPROVED', 'CONVERTED_TO_ACTIVE_SPONSOR'] } } }),
+    prisma.sponsorSubmission.count({ where: { status: { in: ['SUBMITTED', 'UNDER_REVIEW', 'NEEDS_REVISION'] } } }),
+    prisma.inquiry.count(),
+    prisma.sponsorPackageTemplate.count(),
+    prisma.creatorProfile.count(),
+    prisma.productService.count(),
+    prisma.mediaEvent.count(),
+    prisma.adminReport.findMany({ orderBy: { createdAt: 'desc' }, take: 20 }),
+    prisma.user.findMany({ select: { role: true } }),
+    prisma.sponsorSubmission.findMany({ select: { status: true } }),
+    prisma.inquiry.findMany({ select: { status: true } }),
+  ]);
 
-  async function snapshot(type: string) {
-    const res = await fetch("/api/admin/reports/snapshot", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type })
-    });
-    const json = await res.json();
-    setMessage(json.message || "Snapshot saved.");
-  }
+  const metrics = [
+    { label: 'Sponsor applications received', value: submissions },
+    { label: 'Approved or converted sponsors', value: approved },
+    { label: 'Pending sponsor pipeline', value: pending },
+    { label: 'Public inquiries captured', value: inquiries },
+    { label: 'Tier templates in CMS', value: packages },
+    { label: 'Creator profiles in roster', value: creators },
+    { label: 'Products & services', value: productServices },
+    { label: 'Gallery events', value: galleryEvents },
+  ];
+
+  const chartGroups = [
+    {
+      title: 'Sponsor submission pipeline',
+      items: ['SUBMITTED', 'UNDER_REVIEW', 'NEEDS_REVISION', 'APPROVED', 'CONVERTED_TO_ACTIVE_SPONSOR', 'REJECTED'].map((status) => ({
+        label: status.replaceAll('_', ' '),
+        value: submissionStatusCounts.filter((item) => item.status === status).length,
+      })),
+    },
+    {
+      title: 'Inquiry status mix',
+      items: ['NEW', 'UNDER_REVIEW', 'CONTACTED', 'QUALIFIED', 'PENDING_RESPONSE', 'CLOSED', 'ARCHIVED'].map((status) => ({
+        label: status.replaceAll('_', ' '),
+        value: inquiryStatusCounts.filter((item) => item.status === status).length,
+      })),
+    },
+    {
+      title: 'User roles',
+      items: ['SYSTEM_ADMIN', 'CASHIER', 'SPONSOR', 'STAFF', 'PARTNER'].map((role) => ({
+        label: role.replaceAll('_', ' '),
+        value: users.filter((item) => item.role === role).length,
+      })),
+    },
+  ];
 
   return (
-    <div className="grid-2">
-      <div className="card">
-        <div className="card-title">Report Snapshots</div>
-        <div className="inline-actions">
-          <button className="button" onClick={() => snapshot("overview")} type="button">Save Overview Snapshot</button>
-          <button className="button button-secondary" onClick={() => snapshot("cashier")} type="button">Save Cashier Snapshot</button>
-        </div>
-        {message ? <div className="success-text" style={{ marginTop: 12 }}>{message}</div> : null}
-      </div>
-      <div className="card">
-        <div className="card-title">Exports</div>
-        <div className="list-stack">
-          <a className="button" href="/api/admin/reports/export?dataset=inquiries&format=csv">Export Inquiries CSV</a>
-          <a className="button button-secondary" href="/api/admin/reports/export?dataset=sponsors&format=json">Export Sponsors JSON</a>
-          <a className="button button-secondary" href="/api/cashier/reports/summary?format=csv">Cashier Summary CSV</a>
-          <a className="button button-secondary" href="/api/cashier/reports/summary?format=json">Cashier Summary JSON</a>
-        </div>
-      </div>
-    </div>
+    <main>
+      <AdminShell
+        title="Reports and Analytics"
+        description="Executive view of sponsor pipeline health, package readiness, creator inventory readiness, product/service catalog status, gallery content, and inquiry capture performance."
+        currentPath="/admin/reports"
+      >
+        <AdminReportsManager
+          liveTitle="System Admin Executive Snapshot"
+          liveSummary="Save, print, and export a current snapshot of the 2026 sponsorship pipeline, CMS readiness, and inquiry/media activity."
+          liveMetrics={metrics}
+          chartGroups={chartGroups}
+          initialReports={savedReports.map((item) => ({
+            id: item.id,
+            title: item.title,
+            reportType: item.reportType,
+            summary: item.summary,
+            payloadJson: item.payloadJson,
+            generatedByEmail: item.generatedByEmail,
+            createdAt: item.createdAt.toISOString(),
+          }))}
+        />
+      </AdminShell>
+    </main>
   );
 }

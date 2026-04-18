@@ -1,11 +1,29 @@
-import { CrudManager } from "@/components/crud-manager";
+import { AdminShell } from '@/components/admin-shell';
+import { SponsorManager } from '@/components/forms/sponsor-manager';
+import { prisma } from '@/lib/prisma';
 
-export default function Page() {
+export const dynamic = 'force-dynamic';
+
+export default async function AdminSponsorsPage() {
+  const sponsors = await prisma.sponsor.findMany({ orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }] });
+
   return (
-    <CrudManager
-      title="Sponsors"
-      endpoint="/api/admin/sponsors"
-      fields={[{"key": "name", "label": "Name", "type": "text", "required": true}, {"key": "slug", "label": "Slug", "type": "text", "required": true}, {"key": "description", "label": "Description", "type": "textarea", "required": true}, {"key": "website", "label": "Website", "type": "text"}, {"key": "logo", "label": "Logo", "type": "image"}, {"key": "status", "label": "Status", "type": "text"}, {"key": "packageId", "label": "Package ID", "type": "text"}]}
-    />
+    <main>
+      <AdminShell title="Sponsors" description="Create, edit, publish, and organize sponsor packages for the public website." currentPath="/admin/sponsors">
+        <SponsorManager initialSponsors={sponsors.map((item) => ({
+          id: item.id,
+          name: item.name,
+          slug: item.slug,
+          tier: item.tier,
+          logoUrl: item.logoUrl,
+          websiteUrl: item.websiteUrl,
+          shortDescription: item.shortDescription,
+          packageValue: item.packageValue,
+          benefits: item.benefits,
+          sortOrder: item.sortOrder,
+          isActive: item.isActive,
+        }))} />
+      </AdminShell>
+    </main>
   );
 }

@@ -1,10 +1,26 @@
 'use client';
 
-import { SupportChatWidget } from "@/components/support-chat-widget";
+import Script from 'next/script';
+import { ChatKit, useChatKit } from '@openai/chatkit-react';
+
+function getOrCreateVisitorId() {
+  const storageKey = 'resurgence_visitor_id';
+
+  if (typeof window === 'undefined') {
+    return 'server-render';
+  }
+
+  const existing = window.localStorage.getItem(storageKey);
+  if (existing) {
+    return existing;
+  }
+
+  const created = crypto.randomUUID();
+  window.localStorage.setItem(storageKey, created);
+  return created;
+}
 
 export function ResurgenceSupportBot() {
-  return <SupportChatWidget />;
-  /*
   const { control } = useChatKit({
     api: {
       async getClientSecret() {
@@ -67,5 +83,4 @@ export function ResurgenceSupportBot() {
       </div>
     </>
   );
-  */
 }

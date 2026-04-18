@@ -1,11 +1,28 @@
-import { CrudManager } from "@/components/crud-manager";
+import { AdminShell } from '@/components/admin-shell';
+import { PartnerManager } from '@/components/forms/partner-manager';
+import { prisma } from '@/lib/prisma';
 
-export default function Page() {
+export const dynamic = 'force-dynamic';
+
+export default async function AdminPartnersPage() {
+  const partners = await prisma.partner.findMany({ orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }] });
+
   return (
-    <CrudManager
-      title="Partners"
-      endpoint="/api/admin/partners"
-      fields={[{"key": "name", "label": "Name", "type": "text", "required": true}, {"key": "slug", "label": "Slug", "type": "text", "required": true}, {"key": "description", "label": "Description", "type": "textarea", "required": true}, {"key": "website", "label": "Website", "type": "text"}, {"key": "logo", "label": "Logo", "type": "image"}, {"key": "status", "label": "Status", "type": "text"}]}
-    />
+    <main>
+      <AdminShell title="Partners" description="Manage organizations, media allies, operations collaborators, and other partner entries." currentPath="/admin/partners">
+        <PartnerManager initialPartners={partners.map((item) => ({
+          id: item.id,
+          name: item.name,
+          slug: item.slug,
+          category: item.category,
+          logoUrl: item.logoUrl,
+          websiteUrl: item.websiteUrl,
+          shortDescription: item.shortDescription,
+          services: item.services,
+          sortOrder: item.sortOrder,
+          isActive: item.isActive,
+        }))} />
+      </AdminShell>
+    </main>
   );
 }

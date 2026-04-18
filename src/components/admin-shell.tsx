@@ -14,10 +14,11 @@ const items = [
   { href: '/admin/inquiries', label: 'Inquiries' },
   { href: '/admin/content', label: 'Content CMS' },
   { href: '/admin/product-services', label: 'Products & Services' },
+  { href: '/admin/products', label: 'Shop Products' },
+  { href: '/admin/orders', label: 'Shop Orders' },
   { href: '/admin/users', label: 'Users & Roles' },
   { href: '/admin/reports', label: 'Reports' },
   { href: '/admin/settings', label: 'Settings' },
-  { href: '/admin/activity-logs', label: 'Activity Logs' },
 ];
 
 export async function AdminShell({

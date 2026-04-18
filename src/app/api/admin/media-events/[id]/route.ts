@@ -1,25 +1,40 @@
-import { NextRequest } from "next/server";
-import { Role } from "@prisma/client";
-import { db } from "@/lib/db";
-import { ok, requireApiRole } from "@/lib/api-utils";
-import { parsePayload } from "@/lib/parse";
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { mediaEventSchema } from '@/lib/validation';
 
-export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await requireApiRole(request, [Role.SYSTEM_ADMIN]);
-  if (auth.error) return auth.error;
-
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const body = await request.json();
-  const data = parsePayload(body);
-  const item = await (db as any).mediaEvent.update({ where: { id }, data });
-  return ok({ item });
+  const body = await request.json().catch(() => null);
+  const parsed = mediaEventSchema.safeParse(body);
+
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Invalid gallery event payload.' }, { status: 400 });
+  }
+
+  try {
+    const item = await prisma.mediaEvent.update({
+      where: { id },
+      data: {
+        title: parsed.data.title,
+        description: parsed.data.description || null,
+        eventDate: parsed.data.eventDate ? new Date(parsed.data.eventDate) : null,
+        creatorId: parsed.data.creatorId || null,
+        sortOrder: parsed.data.sortOrder,
+        isActive: parsed.data.isActive,
+      },
+    });
+    return NextResponse.json({ item });
+  } catch {
+    return NextResponse.json({ error: 'Unable to update gallery event.' }, { status: 400 });
+  }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await requireApiRole(request, [Role.SYSTEM_ADMIN]);
-  if (auth.error) return auth.error;
-
+export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  await (db as any).mediaEvent.delete({ where: { id } });
-  return ok({ success: true });
+  try {
+    await prisma.mediaEvent.delete({ where: { id } });
+    return NextResponse.json({ success: true });
+  } catch {
+    return NextResponse.json({ error: 'Unable to delete gallery event.' }, { status: 400 });
+  }
 }

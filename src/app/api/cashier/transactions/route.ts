@@ -1,36 +1,62 @@
-import { Decimal, Role, TransactionType } from "@prisma/client";
-import { NextRequest } from "next/server";
-import { db } from "@/lib/db";
-import { ok, requireApiRole } from "@/lib/api-utils";
-import { recalculateInvoice } from "@/lib/invoice";
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { formatCurrency } from '@/lib/cashier';
+import { cashierTransactionSchema } from '@/lib/validation';
+import { buildTransactionPayload, serializeTransaction, syncLinkedInvoice } from '@/lib/cashier-api';
+import { createWorkflowAutomation } from '@/lib/notifications';
 
-export async function GET(request: NextRequest) {
-  const auth = await requireApiRole(request, [Role.CASHIER, Role.SYSTEM_ADMIN]);
-  if (auth.error) return auth.error;
-
-  const items = await db.cashierTransaction.findMany({
-    orderBy: { createdAt: "desc" }
-  });
-
-  return ok({ items });
+export async function GET() {
+  const items = await prisma.cashierTransaction.findMany({ orderBy: [{ transactionDate: 'desc' }, { createdAt: 'desc' }] });
+  return NextResponse.json({ items: items.map(serializeTransaction) });
 }
 
-export async function POST(request: NextRequest) {
-  const auth = await requireApiRole(request, [Role.CASHIER, Role.SYSTEM_ADMIN]);
-  if (auth.error) return auth.error;
+export async function POST(request: Request) {
+  try {
+    const parsed = cashierTransactionSchema.parse(await request.json());
+    const payload = await buildTransactionPayload(parsed);
+    const item = await prisma.cashierTransaction.create({ data: payload });
+    await syncLinkedInvoice(item.invoiceId);
+    const invoice = item.invoiceId ? await prisma.invoice.findUnique({ where: { id: item.invoiceId } }) : null;
+    const actionLabel =
+      item.kind === 'REFUND' ? 'Refund processed' : item.kind === 'ADJUSTMENT' ? 'Adjustment recorded' : 'Collection recorded';
 
-  const body = await request.json();
-
-  const item = await db.cashierTransaction.create({
-    data: {
-      invoiceId: body.invoiceId,
-      type: body.type as TransactionType,
-      amount: new Decimal(Number(body.amount || 0)),
-      reference: body.reference || null,
-      notes: body.notes || null
-    }
-  });
-
-  await recalculateInvoice(body.invoiceId);
-  return ok({ item });
+    await createWorkflowAutomation({
+      notifications: [
+        {
+          recipientRole: 'CASHIER',
+          title: `${actionLabel}: ${item.transactionNumber}`,
+          message: `${item.companyName} ${item.kind.toLowerCase()} amount is ${formatCurrency(item.amount)}.`,
+          level: item.kind === 'COLLECTION' ? 'SUCCESS' : item.kind === 'REFUND' ? 'WARNING' : 'INFO',
+          href: '/cashier/transactions',
+          metadata: { transactionId: item.id, invoiceId: item.invoiceId },
+        },
+        {
+          recipientRole: 'SYSTEM_ADMIN',
+          title: `Finance activity posted`,
+          message: `${item.transactionNumber} updated the sponsor finance ledger.`,
+          level: 'INFO',
+          href: '/admin/reports',
+          metadata: { transactionId: item.id, invoiceId: item.invoiceId },
+        },
+      ],
+      emails:
+        invoice?.email && item.kind !== 'ADJUSTMENT'
+          ? [
+              {
+                recipientRole: 'SPONSOR',
+                toEmail: invoice.email,
+                toName: invoice.contactName || invoice.companyName,
+                subject: `${actionLabel} for ${invoice.invoiceNumber}`,
+                bodyText: `Hi ${invoice.contactName || invoice.companyName},\n\nA ${item.kind.toLowerCase()} entry worth ${formatCurrency(item.amount)} was posted against invoice ${invoice.invoiceNumber}.`,
+                eventKey: 'transaction.created.contact',
+                relatedType: 'CashierTransaction',
+                relatedId: item.id,
+              },
+            ]
+          : [],
+    });
+    return NextResponse.json({ item: serializeTransaction(item) });
+  } catch {
+    return NextResponse.json({ error: 'Unable to record transaction.' }, { status: 400 });
+  }
 }

@@ -1,23 +1,58 @@
-import { NextRequest } from "next/server";
-import { Role } from "@prisma/client";
-import { db } from "@/lib/db";
-import { fail, ok, requireApiRole } from "@/lib/api-utils";
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { getCurrentSponsorContext } from '@/lib/sponsor-server';
+import { sponsorSubmissionSchema } from '@/lib/validation';
 
-export async function GET(request: NextRequest) {
-  const auth = await requireApiRole(request, [Role.SPONSOR, Role.SYSTEM_ADMIN]);
-  if (auth.error) return auth.error;
+export async function GET() {
+  const context = await getCurrentSponsorContext();
+  if (!context) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const where =
-    auth.user?.role === Role.SPONSOR && auth.user.sponsorId
-      ? { sponsorId: auth.user.sponsorId }
-      : auth.user?.role === Role.SYSTEM_ADMIN && request.nextUrl.searchParams.get("sponsorId")
-        ? { sponsorId: request.nextUrl.searchParams.get("sponsorId") || undefined }
-        : {};
-
-  const items = await db.sponsorApplication.findMany({
-    where,
-    orderBy: { createdAt: "desc" },
+  const items = await prisma.sponsorSubmission.findMany({
+    where: { sponsorProfileId: context.sponsorProfile.id },
+    orderBy: [{ createdAt: 'desc' }],
   });
 
-  return ok({ items });
+  return NextResponse.json({
+    items: items.map((item) => ({
+      ...item,
+      createdAt: item.createdAt.toISOString(),
+      updatedAt: item.updatedAt.toISOString(),
+      phone: item.phone ?? null,
+      websiteUrl: item.websiteUrl ?? null,
+      timeline: item.timeline ?? null,
+      internalNotes: item.internalNotes ?? null,
+    })),
+  });
+}
+
+export async function POST(request: Request) {
+  const context = await getCurrentSponsorContext();
+  if (!context) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  try {
+    const parsed = sponsorSubmissionSchema.parse(await request.json());
+    const item = await prisma.sponsorSubmission.create({
+      data: {
+        ...parsed,
+        phone: parsed.phone || null,
+        websiteUrl: parsed.websiteUrl || null,
+        timeline: parsed.timeline || null,
+        sponsorProfileId: context.sponsorProfile.id,
+      },
+    });
+
+    return NextResponse.json({
+      item: {
+        ...item,
+        createdAt: item.createdAt.toISOString(),
+        updatedAt: item.updatedAt.toISOString(),
+        phone: item.phone ?? null,
+        websiteUrl: item.websiteUrl ?? null,
+        timeline: item.timeline ?? null,
+        internalNotes: item.internalNotes ?? null,
+      },
+    });
+  } catch {
+    return NextResponse.json({ error: 'Unable to save sponsor application.' }, { status: 400 });
+  }
 }

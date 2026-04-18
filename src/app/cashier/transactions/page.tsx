@@ -1,17 +1,35 @@
-import { CrudManager } from "@/components/crud-manager";
+import { TransactionManager } from '@/components/forms/transaction-manager';
+import { RoleShell } from '@/components/role-shell';
+import { cashierNavItems } from '@/lib/cashier';
+import { prisma } from '@/lib/prisma';
 
-export default function CashierTransactionsPage() {
+export const dynamic = 'force-dynamic';
+
+export default async function Page() {
+  const [transactions, invoices] = await Promise.all([
+    prisma.cashierTransaction.findMany({ orderBy: [{ transactionDate: 'desc' }, { createdAt: 'desc' }] }),
+    prisma.invoice.findMany({ orderBy: [{ issueDate: 'desc' }, { createdAt: 'desc' }] }),
+  ]);
+
   return (
-    <CrudManager
-      title="Cashier Transactions"
-      endpoint="/api/cashier/transactions"
-      fields={[
-        { key: "invoiceId", label: "Invoice ID", type: "text", required: true },
-        { key: "type", label: "Type (COLLECTION / REFUND / ADJUSTMENT)", type: "text", required: true },
-        { key: "amount", label: "Amount", type: "number", required: true },
-        { key: "reference", label: "Reference", type: "text" },
-        { key: "notes", label: "Notes", type: "textarea" }
-      ]}
-    />
+    <main>
+      <RoleShell roleLabel="Cashier" title="Transactions" description="Record sponsor collections, refunds, and adjustments with linked invoice balance updates." navItems={cashierNavItems as any} currentPath="/cashier/transactions">
+        <TransactionManager
+          initialItems={transactions.map((item) => ({
+            ...item,
+            transactionDate: item.transactionDate.toISOString(),
+            referenceNumber: item.referenceNumber ?? null,
+            notes: item.notes ?? null,
+          }))}
+          invoices={invoices.map((item) => ({
+            id: item.id,
+            invoiceNumber: item.invoiceNumber,
+            companyName: item.companyName,
+            balanceAmount: item.balanceAmount,
+            status: item.status,
+          }))}
+        />
+      </RoleShell>
+    </main>
   );
 }
