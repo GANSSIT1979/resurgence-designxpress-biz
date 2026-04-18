@@ -1,25 +1,16 @@
 # AI Support Patch Notes
 
-Updated: 2026-04-16
+Updated: 2026-04-19
 
-## Purpose
+## Status
 
-This note tracks the AI customer service implementation layer for the active `src/` application.
+Historical implementation note.
 
-## Current State
+## Current Accurate Summary
 
-- `/support` is the public support entry point
-- `/api/chatkit/session` now exposes readiness and ChatKit session behavior
-- `/api/chatkit/message` classifies sponsorships, events, custom apparel, and partnerships
-- `/api/openai/webhook` verifies signed OpenAI webhook payloads
-- `npm run support:verify` is the current verification command
-
-## Outstanding External Steps
-
-- publish the OpenAI workflow
-- set `OPENAI_WORKFLOW_ID`
-- create the OpenAI project webhook
-- set `OPENAI_WEBHOOK_SECRET`
+- `/api/chatkit/message` is the live rule-based support router for sponsorships, events, custom apparel, and partnerships.
+- `/api/chatkit/lead` writes `Inquiry`, notification, and automated email records for support follow-up.
+- `npm run support:verify` is the supported smoke-test command for this flow.
 
 ## Canonical Docs
 

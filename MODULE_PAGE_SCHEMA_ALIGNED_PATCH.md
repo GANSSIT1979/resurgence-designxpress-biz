@@ -1,18 +1,18 @@
 # Module Page Schema Aligned Patch
 
-Updated: 2026-04-16
+Updated: 2026-04-19
 
-## Purpose
+## Status
 
-This note records the effort to replace older route assumptions with names from the active Prisma schema.
+Historical implementation note.
 
-## Current State
+## Current Accurate Summary
 
-- the Prisma schema remains the authority
-- several older field-name mismatches were fixed in past passes
-- a few pages and API routes still need the same treatment
+- `prisma/schema.prisma` remains the authority for model names and field names.
+- The active routes and docs now reflect the repaired schema well enough for local validation to pass.
 
 ## Canonical Docs
 
 - `docs/DATABASE.md`
-- `docs/TROUBLESHOOTING.md`
+- `docs/API.md`
+- `docs/CHANGELOG.md`

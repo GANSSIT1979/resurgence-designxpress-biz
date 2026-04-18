@@ -1,17 +1,17 @@
 # Dashboard Visual Polish Notes
 
-Updated: 2026-04-16
+Updated: 2026-04-19
 
-## Purpose
+## Status
 
-This note captures the UI pass that pushed the dashboards toward a more premium shared design language.
+Historical implementation note.
 
-## Current State
+## Current Accurate Summary
 
-- shared dashboard styling remains part of the active application
-- visual polish is secondary to the current build stabilization work
+- Shared dashboard styling is still part of the live admin, cashier, sponsor, staff, and partner pages.
+- The current documentation focus is on accurate behavior and route structure, not a design changelog.
 
 ## Canonical Docs
 
 - `docs/ARCHITECTURE.md`
-- `docs/ROADMAP.md`
+- `docs/USER_GUIDE.md`

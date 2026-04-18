@@ -1,17 +1,18 @@
 # Server Backed Workflow Notes
 
-Updated: 2026-04-16
+Updated: 2026-04-19
 
-## Purpose
+## Status
 
-This note covers the move from browser-only workflow helpers to server-backed saved views, row actions, and bulk actions.
+Historical implementation note.
 
-## Current State
+## Current Accurate Summary
 
-- saved views and bulk workflow concepts remain part of the repository
-- server-backed workflow support still depends on ongoing schema and route cleanup in some modules
+- Active server-backed workflows today include sponsor submissions, support leads, notifications, automated emails, and protected dashboard CRUD routes.
+- Saved views and bulk workflow features are not part of the current canonical feature set.
 
 ## Canonical Docs
 
 - `docs/API.md`
 - `docs/ARCHITECTURE.md`
+- `docs/DATABASE.md`

@@ -1,17 +1,19 @@
 # Form Layer Premium Notes
 
-Updated: 2026-04-16
+Updated: 2026-04-19
 
-## Purpose
+## Status
 
-This note tracks the form component pass that standardized form shells, sections, actions, and upload fields.
+Historical implementation note.
 
-## Current State
+## Current Accurate Summary
 
-- the active app still uses shared form components and upload handling
-- further form cleanup depends on clearing the remaining schema drift in admin and sponsor modules
+- Active public form flows include inquiries, sponsor submissions, support lead capture, and checkout.
+- Image uploads now use `POST /api/uploads/image`.
+- Dashboard forms remain backed by route handlers and Prisma validation schemas.
 
 ## Canonical Docs
 
 - `docs/API.md`
 - `docs/ADMIN_GUIDE.md`
+- `docs/USER_GUIDE.md`

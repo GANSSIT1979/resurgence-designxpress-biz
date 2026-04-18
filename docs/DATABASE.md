@@ -1,60 +1,91 @@
 # DATABASE
 
-Updated: 2026-04-16
+Updated: 2026-04-19
 
 ## Provider Strategy
 
 - Local development: SQLite
-- Production target: PostgreSQL
+- Production-style provider: PostgreSQL
 
-## Prisma Source of Truth
+## Prisma Source Of Truth
 
-- template schema: `prisma/schema.template.prisma`
-- generated schema: `prisma/schema.prisma`
-- prepare script: `scripts/prepare-prisma.mjs`
+- active schema file: `prisma/schema.prisma`
+- active prep script: `scripts/prepare-prisma-schema.mjs`
+- seed file: `prisma/seed.ts`
 
-Use the npm scripts so Prisma always runs against the prepared schema.
+The app, Prisma Client, and package scripts all run against `prisma/schema.prisma`. The prep script only rewrites the datasource provider.
 
 ## Major Model Areas
 
-### Identity and Access
+### Identity And Access
 
 - `User`
-- `Setting`
-- `Notification`
-- `EmailQueue`
+- `SponsorProfile`
+- `StaffProfile`
+- `PartnerProfile`
 
-### Sponsorship and Partnerships
+### Public Intake And Support
+
+- `Inquiry`
+- `SponsorSubmission`
+- `PlatformNotification`
+- `AutomatedEmail`
+
+### Sponsorship Operations
 
 - `Sponsor`
-- `SponsorPackage`
-- `SponsorProfile`
-- `SponsorApplication`
+- `SponsorPackageTemplate`
 - `SponsorDeliverable`
+- `SponsorInventoryCategory`
+
+### Partner Operations
+
 - `Partner`
+- `PartnerCampaign`
+- `PartnerReferral`
+- `PartnerAgreement`
 
-### Creator and Media
+### Staff Operations
 
+- `StaffTask`
+- `StaffScheduleItem`
+- `StaffAnnouncement`
+
+### Media And Content
+
+- `PageContent`
 - `CreatorProfile`
 - `MediaEvent`
 - `GalleryMedia`
-- `SponsorInventoryItem`
+- `ProductService`
+- `AppSetting`
+- `AdminReport`
 
 ### Finance
 
 - `Invoice`
 - `CashierTransaction`
 - `Receipt`
-- `Counter`
 
-### Support and Intake
+### Commerce
 
-- `Inquiry`
-- `ChatConversation`
-- `ChatMessage`
-- `ReportSnapshot`
+- `ShopCategory`
+- `ShopProduct`
+- `ShopOrder`
+- `ShopOrderItem`
 
-## Local Database Commands
+## Seed Data
+
+`prisma/seed.ts` populates:
+
+- five demo users
+- sponsors, partner records, package templates, creators, media, settings
+- sponsor profile, partner profile, staff profile data
+- inquiries, tasks, schedule items, announcements
+- invoices, transactions, receipts
+- platform notifications and automated email records
+
+## Local Commands
 
 ```bash
 npm run prisma:generate
@@ -62,16 +93,6 @@ npm run db:push
 npm run db:seed
 ```
 
-## Known Schema Drift
-
-Some legacy pages and API routes still reference delegates or field names that are not part of the active Prisma schema. The current documentation reflects the schema, not the stale legacy references.
-
-Examples of drift still being cleaned up:
-
-- `pageContent` delegate references
-- older sponsor profile helper assumptions
-- older cashier field names such as `invoiceNumber` and `receiptNumber`
-
 ## Recommendation
 
-Treat the database layer as authoritative. When a page, route, or note conflicts with Prisma, follow the schema and update the code path rather than the documentation.
+Treat `prisma/schema.prisma` as the database authority. If a historical note or stale route name conflicts with Prisma, Prisma wins.

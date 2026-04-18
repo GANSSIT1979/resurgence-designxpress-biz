@@ -1,18 +1,18 @@
 # Revenue Monitoring Admin Cashier Notes
 
-Updated: 2026-04-16
+Updated: 2026-04-19
 
-## Purpose
+## Status
 
-This note records the revenue monitoring pass shared between admin and cashier workflows.
+Historical implementation note.
 
-## Current State
+## Current Accurate Summary
 
-- revenue monitoring routes and notes remain part of the active project direction
-- finance route cleanup is still part of the current stabilization backlog
+- The old revenue monitoring pages now redirect to `/admin/reports` and `/cashier/reports`.
+- Live finance workflows are centered on invoices, transactions, receipts, and cashier exports.
 
 ## Canonical Docs
 
 - `docs/API.md`
-- `docs/ROADMAP.md`
-- `docs/TROUBLESHOOTING.md`
+- `docs/ADMIN_GUIDE.md`
+- `docs/USER_GUIDE.md`

@@ -1,18 +1,18 @@
 # Finish Pack Notes
 
-Updated: 2026-04-16
+Updated: 2026-04-19
 
-## Purpose
+## Status
 
-This note represents the consolidation pass that tried to align routes, helpers, and shared components.
+Historical implementation note.
 
-## Current State
+## Current Accurate Summary
 
-- some of that consolidation landed and remains in the active app
-- repository-wide schema alignment is still not complete
-- current effort is focused on finishing the cleanup honestly
+- The repo is no longer in the earlier broken state described by this note.
+- Current local verification is green for typecheck, build, and support-route checks.
 
 ## Canonical Docs
 
-- `docs/ROADMAP.md`
-- `docs/TROUBLESHOOTING.md`
+- `README.md`
+- `docs/TESTING.md`
+- `docs/CHANGELOG.md`

@@ -1,19 +1,27 @@
 # TESTING
 
-Updated: 2026-04-16
+Updated: 2026-04-19
 
 ## Recommended Command Checks
 
-### Local Bootstrap
+### Bootstrap
 
 ```bash
 npm install
-npm run prisma:generate
 npm run db:push
 npm run db:seed
 ```
 
+### Static Validation
+
+```bash
+npx tsc --noEmit --pretty false
+npm run build
+```
+
 ### Support Verification
+
+Start the app first, then run:
 
 ```bash
 npm run support:verify -- --base-url=http://localhost:3000
@@ -28,6 +36,7 @@ Verify these pages load:
 - `/contact`
 - `/sponsor/apply`
 - `/support`
+- `/shop`
 - `/api/health`
 
 ## Role Smoke Tests
@@ -38,20 +47,18 @@ Verify these pages load:
 - Staff can open `/staff`
 - Partner can open `/partner`
 
-## AI Support Checks
+## Support Checks
 
 - ask one sponsorship question
 - ask one events question
 - ask one custom apparel question
 - ask one partnership question
-- save lead details through the support lead form
+- submit support lead details
 
 ## Current Verification Status
 
-As of 2026-04-16:
+As of 2026-04-19:
 
-- targeted support-route documentation and route wiring were updated
-- `npx tsc --noEmit` still fails in unrelated legacy modules
-- `npm run build` still fails on the missing `@/lib/sponsor-server` import
-
-That means focused feature testing can continue, but repository-wide green verification is still pending.
+- `npx tsc --noEmit --pretty false` passes
+- `npm run build` passes
+- `npm run support:verify` passes against a running local app

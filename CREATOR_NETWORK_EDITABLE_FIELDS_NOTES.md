@@ -1,15 +1,16 @@
 # Creator Network Editable Fields Notes
 
-Updated: 2026-04-16
+Updated: 2026-04-19
 
-## Purpose
+## Status
 
-This note covers the pass that expanded editable creator profile fields for the admin CMS and creator-facing pages.
+Historical implementation note.
 
-## Current State
+## Current Accurate Summary
 
-- creator profiles remain part of the active schema and public experience
-- creator field typing and rendering still appear in the current stabilization backlog for a few pages
+- Creator profiles are active public content at `/creator/[slug]`.
+- Creator records are managed through the admin creator-network tooling.
+- The current app does not include a creator login or creator dashboard.
 
 ## Canonical Docs
 

@@ -1,18 +1,19 @@
 # Alias And Dashboard Shell Fix
 
-Updated: 2026-04-16
+Updated: 2026-04-19
 
-## Purpose
+## Status
 
-This historical note covers the earlier pass that normalized `@/*` imports and stabilized the shared dashboard shell structure.
+Historical implementation note.
 
-## Current State
+## Current Accurate Summary
 
-- the active application continues to use `@/*` path aliases into `src/`
-- shared dashboard patterns remain part of the active dashboard implementation
-- this note is retained for history, not as the main source of truth
+- `@/*` imports still resolve into `src/`.
+- Shared dashboard shells are still part of the live admin, cashier, sponsor, staff, and partner experiences.
+- Compatibility redirects remain for `/partner/dashboard`, `/admin/revenue-monitoring`, `/cashier/revenue-monitoring`, and nested sponsor dashboard pages.
 
 ## Canonical Docs
 
 - `docs/ARCHITECTURE.md`
 - `docs/ADMIN_GUIDE.md`
+- `docs/USER_GUIDE.md`

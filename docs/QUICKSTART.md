@@ -1,16 +1,17 @@
 # QUICKSTART
 
-Updated: 2026-04-16
+Updated: 2026-04-19
 
 ## Fast Local Startup
 
 ```bash
 npm install
-npm run prisma:generate
 npm run db:push
 npm run db:seed
 npm run dev
 ```
+
+If you switched providers, run `npm run prisma:generate` first.
 
 ## Key URLs
 
@@ -26,11 +27,12 @@ npm run dev
 1. Sign in as the admin user and open `/admin`
 2. Sign in as the cashier user and open `/cashier`
 3. Sign in as the sponsor user and open `/sponsor/dashboard`
-4. Open `/support` and send one message for each support category
+4. Sign in as the staff user and open `/staff`
+5. Sign in as the partner user and open `/partner`
 
 ## Support Verification
 
-Local verification:
+Run this while the app is already serving locally:
 
 ```bash
 npm run support:verify -- --base-url=http://localhost:3000
@@ -46,10 +48,7 @@ npm run support:verify -- --base-url=https://your-domain.example --webhook-secre
 
 - the public site loads
 - login works for seeded users
-- the support desk loads and stores conversation state
-- `/api/chatkit/session` returns readiness metadata
 - `/api/health` returns `200`
-
-## Current Caveat
-
-Use this quickstart for local work and focused feature testing. Do not treat it as proof that the full repository is build-green until the blockers in `TROUBLESHOOTING.md` are cleared.
+- `npx tsc --noEmit --pretty false` passes
+- `npm run build` passes
+- support verification completes without failures

@@ -1,36 +1,36 @@
 # INSTALL
 
-Updated: 2026-04-16
+Updated: 2026-04-19
 
 ## Requirements
 
 - Node.js 20.x
 - npm 10+
 - SQLite for local development
-- PostgreSQL for production deployments
-- OpenAI credentials only if you are enabling production AI support
+- PostgreSQL is supported when you want a production-style provider
+- OpenAI credentials only if you are enabling workflow-backed support verification
 
 ## Install Steps
 
 ```bash
 cp .env.example .env
 npm install
-npm run prisma:generate
 npm run db:push
 npm run db:seed
 npm run dev
 ```
 
-Windows PowerShell equivalent:
+Windows PowerShell:
 
 ```powershell
 Copy-Item .env.example .env
 npm install
-npm run prisma:generate
 npm run db:push
 npm run db:seed
 npm run dev
 ```
+
+`npm install` already runs Prisma generate through `postinstall`. If you change `PRISMA_DB_PROVIDER`, rerun `npm run prisma:generate`.
 
 ## First Local Checks
 
@@ -41,24 +41,21 @@ npm run dev
 
 ## Demo Accounts
 
-- System Admin: `admin@resurgence.local` / `Admin123!`
+- System Admin: `admin@resurgence.local` / `ChangeMe123!`
 - Cashier: `cashier@resurgence.local` / `Cashier123!`
 - Sponsor: `sponsor@resurgence.local` / `Sponsor123!`
 - Staff: `staff@resurgence.local` / `Staff123!`
 - Partner: `partner@resurgence.local` / `Partner123!`
 
-## Optional AI Support Setup
+## Optional Verification
 
-If you are preparing the AI customer service flow, also set:
-
-```env
-OPENAI_API_KEY=""
-OPENAI_WORKFLOW_ID=""
-OPENAI_WORKFLOW_VERSION=""
-OPENAI_WEBHOOK_SECRET=""
-OPENAI_DEFAULT_MODEL="gpt-4.1-mini"
+```bash
+npx tsc --noEmit --pretty false
+npm run build
 ```
 
-## Important Current Note
+Support verification:
 
-The repository can be installed and run locally, but the entire codebase is not fully repaired yet. As of 2026-04-16, some legacy modules still fail full typecheck and production build. See `TROUBLESHOOTING.md` for the active blockers.
+```bash
+npm run support:verify -- --base-url=http://localhost:3000
+```

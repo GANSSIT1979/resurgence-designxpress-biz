@@ -1,15 +1,16 @@
 # Users Creators Partners Dashboard Notes
 
-Updated: 2026-04-16
+Updated: 2026-04-19
 
-## Purpose
+## Status
 
-This note records the dashboard and user-management expansion for admin, creator, and partner experiences.
+Historical implementation note.
 
-## Current State
+## Current Accurate Summary
 
-- users, creators, and partner dashboards remain part of the active feature set
-- some creator and partner pages still appear in the current stabilization backlog because of older typing assumptions
+- Current signed-in roles are admin, cashier, sponsor, staff, and partner.
+- Partner dashboard pages remain active.
+- Creator records are public profiles only in the current app.
 
 ## Canonical Docs
 

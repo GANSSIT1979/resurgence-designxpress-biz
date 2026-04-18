@@ -1,47 +1,58 @@
 # ADMIN GUIDE
 
-Updated: 2026-04-16
+Updated: 2026-04-19
 
 ## Admin Scope
 
 System Admin users oversee:
 
-- sponsor applications and sponsor records
-- creator profiles
-- gallery and media events
+- users and role assignments
+- sponsors, sponsor packages, submissions, and sponsor inventory
+- creators, media events, gallery media, and content
 - inquiries and support lead follow-up
-- users and roles
-- settings and reports
-- revenue monitoring and finance visibility
+- shop products and shop orders
+- settings and executive reports
 
 ## Core Admin Areas
 
 - `/admin`
 - `/admin/users`
 - `/admin/inquiries`
-- `/admin/gallery`
+- `/admin/content`
 - `/admin/creator-network`
+- `/admin/gallery`
+- `/admin/partners`
+- `/admin/product-services`
+- `/admin/products`
+- `/admin/orders`
 - `/admin/settings`
 - `/admin/reports`
+- `/admin/sponsor-inventory`
+- `/admin/sponsor-packages`
+- `/admin/sponsor-submissions`
+- `/admin/sponsors`
+
+`/admin/revenue-monitoring` is now just a compatibility redirect to `/admin/reports`.
 
 ## Daily Admin Checklist
 
 1. Review new inquiries and support leads
-2. Review sponsor applications
-3. Check settings and contact values
-4. Review report snapshots and finance summaries
-5. Review any OpenAI support webhook failures if production AI support is enabled
+2. Review sponsor submissions and sponsor records
+3. Check creator, gallery, and public content changes
+4. Review reports, settings, and notifications
+5. Review email automation failures if `EMAIL_WEBHOOK_URL` is configured
 
 ## Support Oversight
 
 The support desk can create:
 
-- conversation history in Prisma
-- lead capture records
-- inquiry records
-- email queue records
-- admin notifications
+- `Inquiry` records
+- `PlatformNotification` records
+- `AutomatedEmail` records
 
-## Current Caveat
+Support lead follow-up usually starts from `/admin/inquiries`.
 
-Some admin modules still sit inside the broader stabilization backlog because of older schema assumptions. Use the active Prisma schema and route handlers as the authority while those pages are being repaired.
+## API Notes
+
+- many admin collection and item routes are dashboard form handlers and use `POST`
+- admin-only data access is enforced by middleware and the permission matrix

@@ -1,19 +1,18 @@
 # Audit Logging Layer Notes
 
-Updated: 2026-04-16
+Updated: 2026-04-19
 
-## Purpose
+## Status
 
-This note records the audit logging pass for activity trails, saved views, and admin workflow changes.
+Historical implementation note.
 
-## Current State
+## Current Accurate Summary
 
-- audit helpers still exist in the active repository
-- activity and workflow tracking remain part of the platform direction
-- schema and delegate alignment for audit logging is still part of the broader stabilization backlog
+- `/api/activity-logs` still exists, but broad audit coverage is smaller than a full audit subsystem.
+- Platform notifications and automated emails are the most visible workflow-tracking records in the current app.
 
 ## Canonical Docs
 
 - `docs/SECURITY.md`
+- `docs/DATABASE.md`
 - `docs/ROADMAP.md`
-- `docs/TROUBLESHOOTING.md`

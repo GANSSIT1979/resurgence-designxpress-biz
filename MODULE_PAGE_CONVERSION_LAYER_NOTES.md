@@ -1,17 +1,18 @@
 # Module Page Conversion Layer Notes
 
-Updated: 2026-04-16
+Updated: 2026-04-19
 
-## Purpose
+## Status
 
-This note covers the pass that moved several dashboard subpages to a shared orchestration pattern.
+Historical implementation note.
 
-## Current State
+## Current Accurate Summary
 
-- dashboard page orchestration remains part of the active design
-- some converted pages still need schema cleanup to fully match the current Prisma models
+- Shared page orchestration patterns still exist across dashboard modules.
+- The current app is already aligned well enough for local typecheck and build to pass.
 
 ## Canonical Docs
 
 - `docs/ARCHITECTURE.md`
+- `docs/API.md`
 - `docs/ROADMAP.md`

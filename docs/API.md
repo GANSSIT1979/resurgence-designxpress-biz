@@ -1,25 +1,36 @@
 # API
 
-Updated: 2026-04-16
+Updated: 2026-04-19
 
 ## Overview
 
-The active application mixes server-rendered Prisma pages with route handlers under `src/app/api`. The list below focuses on the active route groups in the main `src/` application.
+Route handlers live under `src/app/api`. Middleware protects `/api/*` using the role permission matrix in `src/lib/permissions.ts`.
 
-## Auth
+Important behavior note:
+
+- many admin module handlers use `POST` for create and update flows instead of strict REST-only verbs
+- dashboard page redirects such as `/admin/revenue-monitoring` and `/cashier/revenue-monitoring` are page compatibility routes, not separate API modules
+
+## Public Routes
+
+- `GET /api/health`
+- `POST /api/inquiries`
+- `POST /api/sponsor-submissions`
+- `GET /api/shop/products`
+- `GET /api/shop/products/[slug]`
+- `POST /api/checkout`
+
+## Auth And Shared Protected Routes
 
 - `POST /api/auth/login`
 - `POST /api/auth/logout`
 - `GET /api/auth/me`
+- `GET /api/notifications`
+- `PATCH /api/notifications/[id]`
+- `GET /api/activity-logs`
+- `POST /api/uploads/image`
 
-## Public Intake
-
-- `POST /api/inquiries`
-- `POST /api/sponsor-applications`
-- `GET /api/health`
-- `POST /api/upload`
-
-## AI Customer Service
+## Support Routes
 
 - `GET /api/chatkit/session`
 - `POST /api/chatkit/session`
@@ -28,58 +39,63 @@ The active application mixes server-rendered Prisma pages with route handlers un
 - `GET /api/openai/webhook`
 - `POST /api/openai/webhook`
 
-### Support Behavior
+Current support behavior:
 
-- `/api/chatkit/session` returns readiness metadata on `GET`
-- `/api/chatkit/session` creates either a conversation bootstrap or an OpenAI ChatKit session on `POST`
-- `/api/chatkit/message` classifies requests into sponsorships, events, custom apparel, or partnerships
-- `/api/openai/webhook` verifies OpenAI webhook signatures before accepting events
+- `GET /api/chatkit/session` returns support bootstrap status for the widget
+- `POST /api/chatkit/session` returns either a conversation bootstrap or a local ChatKit-style session payload
+- `POST /api/chatkit/message` routes questions into `sponsorships`, `events`, `custom-apparel`, or `partnerships`
+- `POST /api/chatkit/lead` creates an `Inquiry` and queues platform notifications and automated emails
+- `POST /api/openai/webhook` verifies signed webhook payloads
 
-## Sponsor Routes
+## Sponsor Portal Routes
 
-- `GET /api/sponsor/applications`
-- `GET /api/sponsor/billing`
-- `GET /api/sponsor/deliverables`
-- `GET /api/sponsor/packages`
-- `GET /api/sponsor/profile`
-- `POST /api/sponsor/profile`
+- `/api/sponsor/applications` and `/api/sponsor/applications/[id]`
+- `/api/sponsor/deliverables` and `/api/sponsor/deliverables/[id]`
+- `/api/sponsor/packages`
+- `/api/sponsor/billing`
+- `/api/sponsor/profile`
+
+## Partner Routes
+
+- `/api/partner/profile`
+- `/api/partner/campaigns` and `/api/partner/campaigns/[id]`
+- `/api/partner/referrals` and `/api/partner/referrals/[id]`
+- `/api/partner/agreements` and `/api/partner/agreements/[id]`
+
+## Staff Routes
+
+- `/api/staff/tasks` and `/api/staff/tasks/[id]`
+- `/api/staff/schedule` and `/api/staff/schedule/[id]`
+- `/api/staff/announcements` and `/api/staff/announcements/[id]`
+- `/api/staff/inquiries` and `/api/staff/inquiries/[id]`
 
 ## Cashier Routes
 
-- `GET /api/cashier/reports/summary`
-- `GET /api/cashier/invoices`
-- `POST /api/cashier/invoices`
-- `GET /api/cashier/transactions`
-- `POST /api/cashier/transactions`
-- `GET /api/cashier/receipts`
-- `POST /api/cashier/receipts`
-- revenue monitoring routes for admin and cashier are also present
+- `/api/cashier/invoices` and `/api/cashier/invoices/[id]`
+- `/api/cashier/transactions` and `/api/cashier/transactions/[id]`
+- `/api/cashier/receipts` and `/api/cashier/receipts/[id]`
+- `/api/cashier/reports/summary`
+- `/api/cashier/reports/export`
 
 ## Admin Routes
 
-The admin surface includes route groups for:
+Admin module routes exist for:
 
 - content
 - creator network
-- gallery and gallery media
+- gallery media
 - inquiries
 - media events
 - partners
-- products and services
+- product services
 - reports
-- revenue monitoring
 - settings
+- shop orders
+- shop products
 - sponsor inventory
 - sponsor packages
 - sponsor submissions
 - sponsors
 - users
-- activity logs
-- saved views
-- bulk actions
 
-## Current Caveats
-
-- Some admin and sponsor routes still reference older delegate or field names and are part of the current stabilization backlog.
-- As of 2026-04-16, `npm run build` stops first on `src/app/api/sponsor/profile/route.ts` because `@/lib/sponsor-server` is missing.
-- Use the active Prisma schema as the source of truth when route assumptions and docs conflict.
+Some admin modules expose collection and item endpoints that are thin form-backed CRUD handlers rather than a fully uniform REST surface.

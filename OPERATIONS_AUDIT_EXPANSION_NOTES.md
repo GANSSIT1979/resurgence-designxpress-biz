@@ -1,16 +1,15 @@
 # Operations Audit Expansion Notes
 
-Updated: 2026-04-16
+Updated: 2026-04-19
 
-## Purpose
+## Status
 
-This note records the broader audit pass that extended activity tracking into auth, sponsor, finance, gallery, settings, and role workflows.
+Historical implementation note.
 
-## Current State
+## Current Accurate Summary
 
-- the repository still contains audit helpers and activity routes
-- complete audit coverage remains part of the production-hardening roadmap
-- schema alignment work is still needed before audit coverage can be treated as fully complete
+- The current platform records workflow activity mainly through notifications, automated emails, and the activity-log endpoint.
+- More complete audit coverage remains a roadmap item for production hardening.
 
 ## Canonical Docs
 

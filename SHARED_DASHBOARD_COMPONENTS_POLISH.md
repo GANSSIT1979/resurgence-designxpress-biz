@@ -1,17 +1,18 @@
 # Shared Dashboard Components Polish
 
-Updated: 2026-04-16
+Updated: 2026-04-19
 
-## Purpose
+## Status
 
-This note tracks the shared component pass for CRUD tables, chart cards, and dashboard data presentation.
+Historical implementation note.
 
-## Current State
+## Current Accurate Summary
 
-- shared dashboard components are still part of the active app
-- styling and reuse are no longer the main blocker; schema and typing repairs are
+- Shared components are still used across the protected dashboards.
+- Current source-of-truth behavior is documented in the main docs instead of this UI-oriented note.
 
 ## Canonical Docs
 
 - `docs/ARCHITECTURE.md`
-- `docs/ROADMAP.md`
+- `docs/ADMIN_GUIDE.md`
+- `docs/USER_GUIDE.md`

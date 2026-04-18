@@ -1,19 +1,19 @@
 # Login Fix Notes
 
-Updated: 2026-04-16
+Updated: 2026-04-19
 
-## Purpose
+## Status
 
-This note records the authentication pass that improved login redirects, session cleanup, and role-aware routing.
+Historical implementation note.
 
-## Current State
+## Current Accurate Summary
 
-- demo accounts are hashed
-- auth remains JWT cookie based
-- stale session cleanup is still part of the current expected auth flow
+- `/login` preserves `next` redirects for protected routes.
+- The login page now builds cleanly in production with a Suspense-wrapped search-param flow.
+- Session auth remains JWT-cookie based with the `resurgence_admin_session` cookie.
 
 ## Canonical Docs
 
 - `docs/SECURITY.md`
-- `docs/USER_GUIDE.md`
 - `docs/TROUBLESHOOTING.md`
+- `docs/USER_GUIDE.md`

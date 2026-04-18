@@ -1,22 +1,30 @@
 # SECURITY
 
-Updated: 2026-04-16
+Updated: 2026-04-19
 
 ## Current Security Baseline
 
-- JWT cookie authentication
-- hashed seeded demo passwords
-- role-based dashboard protection
-- sponsor-scoped data access patterns
-- admin-only and role-specific API checks in protected routes
-- upload route gated by authenticated role checks
-- OpenAI webhook signature verification on `/api/openai/webhook`
+- signed JWT session cookie authentication
+- seeded users stored with hashed passwords
+- middleware-based role protection for pages and APIs
+- role permission matrix in `src/lib/permissions.ts`
+- sponsor, partner, staff, and cashier routes scoped by current session context
+- upload scope checks on `/api/uploads/image`
+- signed webhook verification on `/api/openai/webhook`
 
 ## Authentication Notes
 
-- the session cookie should remain `httpOnly`
-- `secure` should be enabled in production
-- stale or invalid cookies should be cleared safely
+- cookie name: `resurgence_admin_session`
+- cookies are `httpOnly`
+- `secure` is enabled automatically in production
+- stale or invalid cookies should be cleared by logging out or clearing the browser cookie
+- rotate `JWT_SECRET` for production
+
+## Upload Notes
+
+- only JPG, PNG, WEBP, and GIF are accepted
+- files larger than `5 MB` are rejected
+- only permitted roles can upload specific scopes
 
 ## Current Gaps
 
@@ -24,17 +32,17 @@ Updated: 2026-04-16
 - no email verification flow yet
 - no 2FA yet
 - no comprehensive rate limiting yet
-- audit log coverage exists in places but schema integration is still incomplete
+- `/api/activity-logs` is present, but broad audit coverage is still limited compared with a full audit subsystem
 
 ## Deployment Guidance
 
-- rotate `AUTH_SECRET`
-- remove all demo credentials from production
-- move uploads away from local disk
-- add monitoring and alerting around auth, support, and finance flows
+- rotate `JWT_SECRET`
+- remove or change demo credentials before deployment
+- move uploads away from local disk if you need durable storage
+- add monitoring around auth, support, finance, and email webhook delivery
 
-## AI Support Guidance
+## Support Guidance
 
 - keep `OPENAI_WEBHOOK_SECRET` private
 - reject unsigned or invalid webhook payloads
-- do not treat workflow publishing as complete until the verifier passes against production
+- only treat workflow publishing as complete after the verifier passes against the target environment

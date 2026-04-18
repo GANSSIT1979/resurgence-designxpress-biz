@@ -1,17 +1,18 @@
 # Status And Data Semantics Notes
 
-Updated: 2026-04-16
+Updated: 2026-04-19
 
-## Purpose
+## Status
 
-This note records the pass that unified status badges, dashboard filters, tabs, empty states, and loading states.
+Historical implementation note.
 
-## Current State
+## Current Accurate Summary
 
-- semantic status and data presentation remain part of the current UI approach
-- any remaining mismatches are now mostly schema and typing issues, not visual semantic issues
+- The authoritative statuses now come from Prisma enums such as `InquiryStatus`, `SponsorSubmissionStatus`, `InvoiceStatus`, `DeliverableStatus`, and the partner and staff status enums.
+- Current docs follow the schema rather than older UI-only terminology.
 
 ## Canonical Docs
 
+- `docs/DATABASE.md`
 - `docs/ADMIN_GUIDE.md`
 - `docs/USER_GUIDE.md`
