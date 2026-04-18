@@ -35,7 +35,7 @@ If you change `PRISMA_DB_PROVIDER`, run `npm run prisma:generate` before the dat
 
 ## Demo Accounts
 
-- System Admin: `admin@resurgence.local` / `ChangeMe123!`
+- System Admin: `admin@resurgence.local` / `Admin123!`
 - Cashier: `cashier@resurgence.local` / `Cashier123!`
 - Sponsor: `sponsor@resurgence.local` / `Sponsor123!`
 - Staff: `staff@resurgence.local` / `Staff123!`

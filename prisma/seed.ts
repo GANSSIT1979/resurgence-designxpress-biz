@@ -34,7 +34,7 @@ async function main() {
   const users = [
     {
       email: 'admin@resurgence.local',
-      password: 'ChangeMe123!',
+      password: 'Admin123!',
       displayName: 'System Administrator',
       title: 'Full platform owner',
       role: UserRole.SYSTEM_ADMIN,
