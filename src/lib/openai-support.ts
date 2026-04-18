@@ -1,7 +1,7 @@
 import type { PublicSettings } from '@/lib/settings';
 
 export type SupportCategory = {
-  key: 'sponsorships' | 'events' | 'custom-apparel' | 'partnerships';
+  key: 'sponsorships' | 'orders' | 'payments' | 'events' | 'custom-apparel' | 'partnerships';
   label: string;
   routeLabel: string;
   starterPrompt: string;
@@ -15,6 +15,20 @@ export const supportCategories: readonly SupportCategory[] = [
     routeLabel: 'Sponsor package and brand activation routing',
     starterPrompt: 'I want to ask about sponsor packages and brand activation opportunities.',
     summary: 'Package tiers, deck-aligned sponsor benefits, creator integrations, and commercial follow-up.',
+  },
+  {
+    key: 'orders',
+    label: 'Orders & Shipping',
+    routeLabel: 'Shop order, delivery, and fulfillment routing',
+    starterPrompt: 'I need help with an order, delivery, product availability, or shipping question.',
+    summary: 'Order questions, product availability, checkout concerns, delivery coverage, and fulfillment handoff.',
+  },
+  {
+    key: 'payments',
+    label: 'Payments',
+    routeLabel: 'Payment method, reference, and billing support routing',
+    starterPrompt: 'I need help with payment options, payment confirmation, or billing reference details.',
+    summary: 'GCash, Maya, bank transfer, cards, cash payment guidance, payment references, and billing follow-up.',
   },
   {
     key: 'events',
@@ -43,12 +57,16 @@ export const supportWorkflowPrompt = `You are the official customer service assi
 
 Your scope:
 - Sponsorship packages, creator-led integrations, activations, and commercial sponsor questions.
+- Shop orders, product availability, delivery coverage, and fulfillment support.
+- Payment options, payment references, billing support, and receipt-oriented handoff.
 - Event operations, leagues, bookings, and on-ground support.
 - Custom uniforms, jerseys, and apparel requests.
 - Media, brand, and strategic partnerships.
 
 Routing rules:
 - For sponsorship questions, explain available sponsor package directions at a high level and route serious leads to the inquiry form for formal follow-up.
+- For shop or shipping questions, ask for the order number if available, customer email, product name, and delivery concern before handoff.
+- For payment questions, explain accepted payment methods only from the configured business profile and never ask for card numbers or sensitive financial credentials.
 - For events, clarify the event type, expected audience, venue/date needs, and operational scope before handing off.
 - For custom apparel, collect quantity, timeline, sizing, design needs, and preferred contact details before handoff.
 - For partnerships, determine whether the user is asking about media, community, brand, creator, or commercial collaboration and route accordingly.
@@ -130,6 +148,14 @@ export function getSupportCategory(key?: string | null) {
 export function inferSupportCategory(message: string): SupportCategory['key'] {
   const normalized = message.toLowerCase();
 
+  if (/(payment|pay|paid|gcash|maya|bank transfer|credit|debit|card|cash|receipt|invoice|billing|refund|reference)/.test(normalized)) {
+    return 'payments';
+  }
+
+  if (/(order|checkout|cart|shipping|delivery|deliver|product|stock|availability|tracking|shop)/.test(normalized)) {
+    return 'orders';
+  }
+
   if (/(uniform|jersey|apparel|merch|merchandise|printing|sublimation|dtf)/.test(normalized)) {
     return 'custom-apparel';
   }
@@ -147,6 +173,7 @@ export function inferSupportCategory(message: string): SupportCategory['key'] {
 
 export function buildSupportWorkflowStateVariables(settings: PublicSettings) {
   const supportFormUrl = settings.siteUrl.replace(/\/+$/, '') + '/support';
+  const routeLabel = (key: SupportCategory['key']) => supportCategories.find((item) => item.key === key)?.routeLabel || '';
 
   return {
     brand_name: settings.brandName,
@@ -165,10 +192,12 @@ export function buildSupportWorkflowStateVariables(settings: PublicSettings) {
     shipping_area: settings.shippingArea,
     support_form_url: supportFormUrl,
     support_topics: supportCategories.map((item) => item.label).join(' | '),
-    route_sponsorships: supportCategories[0].routeLabel,
-    route_events: supportCategories[1].routeLabel,
-    route_apparel: supportCategories[2].routeLabel,
-    route_partnerships: supportCategories[3].routeLabel,
+    route_sponsorships: routeLabel('sponsorships'),
+    route_orders: routeLabel('orders'),
+    route_payments: routeLabel('payments'),
+    route_events: routeLabel('events'),
+    route_apparel: routeLabel('custom-apparel'),
+    route_partnerships: routeLabel('partnerships'),
   };
 }
 

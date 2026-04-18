@@ -7,11 +7,12 @@ import { getPublicSettings } from '@/lib/settings';
 
 const schema = z.object({
   conversationId: z.string().min(1),
-  fullName: z.string().min(2).max(120),
-  organization: z.string().max(160).optional().or(z.literal('')),
-  email: z.string().email(),
-  mobile: z.string().min(7).max(40),
-  summary: z.string().min(5).max(2000)
+  fullName: z.string().trim().min(2).max(120),
+  organization: z.string().trim().max(160).optional().or(z.literal('')),
+  email: z.string().trim().email(),
+  mobile: z.string().trim().min(7).max(40),
+  summary: z.string().trim().min(5).max(2000),
+  category: z.string().trim().max(80).optional().or(z.literal('')),
 });
 
 export async function POST(request: NextRequest) {
@@ -22,7 +23,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: parsed.error.issues[0]?.message || 'Invalid lead payload' }, { status: 400 });
   }
 
-  const { conversationId, fullName, organization, email, mobile, summary } = parsed.data;
+  const { conversationId, fullName, organization, email, mobile, summary, category } = parsed.data;
   const [settings, inquiry] = await Promise.all([
     getPublicSettings(),
     prisma.inquiry.create({
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest) {
         organization: organization || null,
         email,
         phone: mobile,
-        inquiryType: 'AI Support Lead',
+        inquiryType: category ? `Support Lead - ${category}` : 'Live Support Lead',
         message: `${summary}\n\nConversation ID: ${conversationId}`,
         status: 'NEW',
       },
@@ -43,7 +44,7 @@ export async function POST(request: NextRequest) {
       {
         recipientRole: 'SYSTEM_ADMIN',
         title: `New AI support lead: ${fullName}`,
-        message: `${organization || 'Independent contact'} submitted business details through the support desk.`,
+        message: `${organization || 'Independent contact'} submitted ${category || 'support'} details through the support desk.`,
         level: 'SUCCESS',
         href: '/admin/inquiries',
         metadata: { inquiryId: inquiry.id, conversationId },
@@ -51,7 +52,7 @@ export async function POST(request: NextRequest) {
       {
         recipientRole: 'STAFF',
         title: 'AI support lead ready for follow-up',
-        message: `${fullName} is waiting for a business response from RESURGENCE.`,
+        message: `${fullName} is waiting for a ${category || 'support'} response from RESURGENCE.`,
         level: 'WARNING',
         href: '/staff/inquiries',
         metadata: { inquiryId: inquiry.id, conversationId },
@@ -62,7 +63,7 @@ export async function POST(request: NextRequest) {
         recipientRole: 'SYSTEM_ADMIN',
         toEmail: process.env.ADMIN_EMAIL || settings.contactEmail,
         subject: `New ${settings.brandName} AI lead: ${fullName}`,
-        bodyText: `Conversation ID: ${conversationId}\nName: ${fullName}\nOrganization: ${organization || 'N/A'}\nEmail: ${email}\nMobile: ${mobile}\n\nSummary:\n${summary}`,
+        bodyText: `Conversation ID: ${conversationId}\nCategory: ${category || 'General Support'}\nName: ${fullName}\nOrganization: ${organization || 'N/A'}\nEmail: ${email}\nMobile: ${mobile}\n\nSummary:\n${summary}`,
         eventKey: 'support.lead.admin',
         relatedType: 'Inquiry',
         relatedId: inquiry.id,
@@ -89,6 +90,7 @@ export async function POST(request: NextRequest) {
       email,
       mobile,
       summary,
+      category: category || null,
     },
   });
 }

@@ -10,7 +10,7 @@ type ConversationMessage = {
 };
 
 function hasBusinessIntent(message: string) {
-  return /(proposal|quotation|quote|pricing|price|budget|meeting|callback|call me|formal follow-up|proceed|interested in partnering)/i.test(message);
+  return /(proposal|quotation|quote|pricing|price|budget|meeting|callback|call me|formal follow-up|proceed|interested in partnering|order number|payment reference|delivery issue|urgent)/i.test(message);
 }
 
 function buildSupportReply(message: string, routeKey: string, settings: PublicSettings) {
@@ -18,6 +18,18 @@ function buildSupportReply(message: string, routeKey: string, settings: PublicSe
   const askForLeadDetails = hasBusinessIntent(message);
   const primaryContactLine = `${settings.contactEmail} / ${settings.contactPhone}`;
   const supportContactLine = `${settings.supportEmail} / ${settings.supportPhone}`;
+
+  if (routeKey === 'orders') {
+    return askForLeadDetails
+      ? `We can help route order, product availability, checkout, and shipping concerns for ${settings.brandName}.\n\nPlease share your full name, email address, mobile number, order number if available, product name, and the delivery or checkout concern. Our support team can follow up through ${supportContactLine} during ${settings.businessHours}.\n\nShipping coverage: ${settings.shippingArea}.`
+      : `For order and shipping support, please tell us whether this is about product availability, checkout, an existing order, or delivery.\n\nIf you already placed an order, include the order number if available, the customer email used at checkout, and the product name. Shipping coverage is ${settings.shippingArea}.`;
+  }
+
+  if (routeKey === 'payments') {
+    return askForLeadDetails
+      ? `${settings.brandName} accepts these configured payment methods: ${settings.paymentMethods}.\n\nFor payment confirmation, please share your full name, email address, mobile number, order or invoice reference if available, payment method, amount, payment date, and reference number. Do not send card numbers or sensitive financial credentials here.\n\nSupport contact: ${supportContactLine}.`
+      : `Configured payment methods are: ${settings.paymentMethods}. Currency is ${settings.currency}.\n\nFor payment help, tell us if you need available methods, payment confirmation, receipt support, billing reference help, or refund routing. Please do not share card numbers or sensitive account credentials.`;
+  }
 
   if (routeKey === 'events') {
     return askForLeadDetails
@@ -27,8 +39,8 @@ function buildSupportReply(message: string, routeKey: string, settings: PublicSe
 
   if (routeKey === 'custom-apparel') {
     return askForLeadDetails
-      ? `We can route custom jersey, uniform, and apparel requests.\n\nPlease send your full name, organization, email address, mobile number, required quantity, target timeline, and any design notes so our team can follow up with the right production details.\n\nYou can also submit those details through the support form on this page or contact ${supportContactLine}.`
-      : `We can help with custom jerseys, uniforms, and apparel production requests.\n\nTo prepare an accurate handoff, we usually need quantity, target timeline, sizing needs, and any design or branding requirements.`;
+      ? `We can route custom jersey, uniform, and apparel requests.\n\nPlease send your full name, organization, email address, mobile number, item type, required quantity, sizing range, target timeline, and any design or branding notes so our team can follow up with accurate production details.\n\nYou can also submit those details through the support form on this page or contact ${supportContactLine}.`
+      : `We can help with custom jerseys, uniforms, and apparel production requests.\n\nTo prepare an accurate handoff, we usually need item type, quantity, sizing range, target timeline, logo/design files, and preferred payment or delivery arrangement.`;
   }
 
   if (routeKey === 'partnerships') {
@@ -42,8 +54,8 @@ function buildSupportReply(message: string, routeKey: string, settings: PublicSe
   }
 
   return askForLeadDetails
-    ? `We can help with sponsorship packages, creator integrations, and brand activation planning.\n\nPlease share your full name, organization, email address, mobile number, and the exact sponsorship support you need so ${settings.contactName} (${settings.contactRole}) can route this for formal follow-up.\n\nYou can also leave the details in the support form on this page or contact ${primaryContactLine}.`
-    : `We can help with sponsorship packages, creator-led integrations, activations, and general support questions.\n\nIf you're exploring a serious sponsorship conversation, the fastest path is to tell us your brand, goals, and preferred package direction so we can prepare the right follow-up.`;
+    ? `We can help with sponsorship packages, creator integrations, and brand activation planning.\n\nPlease share your full name, organization, email address, mobile number, campaign goal, target timeline, and the exact sponsorship support you need so ${settings.contactName} (${settings.contactRole}) can route this for formal follow-up.\n\nYou can also leave the details in the support form on this page or contact ${primaryContactLine}.`
+    : `We can help with sponsorship packages, creator-led integrations, activations, and general support questions.\n\nIf you're exploring a serious sponsorship conversation, the fastest path is to tell us your brand, campaign goals, target timeline, and preferred package direction so we can prepare the right follow-up.`;
 }
 
 function parseHistory(value: unknown): ConversationMessage[] {
@@ -113,9 +125,12 @@ export async function POST(req: NextRequest) {
       ok: true,
       aiEnabled,
       output,
+      requiresLeadDetails: hasBusinessIntent(message),
       leadCaptured: false,
       routeKey: route.key,
       routeLabel: route.label,
+      routeSummary: route.summary,
+      supportMode: aiEnabled ? 'ai' : 'local-fallback',
     });
   } catch (error) {
     console.error('Chatkit message route error:', error);

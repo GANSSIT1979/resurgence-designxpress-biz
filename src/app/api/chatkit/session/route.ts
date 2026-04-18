@@ -6,10 +6,18 @@ export const runtime = 'nodejs';
 
 function buildStatusPayload() {
   const support = getSupportRouteStatus();
+  const productionReady = support.chatkitReady && support.webhookReady;
+
   return {
     chatkitReady: support.chatkitReady,
     webhookReady: support.webhookReady,
-    productionReady: support.chatkitReady && support.webhookReady,
+    productionReady,
+    missing: support.missing,
+    supportModeLabel: productionReady
+      ? 'AI support and webhook verification are production-ready.'
+      : support.chatkitReady
+        ? 'AI support is live. Webhook verification still needs production setup.'
+        : 'Fallback routing is active. Lead capture still works while AI setup is completed.',
   };
 }
 
