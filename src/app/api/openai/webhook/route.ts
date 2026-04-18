@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { NextResponse } from 'next/server';
+import { getSupportRouteStatus } from '@/lib/openai-support';
 
 export const runtime = 'nodejs';
 
@@ -61,9 +62,11 @@ function verifySignature(secret: string, payload: string, webhookId: string, tim
 }
 
 export async function GET() {
+  const support = getSupportRouteStatus();
+
   return NextResponse.json({
     ok: true,
-    webhookReady: Boolean(process.env.OPENAI_WEBHOOK_SECRET),
+    webhookReady: support.webhookReady,
   });
 }
 

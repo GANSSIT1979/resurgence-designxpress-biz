@@ -140,6 +140,12 @@ export function SupportChatWidget() {
     e.preventDefault();
     const trimmed = input.trim();
     if (!trimmed || !conversationId) return;
+    const history = messages
+      .filter((item) => item.role === "user" || item.role === "assistant")
+      .map((item) => ({
+        role: item.role as "user" | "assistant",
+        content: item.content,
+      }));
 
     const optimisticUser: ChatMessage = {
       id: `local-${Date.now()}`,
@@ -157,7 +163,7 @@ export function SupportChatWidget() {
       const res = await fetch("/api/chatkit/message", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ conversationId, message: trimmed })
+        body: JSON.stringify({ conversationId, message: trimmed, history })
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json?.error || "Unable to send message.");

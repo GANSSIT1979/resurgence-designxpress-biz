@@ -7,7 +7,7 @@ export const runtime = 'nodejs';
 function buildStatusPayload() {
   const support = getSupportRouteStatus();
   return {
-    chatkitReady: true,
+    chatkitReady: support.chatkitReady,
     webhookReady: support.webhookReady,
     productionReady: support.chatkitReady && support.webhookReady,
   };

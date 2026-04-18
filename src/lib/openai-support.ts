@@ -60,22 +60,63 @@ Operating rules:
 - Encourage serious leads to submit the inquiry form on the support page for formal follow-up.
 - If unsure, clearly say that a human team member will confirm the details.`;
 
+type SupportConversationMessage = {
+  role: 'user' | 'assistant';
+  content: string;
+};
+
+type ResponsesApiPayload = {
+  output?: Array<{
+    type?: string;
+    content?: Array<{
+      type?: string;
+      text?: string;
+    }>;
+  }>;
+  error?: {
+    message?: string;
+  };
+};
+
+function hasConfiguredValue(value?: string | null) {
+  const normalized = String(value || '').trim();
+
+  if (!normalized) {
+    return false;
+  }
+
+  return !/^(your_|wf_your_|whsec_your_|change-this|replace-this|example_)/i.test(normalized);
+}
+
+function getSupportPromptConfig() {
+  const promptId = (process.env.OPENAI_PROMPT_ID || process.env.OPENAI_WORKFLOW_ID || '').trim();
+  const promptVersion = (process.env.OPENAI_PROMPT_VERSION || process.env.OPENAI_WORKFLOW_VERSION || '').trim();
+
+  return {
+    promptId,
+    promptVersion,
+    promptIdConfigured: hasConfiguredValue(promptId),
+    promptVersionConfigured: hasConfiguredValue(promptVersion),
+  };
+}
+
 export function getSupportRouteStatus() {
-  const apiKeyConfigured = Boolean(process.env.OPENAI_API_KEY);
-  const workflowIdConfigured = Boolean(process.env.OPENAI_WORKFLOW_ID);
-  const workflowVersionConfigured = Boolean(process.env.OPENAI_WORKFLOW_VERSION);
-  const webhookSecretConfigured = Boolean(process.env.OPENAI_WEBHOOK_SECRET);
+  const apiKeyConfigured = hasConfiguredValue(process.env.OPENAI_API_KEY);
+  const { promptIdConfigured, promptVersionConfigured } = getSupportPromptConfig();
+  const webhookSecretConfigured = hasConfiguredValue(process.env.OPENAI_WEBHOOK_SECRET);
 
   return {
     apiKeyConfigured,
-    workflowIdConfigured,
-    workflowVersionConfigured,
+    workflowIdConfigured: promptIdConfigured,
+    workflowVersionConfigured: promptVersionConfigured,
+    promptIdConfigured,
+    promptVersionConfigured,
     webhookSecretConfigured,
-    chatkitReady: apiKeyConfigured && workflowIdConfigured,
+    chatkitReady: apiKeyConfigured && promptIdConfigured,
     webhookReady: webhookSecretConfigured,
     missing: [
       !apiKeyConfigured ? 'OPENAI_API_KEY' : null,
-      !workflowIdConfigured ? 'OPENAI_WORKFLOW_ID' : null,
+      !promptIdConfigured ? 'OPENAI_PROMPT_ID (or OPENAI_WORKFLOW_ID)' : null,
       !webhookSecretConfigured ? 'OPENAI_WEBHOOK_SECRET' : null,
     ].filter(Boolean) as string[],
   };
@@ -116,4 +157,99 @@ export function buildSupportWorkflowStateVariables(settings: PublicSettings) {
     route_apparel: supportCategories[2].routeLabel,
     route_partnerships: supportCategories[3].routeLabel,
   };
+}
+
+function buildTranscriptInput(history: SupportConversationMessage[], message: string) {
+  return [
+    ...history.map((item) => ({
+      role: item.role,
+      content: [
+        {
+          type: 'input_text' as const,
+          text: item.content,
+        },
+      ],
+    })),
+    {
+      role: 'user' as const,
+      content: [
+        {
+          type: 'input_text' as const,
+          text: message,
+        },
+      ],
+    },
+  ];
+}
+
+function extractResponseText(payload: ResponsesApiPayload) {
+  if (!Array.isArray(payload.output)) {
+    return '';
+  }
+
+  return payload.output
+    .flatMap((item) => {
+      if (item.type !== 'message' || !Array.isArray(item.content)) {
+        return [];
+      }
+
+      return item.content;
+    })
+    .map((item) => {
+      if (item.type !== 'output_text' && item.type !== 'text') {
+        return '';
+      }
+
+      return item.text || '';
+    })
+    .join('\n')
+    .trim();
+}
+
+export async function generateSupportResponse(args: {
+  conversationId: string;
+  history: SupportConversationMessage[];
+  message: string;
+  route: SupportCategory;
+  settings: PublicSettings;
+}) {
+  const status = getSupportRouteStatus();
+  const { promptId, promptVersion } = getSupportPromptConfig();
+
+  if (!status.chatkitReady || !promptId) {
+    return null;
+  }
+
+  const response = await fetch('https://api.openai.com/v1/responses', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      prompt: {
+        id: promptId,
+        ...(promptVersion ? { version: promptVersion } : {}),
+        variables: {
+          ...buildSupportWorkflowStateVariables(args.settings),
+          support_category: args.route.label,
+          support_route_key: args.route.key,
+          support_route_summary: args.route.summary,
+        },
+      },
+      input: buildTranscriptInput(args.history, args.message),
+      metadata: {
+        conversationId: args.conversationId,
+        supportRoute: args.route.key,
+      },
+    }),
+  });
+
+  const payload = (await response.json().catch(() => null)) as ResponsesApiPayload | null;
+
+  if (!response.ok) {
+    throw new Error(payload?.error?.message || 'OpenAI Responses API request failed.');
+  }
+
+  return payload ? extractResponseText(payload) || null : null;
 }

@@ -13,7 +13,7 @@ export async function GET() {
   return ok({
     status: "ok",
     database: "connected",
-    aiConfigured: Boolean(process.env.OPENAI_API_KEY),
+    aiConfigured: support.apiKeyConfigured,
     support,
     counts: {
       users: userCount,

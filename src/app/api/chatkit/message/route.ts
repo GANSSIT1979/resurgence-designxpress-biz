@@ -1,14 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { generateSupportResponse, getSupportCategory, getSupportRouteStatus, inferSupportCategory } from '@/lib/openai-support';
 import { getPublicSettings } from '@/lib/settings';
-import { getSupportCategory, inferSupportCategory } from '@/lib/openai-support';
 
 export const runtime = 'nodejs';
+
+type ConversationMessage = {
+  role: 'user' | 'assistant';
+  content: string;
+};
 
 function hasBusinessIntent(message: string) {
   return /(proposal|quotation|quote|pricing|price|budget|meeting|callback|call me|formal follow-up|proceed|interested in partnering)/i.test(message);
 }
 
-function buildSupportReply(message: string, routeLabel: string, routeKey: string, contactName: string, contactEmail: string, contactPhone: string) {
+function buildSupportReply(message: string, routeKey: string, contactName: string, contactEmail: string, contactPhone: string) {
   const lower = message.toLowerCase();
   const askForLeadDetails = hasBusinessIntent(message);
 
@@ -27,7 +32,7 @@ function buildSupportReply(message: string, routeLabel: string, routeKey: string
   if (routeKey === 'partnerships') {
     return askForLeadDetails
       ? `RESURGENCE is open to media, brand, and creator collaboration discussions.\n\nPlease share your full name, organization, email address, mobile number, and a short summary of the partnership you want to explore so ${contactName} can route this for review.\n\nDirect contact: ${contactEmail} / ${contactPhone}.`
-      : `We handle media partnerships, brand collaborations, and creator-led opportunities.\n\nA useful next step is to tell us whether you’re looking for media support, co-branding, creator collaboration, or a longer-term commercial partnership.`;
+      : `We handle media partnerships, brand collaborations, and creator-led opportunities.\n\nA useful next step is to tell us whether you're looking for media support, co-branding, creator collaboration, or a longer-term commercial partnership.`;
   }
 
   if (lower.includes('price') || lower.includes('cost') || lower.includes('rate')) {
@@ -36,7 +41,30 @@ function buildSupportReply(message: string, routeLabel: string, routeKey: string
 
   return askForLeadDetails
     ? `We can help with sponsorship packages, creator integrations, and brand activation planning.\n\nPlease share your full name, organization, email address, mobile number, and the exact sponsorship support you need so ${contactName} can route this for formal follow-up.\n\nYou can also leave the details in the support form on this page.`
-    : `We can help with sponsorship packages, creator-led integrations, activations, and general support questions.\n\nIf you’re exploring a serious sponsorship conversation, the fastest path is to tell us your brand, goals, and preferred package direction so we can prepare the right follow-up.`;
+    : `We can help with sponsorship packages, creator-led integrations, activations, and general support questions.\n\nIf you're exploring a serious sponsorship conversation, the fastest path is to tell us your brand, goals, and preferred package direction so we can prepare the right follow-up.`;
+}
+
+function parseHistory(value: unknown): ConversationMessage[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .flatMap((item) => {
+      if (!item || typeof item !== 'object') {
+        return [];
+      }
+
+      const role = item.role === 'user' || item.role === 'assistant' ? item.role : null;
+      const content = typeof item.content === 'string' ? item.content.trim() : '';
+
+      if (!role || !content) {
+        return [];
+      }
+
+      return [{ role, content }];
+    })
+    .slice(-10);
 }
 
 export async function POST(req: NextRequest) {
@@ -44,6 +72,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => ({}));
     const conversationId = String(body?.conversationId || '').trim();
     const message = String(body?.message || '').trim();
+    const history = parseHistory(body?.history);
 
     if (!conversationId || !message) {
       return NextResponse.json(
@@ -55,18 +84,38 @@ export async function POST(req: NextRequest) {
     const routeKey = inferSupportCategory(message);
     const route = getSupportCategory(routeKey);
     const settings = await getPublicSettings();
-    const output = buildSupportReply(
-      message,
-      route.label,
-      route.key,
-      settings.contactName,
-      settings.contactEmail,
-      settings.contactPhone,
-    );
+    const supportStatus = getSupportRouteStatus();
+    let aiEnabled = false;
+    let output: string | null = null;
+
+    if (supportStatus.chatkitReady) {
+      try {
+        output = await generateSupportResponse({
+          conversationId,
+          history,
+          message,
+          route,
+          settings,
+        });
+        aiEnabled = Boolean(output);
+      } catch (error) {
+        console.error('OpenAI support reply failed, falling back to local routing:', error);
+      }
+    }
+
+    if (!output) {
+      output = buildSupportReply(
+        message,
+        route.key,
+        settings.contactName,
+        settings.contactEmail,
+        settings.contactPhone,
+      );
+    }
 
     return NextResponse.json({
       ok: true,
-      aiEnabled: false,
+      aiEnabled,
       output,
       leadCaptured: false,
       routeKey: route.key,

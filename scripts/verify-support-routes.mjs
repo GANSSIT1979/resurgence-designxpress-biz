@@ -171,12 +171,11 @@ async function verify() {
   });
   record(
     "/api/chatkit/session POST chatkit",
-    chatkitReady &&
-      chatkitCreate.response.ok &&
+    chatkitCreate.response.ok &&
       typeof chatkitCreate.json?.client_secret === "string" &&
       typeof chatkitCreate.json?.sessionId === "string",
     chatkitCreate.response.ok
-      ? "ChatKit client secret issued."
+      ? `chatkitReady=${chatkitReady} client secret issued.`
       : `Unexpected status ${chatkitCreate.response.status}: ${chatkitCreate.json?.error || chatkitCreate.text}`,
   );
 
