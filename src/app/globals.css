@@ -303,6 +303,24 @@ select {
   color: white;
 }
 
+.nav-links a.nav-login-link {
+  align-items: center;
+  background: linear-gradient(135deg, var(--brand), var(--brand-2));
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  box-shadow: 0 14px 34px rgba(42, 113, 255, 0.28);
+  color: white;
+  display: inline-flex;
+  font-weight: 800;
+  justify-content: center;
+  padding: 9px 14px;
+}
+
+.nav-links a.nav-login-link:hover {
+  color: white;
+  transform: translateY(-1px);
+}
+
 .list-clean {
   padding-left: 18px;
   color: var(--muted);

@@ -212,6 +212,7 @@ export default async function HomePage() {
             <p className="section-copy">For direct business discussions, proposal requests, and custom partnership packages, reach out using the official {brandName} contact details below.</p>
             <div className="btn-row" style={{ marginTop: 18 }}>
               <Link href="/contact" className="button-link">Open Contact Page</Link>
+              <Link href="/login" className="button-link btn-secondary">Log-in</Link>
               <a href={`mailto:${contactEmail}`} className="button-link btn-secondary">Email Partnerships</a>
             </div>
           </div>
