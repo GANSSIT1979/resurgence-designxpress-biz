@@ -54,7 +54,8 @@ RESURGENCE Powered by DesignXpress is a Next.js 15 + Prisma platform for sponsor
 
 - Public site: discovery pages, sponsor apply, contact, support, creators, official merch, cart, checkout
 - Commerce: official merch catalog, selected variants, public order lookup, admin merch products, admin merch orders
-- Internal roles: admin, cashier, sponsor, creator, staff, partner
+- Role access: admin, cashier, regular member, sponsor, creator, coach, referee, staff, partner
+- Public registration: free Gmail or mobile OTP signup with role selection and role-based redirect
 - Support automation: session bootstrap, message routing, lead capture, webhook verification
 - CMS and operations: creators, gallery, sponsors, packages, submissions, reports, settings
 - Finance: invoices, transactions, receipts, cashier summaries and exports

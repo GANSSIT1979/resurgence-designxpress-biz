@@ -12,6 +12,7 @@ RESURGENCE Powered by DesignXpress is a sponsorship and business operations plat
 - creator and gallery presentation
 - sponsor-facing portal access
 - creator-facing dashboard access when a creator account is linked
+- free public registration for members, creators, coaches, referees, sponsors, and partners
 - internal dashboards for admin, cashier, staff, and partner users
 
 Important accuracy note:
@@ -78,12 +79,32 @@ When support captures enough lead detail, the platform can create inquiry and fo
 
 ## Login
 
-Use the credentials provided by the platform administrator or the seeded local demo credentials in development.
+Use the credentials provided by the platform administrator, sign in with a registered mobile number and password, or create a new free account from `/login`.
+
+New users can choose:
+
+- Regular Member
+- Creator
+- Coach
+- Referee
+- Sponsor
+- Partner
+
+Signup options:
+
+- Continue with Gmail when Google authentication is configured
+- Continue with Mobile Number with OTP verification
+
+Membership registration is free for all public account types.
 
 Current signed-in role areas are:
 
 - admin
 - cashier
+- regular member
+- creator
+- coach
+- referee
 - sponsor
 - staff
 - partner

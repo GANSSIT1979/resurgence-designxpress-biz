@@ -2,18 +2,25 @@ import { AppRole, roleMeta } from '@/lib/resurgence';
 import { getAdminCredentials } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { hashPassword, isPasswordHash, verifyPassword } from '@/lib/passwords';
+import { normalizePhoneNumber } from '@/lib/public-registration';
 
-export async function authenticateUser(email: string, password: string) {
-  const normalizedEmail = email.trim().toLowerCase();
+export async function authenticateUser(identifier: string, password: string) {
+  const normalizedIdentifier = identifier.trim().toLowerCase();
+  const normalizedPhone = normalizePhoneNumber(identifier);
 
-  const seededUser = await prisma.user.findUnique({
-    where: { email: normalizedEmail },
+  const user = await prisma.user.findFirst({
+    where: {
+      OR: [
+        { email: normalizedIdentifier },
+        ...(normalizedPhone ? [{ phoneNumber: normalizedPhone }] : []),
+      ],
+    },
   });
 
-  if (seededUser && seededUser.isActive && verifyPassword(password, seededUser.password)) {
-    const passwordHash = isPasswordHash(seededUser.password) ? seededUser.password : hashPassword(password);
+  if (user && user.isActive && verifyPassword(password, user.password)) {
+    const passwordHash = isPasswordHash(user.password) ? user.password : hashPassword(password);
     await prisma.user.update({
-      where: { id: seededUser.id },
+      where: { id: user.id },
       data: {
         password: passwordHash,
         lastLoginAt: new Date(),
@@ -21,16 +28,16 @@ export async function authenticateUser(email: string, password: string) {
     });
 
     return {
-      email: seededUser.email,
-      role: seededUser.role as AppRole,
-      displayName: seededUser.displayName,
-      redirectTo: roleMeta[seededUser.role as AppRole].defaultRoute,
+      email: user.email,
+      role: user.role as AppRole,
+      displayName: user.displayName,
+      redirectTo: roleMeta[user.role as AppRole].defaultRoute,
     };
   }
 
   const credentials = getAdminCredentials();
   const adminMatches =
-    normalizedEmail === credentials.email.toLowerCase() &&
+    normalizedIdentifier === credentials.email.toLowerCase() &&
     ((credentials.passwordHash && verifyPassword(password, credentials.passwordHash)) ||
       (!credentials.passwordHash && credentials.password && credentials.password === password));
 
@@ -45,4 +52,3 @@ export async function authenticateUser(email: string, password: string) {
 
   return null;
 }
-

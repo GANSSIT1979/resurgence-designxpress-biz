@@ -10,10 +10,13 @@ datasource db {
 enum Role {
   SYSTEM_ADMIN
   CASHIER
+  MEMBER
   SPONSOR
   STAFF
   PARTNER
   CREATOR
+  COACH
+  REFEREE
 }
 
 enum UserStatus {
@@ -524,5 +527,4 @@ model ChatMessage {
 
   @@index([conversationId, createdAt])
 }
-
 

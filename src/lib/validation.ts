@@ -310,7 +310,7 @@ const adminUserBaseSchema = z.object({
   email: z.string().email(),
   displayName: z.string().min(2),
   title: z.string().optional().or(z.literal('')),
-  role: z.enum(['SYSTEM_ADMIN', 'CASHIER', 'SPONSOR', 'STAFF', 'PARTNER', 'CREATOR']),
+  role: z.enum(['SYSTEM_ADMIN', 'CASHIER', 'MEMBER', 'SPONSOR', 'STAFF', 'PARTNER', 'CREATOR', 'COACH', 'REFEREE']),
   isActive: z.coerce.boolean().default(true),
 });
 

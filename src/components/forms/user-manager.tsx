@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 
-type Role = 'SYSTEM_ADMIN' | 'CASHIER' | 'SPONSOR' | 'STAFF' | 'PARTNER' | 'CREATOR';
+type Role = 'SYSTEM_ADMIN' | 'CASHIER' | 'MEMBER' | 'SPONSOR' | 'STAFF' | 'PARTNER' | 'CREATOR' | 'COACH' | 'REFEREE';
 
 type UserItem = {
   id: string;
@@ -29,7 +29,7 @@ const emptyForm = {
   isActive: true,
 };
 
-const roles: Role[] = ['SYSTEM_ADMIN', 'CASHIER', 'SPONSOR', 'STAFF', 'PARTNER', 'CREATOR'];
+const roles: Role[] = ['SYSTEM_ADMIN', 'CASHIER', 'MEMBER', 'SPONSOR', 'STAFF', 'PARTNER', 'CREATOR', 'COACH', 'REFEREE'];
 
 export function UserManager({
   initialUsers,

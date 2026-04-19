@@ -29,10 +29,13 @@ enum SponsorSubmissionStatus {
 enum UserRole {
   SYSTEM_ADMIN
   CASHIER
+  MEMBER
   SPONSOR
   STAFF
   PARTNER
   CREATOR
+  COACH
+  REFEREE
 }
 
 enum InvoiceStatus {
@@ -122,10 +125,17 @@ enum EmailAutomationStatus {
 model User {
   id             String          @id @default(cuid())
   email          String          @unique
+  phoneNumber    String?         @unique
   password       String
   displayName    String
   title          String?
   role           UserRole
+  authProvider   String          @default("PASSWORD")
+  isEmailVerified Boolean        @default(false)
+  isPhoneVerified Boolean        @default(false)
+  referralCode   String?
+  profileImageUrl String?
+  termsAcceptedAt DateTime?
   isActive       Boolean         @default(true)
   lastLoginAt    DateTime?
   sponsorProfile SponsorProfile?
@@ -136,6 +146,22 @@ model User {
   emails         AutomatedEmail[]       @relation("EmailRecipient")
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
+}
+
+model VerificationCode {
+  id          String    @id @default(cuid())
+  identifier  String
+  channel     String
+  purpose     String
+  codeHash    String
+  payload     Json?
+  attempts    Int       @default(0)
+  expiresAt   DateTime
+  consumedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([identifier, purpose, createdAt])
+  @@index([expiresAt])
 }
 
 model UploadAsset {

@@ -48,7 +48,7 @@ export default async function ReportsPage() {
     },
     {
       title: 'User roles',
-      items: ['SYSTEM_ADMIN', 'CASHIER', 'SPONSOR', 'STAFF', 'PARTNER'].map((role) => ({
+      items: ['SYSTEM_ADMIN', 'CASHIER', 'MEMBER', 'SPONSOR', 'STAFF', 'PARTNER', 'CREATOR', 'COACH', 'REFEREE'].map((role) => ({
         label: role.replaceAll('_', ' '),
         value: users.filter((item) => item.role === role).length,
       })),

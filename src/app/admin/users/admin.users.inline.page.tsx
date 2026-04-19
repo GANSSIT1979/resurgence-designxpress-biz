@@ -404,10 +404,13 @@ export default function AdminUsersPage() {
                   >
                     <option value="SYSTEM_ADMIN">SYSTEM_ADMIN</option>
                     <option value="CASHIER">CASHIER</option>
+                    <option value="MEMBER">MEMBER</option>
                     <option value="SPONSOR">SPONSOR</option>
                     <option value="STAFF">STAFF</option>
                     <option value="PARTNER">PARTNER</option>
                     <option value="CREATOR">CREATOR</option>
+                    <option value="COACH">COACH</option>
+                    <option value="REFEREE">REFEREE</option>
                   </select>
                 </div>
 

@@ -125,6 +125,40 @@ Role access:
 - `SPONSOR`: `brand-profile`
 - `PARTNER`: `brand-profile`
 
+## Public Registration Configuration
+
+The login page supports free public account creation for:
+
+- Regular Member
+- Creator
+- Coach
+- Referee
+- Sponsor
+- Partner
+
+Authentication routes:
+
+- `POST /api/auth/google`
+- `POST /api/auth/mobile/request-otp`
+- `POST /api/auth/mobile/verify-otp`
+
+Environment variables:
+
+```env
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=""
+GOOGLE_CLIENT_ID=""
+OTP_DELIVERY_MODE="demo"
+SMS_WEBHOOK_URL=""
+SMS_WEBHOOK_SECRET=""
+```
+
+Notes:
+
+- `NEXT_PUBLIC_GOOGLE_CLIENT_ID` enables the client-side Gmail button.
+- `GOOGLE_CLIENT_ID` is used server-side to verify the Google credential audience. It should match the public client ID.
+- `OTP_DELIVERY_MODE=demo` returns the OTP in the API response for setup/testing.
+- `OTP_DELIVERY_MODE=webhook` posts the OTP payload to `SMS_WEBHOOK_URL` for real SMS delivery.
+
 ## Support Configuration
 
 - `/support` is the public entry point

@@ -9,6 +9,7 @@ export const permissionCatalog = [
   { key: 'cashier.finance.manage', label: 'Invoices, transactions, and receipts', area: 'Cashier' },
   { key: 'cashier.reports.view', label: 'Cashier reports and analytics', area: 'Cashier' },
   { key: 'cashier.exports.manage', label: 'Finance exports and print views', area: 'Cashier' },
+  { key: 'member.dashboard.view', label: 'Regular member community dashboard', area: 'Member' },
   { key: 'sponsor.dashboard.view', label: 'Sponsor portal overview', area: 'Sponsor' },
   { key: 'sponsor.applications.manage', label: 'Sponsor applications', area: 'Sponsor' },
   { key: 'sponsor.deliverables.manage', label: 'Sponsor deliverables', area: 'Sponsor' },
@@ -26,6 +27,8 @@ export const permissionCatalog = [
   { key: 'partner.profile.manage', label: 'Partner profile', area: 'Partner' },
   { key: 'creator.dashboard.view', label: 'Creator dashboard', area: 'Creator' },
   { key: 'creator.profile.manage', label: 'Creator profile and social links', area: 'Creator' },
+  { key: 'coach.dashboard.view', label: 'Coach dashboard', area: 'Coach' },
+  { key: 'referee.dashboard.view', label: 'Referee dashboard', area: 'Referee' },
   { key: 'uploads.manage', label: 'Upload platform image assets', area: 'Shared' },
   { key: 'notifications.view', label: 'View notifications and automation inbox', area: 'Shared' },
 ] as const;
@@ -37,6 +40,7 @@ const allPermissionKeys = permissionCatalog.map((item) => item.key) as Permissio
 export const rolePermissionMatrix: Record<AppRole, readonly PermissionKey[]> = {
   SYSTEM_ADMIN: allPermissionKeys,
   CASHIER: ['cashier.dashboard.view', 'cashier.finance.manage', 'cashier.reports.view', 'cashier.exports.manage', 'notifications.view'],
+  MEMBER: ['member.dashboard.view', 'notifications.view'],
   SPONSOR: [
     'sponsor.dashboard.view',
     'sponsor.applications.manage',
@@ -69,6 +73,8 @@ export const rolePermissionMatrix: Record<AppRole, readonly PermissionKey[]> = {
     'uploads.manage',
     'notifications.view',
   ],
+  COACH: ['coach.dashboard.view', 'notifications.view'],
+  REFEREE: ['referee.dashboard.view', 'notifications.view'],
 };
 
 type RoutePermissionRule = {
@@ -100,6 +106,7 @@ const pageRouteRules: readonly RoutePermissionRule[] = [
   { prefix: '/cashier/transactions', permission: 'cashier.finance.manage' },
   { prefix: '/cashier/receipts', permission: 'cashier.finance.manage' },
   { prefix: '/cashier', permission: 'cashier.dashboard.view' },
+  { prefix: '/member', permission: 'member.dashboard.view' },
   { prefix: '/sponsor/applications', permission: 'sponsor.applications.manage' },
   { prefix: '/sponsor/deliverables', permission: 'sponsor.deliverables.manage' },
   { prefix: '/sponsor/billing', permission: 'sponsor.billing.view' },
@@ -117,6 +124,8 @@ const pageRouteRules: readonly RoutePermissionRule[] = [
   { prefix: '/partner/profile', permission: 'partner.profile.manage' },
   { prefix: '/partner', permission: 'partner.dashboard.view' },
   { prefix: '/creator/dashboard', permission: 'creator.dashboard.view' },
+  { prefix: '/coach', permission: 'coach.dashboard.view' },
+  { prefix: '/referee', permission: 'referee.dashboard.view' },
 ];
 
 const apiRouteRules: readonly RoutePermissionRule[] = [

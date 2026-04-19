@@ -270,6 +270,11 @@ export const roleMeta = {
     defaultRoute: '/cashier',
     accent: 'billing, receipts, and collections',
   },
+  MEMBER: {
+    label: 'Regular Member',
+    defaultRoute: '/member',
+    accent: 'community access, merch, updates, and member benefits',
+  },
   SPONSOR: {
     label: 'Sponsor',
     defaultRoute: '/sponsor/dashboard',
@@ -290,15 +295,28 @@ export const roleMeta = {
     defaultRoute: '/creator/dashboard',
     accent: 'creator profile, social reach, and sponsor readiness',
   },
+  COACH: {
+    label: 'Coach',
+    defaultRoute: '/coach',
+    accent: 'training leadership, team development, and event readiness',
+  },
+  REFEREE: {
+    label: 'Referee',
+    defaultRoute: '/referee',
+    accent: 'officiating profile, game availability, and assignment readiness',
+  },
 } as const;
 
 export const rolePrefixes = {
   SYSTEM_ADMIN: ['/admin'],
   CASHIER: ['/cashier'],
+  MEMBER: ['/member'],
   SPONSOR: ['/sponsor/dashboard', '/sponsor/applications', '/sponsor/packages', '/sponsor/deliverables', '/sponsor/billing', '/sponsor/profile'],
   STAFF: ['/staff'],
   PARTNER: ['/partner'],
   CREATOR: ['/creator/dashboard'],
+  COACH: ['/coach'],
+  REFEREE: ['/referee'],
 } as const;
 
 export type AppRole = keyof typeof roleMeta;
