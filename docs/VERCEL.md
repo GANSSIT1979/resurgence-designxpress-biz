@@ -88,9 +88,19 @@ Important database rule:
 
 - do not use `localhost`, `127.0.0.1`, or the local PostGIS connection for Vercel
 - use a managed PostgreSQL connection string from Vercel Storage, Prisma Postgres, Neon, Supabase, Railway, Render, or another internet-reachable provider
-- if the provider gives you `POSTGRES_URL`, copy that value into `DATABASE_URL`
+- if Supabase/Vercel gives you `POSTGRES_PRISMA_URL`, copy that full value into `DATABASE_URL`
+- if `POSTGRES_PRISMA_URL` is unavailable, use `POSTGRES_URL`
 - replace every placeholder in the URL: `USER`, `PASSWORD`, `HOST`, and `DATABASE`
 - URL-encode special password characters before saving the URL, for example `@` becomes `%40`, `[` becomes `%5B`, and `]` becomes `%5D`
+
+Supabase/Vercel mapping for this app:
+
+```env
+PRISMA_DB_PROVIDER=postgresql
+DATABASE_URL=<copy the full value from POSTGRES_PRISMA_URL>
+```
+
+Keep the generated Supabase variables if Vercel created them, but this app does not require Supabase Auth or Storage variables for the current Prisma-backed pages. Do not duplicate repeated variables such as `NEXT_PUBLIC_SUPABASE_ANON_KEY` or `SUPABASE_URL`; keep one value per variable name.
 
 Generate a production `JWT_SECRET` locally before pasting it into Vercel:
 
