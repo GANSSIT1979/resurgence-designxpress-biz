@@ -104,11 +104,20 @@ For Vercel production setup, use `vercel.production.env.example` as the copy-rea
 
 - upload API: `POST /api/uploads/image`
 - image serving API for database-backed uploads: `GET /api/uploads/image/[id]`
+- image serving API for proxied Cloudflare R2 uploads: `GET /api/uploads/r2/[...key]`
 - local filesystem storage path: `public/uploads/<scope>/<year>/<month>`
-- production/serverless storage: set `UPLOAD_STORAGE=database`, or omit it on Vercel where database storage is selected automatically
+- production/serverless storage: set `UPLOAD_STORAGE=r2` for Cloudflare R2, `UPLOAD_STORAGE=database` for PostgreSQL-backed storage, or omit it on Vercel where database storage is selected automatically
 - accepted file types: JPG, PNG, WEBP, GIF
 - size limit: `5 MB`
 - upload scopes: `sponsor`, `creator`, `brand-profile`, `merch`
+
+Cloudflare R2 variables:
+
+- `R2_ACCOUNT_ID`
+- `R2_ACCESS_KEY_ID`
+- `R2_SECRET_ACCESS_KEY`
+- `R2_BUCKET`
+- optional `R2_PUBLIC_BASE_URL`
 
 Role access:
 

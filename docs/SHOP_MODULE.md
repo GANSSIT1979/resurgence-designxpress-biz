@@ -110,6 +110,7 @@ System Admin users can upload merch images through the product manager. Uploads 
 
 - local development: `public/uploads/merch`
 - Vercel/serverless production: PostgreSQL-backed `UploadAsset` records served through `/api/uploads/image/[id]`
+- Cloudflare R2 production: object keys such as `merch/2026/04/file-name.jpg`, served through `R2_PUBLIC_BASE_URL` or `/api/uploads/r2`
 
 For large production catalogs, move image storage to object storage such as S3-compatible storage or Cloudflare R2.
 

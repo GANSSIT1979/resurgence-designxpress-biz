@@ -193,7 +193,7 @@ export function ShopProductManager({ initialItems, categories }: { initialItems:
             label="Product image"
             scope="merch"
             value={form.imageUrl}
-            helper="Use a square or landscape merch mockup. Vercel uploads are stored durably in the database and served through the upload API."
+            helper="Use a square or landscape merch mockup. Production uploads can store in Cloudflare R2, database storage, or local filesystem based on UPLOAD_STORAGE."
             onChange={(value) => setForm({ ...form, imageUrl: value })}
           />
 

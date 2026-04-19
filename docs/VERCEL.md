@@ -200,4 +200,4 @@ npm run support:verify -- --base-url=https://resurgence-dx.biz --webhook-secret=
 
 ## Storage Note
 
-Vercel filesystem writes are not persistent. The upload API works for local workflows, but production uploads should be moved to object storage such as S3-compatible storage, Cloudflare R2, or another persistent provider.
+Vercel filesystem writes are not persistent. For merch and creator uploads, set `UPLOAD_STORAGE=r2` with Cloudflare R2 variables or use `UPLOAD_STORAGE=database` for PostgreSQL-backed upload storage. Cloudflare R2 variables are `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, and optional `R2_PUBLIC_BASE_URL`.

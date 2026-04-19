@@ -163,6 +163,7 @@ Local:
 
 Production:
 
+- Cloudflare R2: `UPLOAD_STORAGE=r2` stores uploaded images in the configured R2 bucket and returns either `R2_PUBLIC_BASE_URL/<key>` or the app proxy URL `/api/uploads/r2/<key>`
 - Vercel/serverless: `UPLOAD_STORAGE=database` stores uploaded images in PostgreSQL and serves them through `/api/uploads/image/[id]`
 - larger catalogs: prefer object storage such as S3-compatible storage, Cloudflare R2, or similar
 
