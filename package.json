@@ -15,6 +15,7 @@
     "db:deploy": "npm run prisma:prepare && prisma db push",
     "db:migrate:deploy": "npm run prisma:prepare && prisma migrate deploy",
     "support:verify": "node scripts/verify-support-routes.mjs",
+    "phase12:verify": "node scripts/verify-phase-12.mjs",
     "postinstall": "npm run prisma:prepare && prisma generate"
   },
   "dependencies": {
