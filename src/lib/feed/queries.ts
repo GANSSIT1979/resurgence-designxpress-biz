@@ -81,6 +81,9 @@ export async function getPublicFeed({
     });
 
     const visibleItems = items.slice(0, take);
+    if (!visibleItems.length && fallbackOnError) {
+      return getGalleryFallbackFeed(take);
+    }
 
     return {
       items: visibleItems.map((item) => serializeContentPost(item, viewerId)),
