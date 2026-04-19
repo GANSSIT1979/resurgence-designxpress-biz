@@ -122,43 +122,83 @@ enum EmailAutomationStatus {
   SKIPPED
 }
 
+enum ContentPostStatus {
+  DRAFT
+  PENDING_REVIEW
+  PUBLISHED
+  HIDDEN
+  ARCHIVED
+  DELETED
+}
+
+enum ContentPostVisibility {
+  PUBLIC
+  MEMBERS_ONLY
+  PRIVATE
+}
+
+enum ContentPostMediaType {
+  IMAGE
+  VIDEO
+  YOUTUBE
+  VIMEO
+  EXTERNAL
+}
+
+enum SponsoredPlacementStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  ACTIVE
+  PAUSED
+  COMPLETED
+  CANCELLED
+  REJECTED
+}
+
 model User {
-  id             String          @id @default(cuid())
-  email          String          @unique
-  phoneNumber    String?         @unique
-  password       String
-  displayName    String
-  title          String?
-  role           UserRole
-  authProvider   String          @default("PASSWORD")
-  isEmailVerified Boolean        @default(false)
-  isPhoneVerified Boolean        @default(false)
-  referralCode   String?
-  profileImageUrl String?
-  termsAcceptedAt DateTime?
-  isActive       Boolean         @default(true)
-  lastLoginAt    DateTime?
-  sponsorProfile SponsorProfile?
-  staffProfile   StaffProfile?
-  partnerProfile PartnerProfile?
-  creatorProfile CreatorProfile?
-  notifications  PlatformNotification[] @relation("NotificationRecipient")
-  emails         AutomatedEmail[]       @relation("EmailRecipient")
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  id                 String                 @id @default(cuid())
+  email              String                 @unique
+  phoneNumber        String?                @unique
+  password           String
+  displayName        String
+  title              String?
+  role               UserRole
+  authProvider       String                 @default("PASSWORD")
+  isEmailVerified    Boolean                @default(false)
+  isPhoneVerified    Boolean                @default(false)
+  referralCode       String?
+  profileImageUrl    String?
+  termsAcceptedAt    DateTime?
+  isActive           Boolean                @default(true)
+  lastLoginAt        DateTime?
+  sponsorProfile     SponsorProfile?
+  staffProfile       StaffProfile?
+  partnerProfile     PartnerProfile?
+  creatorProfile     CreatorProfile?
+  notifications      PlatformNotification[] @relation("NotificationRecipient")
+  actorNotifications PlatformNotification[] @relation("NotificationActor")
+  emails             AutomatedEmail[]       @relation("EmailRecipient")
+  contentPosts       ContentPost[]          @relation("PostAuthor")
+  postLikes          PostLike[]             @relation("PostLikeUser")
+  postComments       PostComment[]          @relation("PostCommentAuthor")
+  postSaves          PostSave[]             @relation("PostSaveUser")
+  following          Follow[]               @relation("CreatorFollowUser")
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
 }
 
 model VerificationCode {
-  id          String    @id @default(cuid())
-  identifier  String
-  channel     String
-  purpose     String
-  codeHash    String
-  payload     Json?
-  attempts    Int       @default(0)
-  expiresAt   DateTime
-  consumedAt  DateTime?
-  createdAt   DateTime  @default(now())
+  id         String    @id @default(cuid())
+  identifier String
+  channel    String
+  purpose    String
+  codeHash   String
+  payload    Json?
+  attempts   Int       @default(0)
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
 
   @@index([identifier, purpose, createdAt])
   @@index([expiresAt])
@@ -202,21 +242,22 @@ model Inquiry {
 }
 
 model Sponsor {
-  id               String           @id @default(cuid())
-  name             String
-  slug             String           @unique
-  tier             String
-  logoUrl          String?
-  websiteUrl       String?
-  shortDescription String
-  packageValue     String
-  benefits         String
-  sortOrder        Int              @default(0)
-  isActive         Boolean          @default(true)
-  sponsorProfiles  SponsorProfile[]
-  invoices         Invoice[]
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
+  id                  String               @id @default(cuid())
+  name                String
+  slug                String               @unique
+  tier                String
+  logoUrl             String?
+  websiteUrl          String?
+  shortDescription    String
+  packageValue        String
+  benefits            String
+  sortOrder           Int                  @default(0)
+  isActive            Boolean              @default(true)
+  sponsorProfiles     SponsorProfile[]
+  invoices            Invoice[]
+  sponsoredPlacements SponsoredPlacement[]
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
 }
 
 model Partner {
@@ -248,25 +289,26 @@ model PageContent {
 }
 
 model SponsorProfile {
-  id                 String                  @id @default(cuid())
-  userId             String                  @unique
-  user               User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  sponsorId          String?
-  sponsor            Sponsor?                @relation(fields: [sponsorId], references: [id], onDelete: SetNull)
-  preferredPackageId String?
-  preferredPackage   SponsorPackageTemplate? @relation(fields: [preferredPackageId], references: [id], onDelete: SetNull)
-  companyName        String
-  contactName        String
-  contactEmail       String
-  phone              String?
-  websiteUrl         String?
-  address            String?
-  brandSummary       String?
-  assetLink          String?
-  submissions        SponsorSubmission[]
-  deliverables       SponsorDeliverable[]
-  createdAt          DateTime                @default(now())
-  updatedAt          DateTime                @updatedAt
+  id                  String                  @id @default(cuid())
+  userId              String                  @unique
+  user                User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sponsorId           String?
+  sponsor             Sponsor?                @relation(fields: [sponsorId], references: [id], onDelete: SetNull)
+  preferredPackageId  String?
+  preferredPackage    SponsorPackageTemplate? @relation(fields: [preferredPackageId], references: [id], onDelete: SetNull)
+  companyName         String
+  contactName         String
+  contactEmail        String
+  phone               String?
+  websiteUrl          String?
+  address             String?
+  brandSummary        String?
+  assetLink           String?
+  submissions         SponsorSubmission[]
+  deliverables        SponsorDeliverable[]
+  sponsoredPlacements SponsoredPlacement[]
+  createdAt           DateTime                @default(now())
+  updatedAt           DateTime                @updatedAt
 
   @@index([sponsorId])
   @@index([preferredPackageId])
@@ -331,21 +373,21 @@ model StaffProfile {
 }
 
 model StaffTask {
-  id                  String            @id @default(cuid())
+  id                  String             @id @default(cuid())
   staffProfileId      String
-  staffProfile        StaffProfile      @relation(fields: [staffProfileId], references: [id], onDelete: Cascade)
+  staffProfile        StaffProfile       @relation(fields: [staffProfileId], references: [id], onDelete: Cascade)
   title               String
   description         String?
-  priority            StaffTaskPriority @default(NORMAL)
-  status              StaffTaskStatus   @default(TODO)
+  priority            StaffTaskPriority  @default(NORMAL)
+  status              StaffTaskStatus    @default(TODO)
   dueDate             DateTime?
   completedAt         DateTime?
   inquiryId           String?
-  inquiry             Inquiry?          @relation(fields: [inquiryId], references: [id], onDelete: SetNull)
+  inquiry             Inquiry?           @relation(fields: [inquiryId], references: [id], onDelete: SetNull)
   sponsorSubmissionId String?
   sponsorSubmission   SponsorSubmission? @relation(fields: [sponsorSubmissionId], references: [id], onDelete: SetNull)
-  createdAt           DateTime          @default(now())
-  updatedAt           DateTime          @updatedAt
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
 
   @@index([staffProfileId, status])
   @@index([dueDate])
@@ -388,6 +430,11 @@ model PlatformNotification {
   recipientRole   UserRole?
   recipientUserId String?
   recipientUser   User?             @relation("NotificationRecipient", fields: [recipientUserId], references: [id], onDelete: SetNull)
+  actorUserId     String?
+  actorUser       User?             @relation("NotificationActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  contentPostId   String?
+  contentPost     ContentPost?      @relation(fields: [contentPostId], references: [id], onDelete: SetNull)
+  kind            String?
   title           String
   message         String
   level           AnnouncementLevel @default(INFO)
@@ -400,6 +447,8 @@ model PlatformNotification {
 
   @@index([recipientRole, createdAt])
   @@index([recipientUserId, isRead, createdAt])
+  @@index([actorUserId, createdAt])
+  @@index([contentPostId, createdAt])
 }
 
 model AutomatedEmail {
@@ -519,47 +568,48 @@ enum GalleryMediaType {
 }
 
 model CreatorProfile {
-  id               String       @id @default(cuid())
-  userId           String?      @unique
-  user             User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
-  name             String       @unique
-  slug             String       @unique
-  roleLabel        String
-  platformFocus    String
-  audience         String
-  biography        String?
-  journeyStory     String?
-  contactNumber    String?
-  address          String?
-  dateOfBirth      DateTime?
-  jobDescription   String       @default("")
-  position         String?
-  height           String?
-  facebookPage     String?
-  facebookFollowers String?
-  tiktokPage       String?
-  tiktokFollowers  String?
-  instagramPage    String?
+  id                 String        @id @default(cuid())
+  userId             String?       @unique
+  user               User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  name               String        @unique
+  slug               String        @unique
+  roleLabel          String
+  platformFocus      String
+  audience           String
+  biography          String?
+  journeyStory       String?
+  contactNumber      String?
+  address            String?
+  dateOfBirth        DateTime?
+  jobDescription     String        @default("")
+  position           String?
+  height             String?
+  facebookPage       String?
+  facebookFollowers  String?
+  tiktokPage         String?
+  tiktokFollowers    String?
+  instagramPage      String?
   instagramFollowers String?
-  youtubePage      String?
-  youtubeFollowers String?
-  trendingVideoUrl String?
-  shortBio         String?
-  pointsPerGame    Float?
-  assistsPerGame   Float?
-  reboundsPerGame  Float?
-  imageUrl         String?
-  mediaEvents      MediaEvent[]
-  sortOrder        Int          @default(0)
-  isActive         Boolean      @default(true)
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
+  youtubePage        String?
+  youtubeFollowers   String?
+  trendingVideoUrl   String?
+  shortBio           String?
+  pointsPerGame      Float?
+  assistsPerGame     Float?
+  reboundsPerGame    Float?
+  imageUrl           String?
+  mediaEvents        MediaEvent[]
+  contentPosts       ContentPost[] @relation("CreatorContentPosts")
+  followers          Follow[]      @relation("CreatorFollowers")
+  sortOrder          Int           @default(0)
+  isActive           Boolean       @default(true)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
 
   @@index([userId])
   @@index([isActive, sortOrder])
   @@index([position])
 }
-
 
 model MediaEvent {
   id          String          @id @default(cuid())
@@ -579,18 +629,209 @@ model MediaEvent {
 }
 
 model GalleryMedia {
-  id          String          @id @default(cuid())
+  id           String           @id @default(cuid())
   mediaEventId String
-  mediaEvent   MediaEvent      @relation(fields: [mediaEventId], references: [id], onDelete: Cascade)
-  mediaType   GalleryMediaType @default(IMAGE)
-  url         String
+  mediaEvent   MediaEvent       @relation(fields: [mediaEventId], references: [id], onDelete: Cascade)
+  mediaType    GalleryMediaType @default(IMAGE)
+  url          String
   thumbnailUrl String?
-  caption     String?
-  sortOrder   Int              @default(0)
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
+  caption      String?
+  sortOrder    Int              @default(0)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
 
   @@index([mediaEventId, sortOrder])
+}
+
+model ContentPost {
+  id                  String                 @id @default(cuid())
+  authorUserId        String?
+  authorUser          User?                  @relation("PostAuthor", fields: [authorUserId], references: [id], onDelete: SetNull)
+  creatorProfileId    String?
+  creatorProfile      CreatorProfile?        @relation("CreatorContentPosts", fields: [creatorProfileId], references: [id], onDelete: SetNull)
+  caption             String
+  summary             String?
+  visibility          ContentPostVisibility  @default(PUBLIC)
+  status              ContentPostStatus      @default(DRAFT)
+  isFeatured          Boolean                @default(false)
+  isPinned            Boolean                @default(false)
+  moderationReason    String?
+  publishedAt         DateTime?
+  archivedAt          DateTime?
+  likeCount           Int                    @default(0)
+  commentCount        Int                    @default(0)
+  saveCount           Int                    @default(0)
+  shareCount          Int                    @default(0)
+  viewCount           Int                    @default(0)
+  metadataJson        Json?
+  mediaAssets         MediaAsset[]
+  hashtags            PostHashtag[]
+  likes               PostLike[]
+  comments            PostComment[]
+  saves               PostSave[]
+  productTags         PostProductTag[]
+  sponsoredPlacements SponsoredPlacement[]
+  notifications       PlatformNotification[]
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+
+  @@index([status, visibility, publishedAt])
+  @@index([creatorProfileId, status, publishedAt])
+  @@index([authorUserId, createdAt])
+  @@index([isFeatured, publishedAt])
+  @@index([publishedAt])
+}
+
+model MediaAsset {
+  id              String               @id @default(cuid())
+  postId          String
+  post            ContentPost          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  mediaType       ContentPostMediaType @default(IMAGE)
+  url             String
+  thumbnailUrl    String?
+  storageProvider String?
+  storageKey      String?
+  contentType     String?
+  size            Int?
+  width           Int?
+  height          Int?
+  durationSeconds Int?
+  altText         String?
+  caption         String?
+  sortOrder       Int                  @default(0)
+  metadataJson    Json?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  @@index([postId, sortOrder])
+  @@index([mediaType, createdAt])
+}
+
+model Hashtag {
+  id             String        @id @default(cuid())
+  label          String
+  normalizedName String        @unique
+  posts          PostHashtag[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([label])
+}
+
+model PostHashtag {
+  postId    String
+  hashtagId String
+  post      ContentPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  hashtag   Hashtag     @relation(fields: [hashtagId], references: [id], onDelete: Cascade)
+  createdAt DateTime    @default(now())
+
+  @@id([postId, hashtagId])
+  @@index([hashtagId])
+}
+
+model PostLike {
+  id        String      @id @default(cuid())
+  postId    String
+  userId    String
+  post      ContentPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User        @relation("PostLikeUser", fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime    @default(now())
+
+  @@unique([postId, userId])
+  @@index([userId, createdAt])
+}
+
+model PostComment {
+  id              String        @id @default(cuid())
+  postId          String
+  userId          String?
+  parentCommentId String?
+  post            ContentPost   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user            User?         @relation("PostCommentAuthor", fields: [userId], references: [id], onDelete: SetNull)
+  parentComment   PostComment?  @relation("CommentReplies", fields: [parentCommentId], references: [id], onDelete: SetNull)
+  replies         PostComment[] @relation("CommentReplies")
+  body            String
+  isHidden        Boolean       @default(false)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([postId, createdAt])
+  @@index([userId, createdAt])
+  @@index([parentCommentId])
+}
+
+model PostSave {
+  id        String      @id @default(cuid())
+  postId    String
+  userId    String
+  post      ContentPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User        @relation("PostSaveUser", fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime    @default(now())
+
+  @@unique([postId, userId])
+  @@index([userId, createdAt])
+}
+
+model Follow {
+  id               String         @id @default(cuid())
+  followerUserId   String
+  creatorProfileId String
+  followerUser     User           @relation("CreatorFollowUser", fields: [followerUserId], references: [id], onDelete: Cascade)
+  creatorProfile   CreatorProfile @relation("CreatorFollowers", fields: [creatorProfileId], references: [id], onDelete: Cascade)
+  createdAt        DateTime       @default(now())
+
+  @@unique([followerUserId, creatorProfileId])
+  @@index([creatorProfileId, createdAt])
+  @@index([followerUserId, createdAt])
+}
+
+model SponsoredPlacement {
+  id               String                   @id @default(cuid())
+  postId           String?
+  post             ContentPost?             @relation(fields: [postId], references: [id], onDelete: SetNull)
+  sponsorId        String?
+  sponsor          Sponsor?                 @relation(fields: [sponsorId], references: [id], onDelete: SetNull)
+  sponsorProfileId String?
+  sponsorProfile   SponsorProfile?          @relation(fields: [sponsorProfileId], references: [id], onDelete: SetNull)
+  productId        String?
+  product          ShopProduct?             @relation(fields: [productId], references: [id], onDelete: SetNull)
+  title            String
+  placementType    String                   @default("FEED_PROMOTION")
+  status           SponsoredPlacementStatus @default(PENDING)
+  startsAt         DateTime?
+  endsAt           DateTime?
+  ctaLabel         String?
+  ctaHref          String?
+  budgetAmount     Int?
+  impressionGoal   Int?
+  impressionCount  Int                      @default(0)
+  clickCount       Int                      @default(0)
+  metadataJson     Json?
+  createdAt        DateTime                 @default(now())
+  updatedAt        DateTime                 @updatedAt
+
+  @@index([status, startsAt, endsAt])
+  @@index([postId, status])
+  @@index([sponsorId, status])
+  @@index([sponsorProfileId, status])
+  @@index([productId, status])
+}
+
+model PostProductTag {
+  id        String       @id @default(cuid())
+  postId    String
+  productId String?
+  post      ContentPost  @relation(fields: [postId], references: [id], onDelete: Cascade)
+  product   ShopProduct? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  label     String?
+  ctaLabel  String?
+  sortOrder Int          @default(0)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@unique([postId, productId])
+  @@index([postId, sortOrder])
+  @@index([productId])
 }
 
 model SponsorInventoryCategory {
@@ -691,7 +932,6 @@ model Receipt {
   @@index([companyName])
 }
 
-
 model ProductService {
   id          String   @id @default(cuid())
   name        String
@@ -708,7 +948,6 @@ model ProductService {
   @@index([isActive, sortOrder])
 }
 
-
 model AdminReport {
   id               String   @id @default(cuid())
   title            String
@@ -722,7 +961,6 @@ model AdminReport {
   @@index([reportType, createdAt])
 }
 
-
 model AppSetting {
   id        String   @id @default(cuid())
   key       String   @unique
@@ -734,7 +972,6 @@ model AppSetting {
 
   @@index([group])
 }
-
 
 enum ShopOrderStatus {
   PENDING
@@ -779,31 +1016,33 @@ model ShopCategory {
 }
 
 model ShopProduct {
-  id               String          @id @default(cuid())
-  name             String
-  slug             String          @unique
-  sku              String?         @unique
-  description      String
-  shortDescription String?
-  price            Int
-  compareAtPrice   Int?
-  stock            Int             @default(0)
-  imageUrl         String?
-  badgeLabel       String?
-  material         String?
-  fitNotes         String?
-  careInstructions String?
-  availableSizes   String?
-  availableColors  String?
-  isOfficialMerch  Boolean         @default(true)
-  sortOrder        Int             @default(0)
-  isActive         Boolean         @default(true)
-  isFeatured       Boolean         @default(false)
-  categoryId       String?
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
-  category         ShopCategory?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  orderItems       ShopOrderItem[]
+  id                  String               @id @default(cuid())
+  name                String
+  slug                String               @unique
+  sku                 String?              @unique
+  description         String
+  shortDescription    String?
+  price               Int
+  compareAtPrice      Int?
+  stock               Int                  @default(0)
+  imageUrl            String?
+  badgeLabel          String?
+  material            String?
+  fitNotes            String?
+  careInstructions    String?
+  availableSizes      String?
+  availableColors     String?
+  isOfficialMerch     Boolean              @default(true)
+  sortOrder           Int                  @default(0)
+  isActive            Boolean              @default(true)
+  isFeatured          Boolean              @default(false)
+  categoryId          String?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  category            ShopCategory?        @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  orderItems          ShopOrderItem[]
+  postProductTags     PostProductTag[]
+  sponsoredPlacements SponsoredPlacement[]
 
   @@index([isActive, isFeatured, sortOrder])
   @@index([isOfficialMerch, isActive, sortOrder])
@@ -811,26 +1050,26 @@ model ShopProduct {
 }
 
 model ShopOrder {
-  id             String            @id @default(cuid())
-  orderNumber    String            @unique
-  customerName   String
-  customerEmail  String
-  customerPhone  String
-  addressLine1   String
-  addressLine2   String?
-  city           String
-  province       String?
-  postalCode     String?
-  notes          String?
-  subtotal       Int
-  shippingFee    Int               @default(0)
-  totalAmount    Int
-  status         ShopOrderStatus   @default(PENDING)
-  paymentStatus  ShopPaymentStatus @default(PENDING)
-  paymentMethod  ShopPaymentMethod @default(COD)
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
-  items          ShopOrderItem[]
+  id            String            @id @default(cuid())
+  orderNumber   String            @unique
+  customerName  String
+  customerEmail String
+  customerPhone String
+  addressLine1  String
+  addressLine2  String?
+  city          String
+  province      String?
+  postalCode    String?
+  notes         String?
+  subtotal      Int
+  shippingFee   Int               @default(0)
+  totalAmount   Int
+  status        ShopOrderStatus   @default(PENDING)
+  paymentStatus ShopPaymentStatus @default(PENDING)
+  paymentMethod ShopPaymentMethod @default(COD)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  items         ShopOrderItem[]
 
   @@index([customerEmail, createdAt])
   @@index([status, createdAt])
@@ -838,20 +1077,20 @@ model ShopOrder {
 }
 
 model ShopOrderItem {
-  id          String       @id @default(cuid())
-  orderId     String
-  productId   String?
-  productName String
-  sku         String?
-  imageUrl    String?
+  id           String       @id @default(cuid())
+  orderId      String
+  productId    String?
+  productName  String
+  sku          String?
+  imageUrl     String?
   variantLabel String?
-  price       Int
-  quantity    Int
-  lineTotal   Int
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  order       ShopOrder    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product     ShopProduct? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  price        Int
+  quantity     Int
+  lineTotal    Int
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  order        ShopOrder    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product      ShopProduct? @relation(fields: [productId], references: [id], onDelete: SetNull)
 
   @@index([orderId])
   @@index([productId])
