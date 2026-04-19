@@ -60,6 +60,8 @@ Before build or migration commands, confirm:
 
 ## Vercel
 
+See [VERCEL.md](./VERCEL.md) for the exact Vercel project settings and environment variable checklist.
+
 Typical flow:
 
 1. push the repository to GitHub
@@ -67,7 +69,7 @@ Typical flow:
 3. configure environment variables
 4. connect a PostgreSQL database
 5. run `npm run build` as the build command
-6. run schema deployment separately with `npx prisma migrate deploy`
+6. run schema deployment separately with `npm run db:deploy`
 
 Important:
 

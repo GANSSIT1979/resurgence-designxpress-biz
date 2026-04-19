@@ -101,6 +101,7 @@ Recommended references:
 - [`docs/INSTALL.md`](./docs/INSTALL.md)
 - [`docs/QUICKSTART.md`](./docs/QUICKSTART.md)
 - [`docs/API.md`](./docs/API.md)
+- [`docs/VERCEL.md`](./docs/VERCEL.md)
 - [`docs/SHOP_MODULE.md`](./docs/SHOP_MODULE.md)
 - [`docs/DATABASE.md`](./docs/DATABASE.md)
 - [`docs/AI_SUPPORT_PRODUCTION.md`](./docs/AI_SUPPORT_PRODUCTION.md)

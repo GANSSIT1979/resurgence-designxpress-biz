@@ -1,0 +1,11 @@
+.env
+.env.*
+!.env.example
+.next
+.next-*
+node_modules
+*.log
+certificates
+prisma/dev*.db
+prisma/dev*.db-journal
+public/uploads
