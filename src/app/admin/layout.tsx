@@ -4,6 +4,7 @@ import { DashboardShell } from "@/components/dashboard-shell";
 const links = [
   { href: "/admin", label: "Overview" },
   { href: "/admin/sponsor-submissions", label: "Applications" },
+  { href: "/admin/feed", label: "Feed Moderation" },
   { href: "/admin/gallery", label: "Gallery" },
   { href: "/admin/inquiries", label: "Inquiries" },
   { href: "/admin/users", label: "Users" },

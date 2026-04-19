@@ -3799,3 +3799,281 @@ th {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.admin-feed-moderation {
+  display: grid;
+  gap: 20px;
+}
+
+.admin-feed-moderation-hero {
+  align-items: center;
+  background:
+    radial-gradient(circle at 12% 10%, rgba(255, 125, 17, 0.22), transparent 30%),
+    radial-gradient(circle at 88% 20%, rgba(64, 191, 255, 0.18), transparent 32%),
+    linear-gradient(135deg, rgba(5, 14, 28, 0.98), rgba(12, 31, 50, 0.96));
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f8fbff;
+  display: grid;
+  gap: 20px;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+  overflow: hidden;
+  position: relative;
+}
+
+.admin-feed-moderation-hero::after {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), transparent);
+  border-radius: 999px;
+  content: '';
+  height: 320px;
+  position: absolute;
+  right: -110px;
+  top: -150px;
+  width: 320px;
+}
+
+.admin-feed-moderation-hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+.admin-feed-moderation-hero h2 {
+  font-size: clamp(1.8rem, 3vw, 3rem);
+  line-height: 1;
+  margin: 0 0 10px;
+  max-width: 780px;
+}
+
+.admin-feed-moderation-hero .section-copy {
+  color: rgba(242, 247, 255, 0.78);
+}
+
+.admin-feed-moderation-kpis {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.admin-feed-moderation-kpis div {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+}
+
+.admin-feed-moderation-kpis span {
+  color: rgba(242, 247, 255, 0.68);
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.admin-feed-moderation-kpis strong {
+  font-size: 2.2rem;
+  line-height: 1;
+}
+
+.admin-feed-section {
+  display: grid;
+  gap: 18px;
+}
+
+.admin-feed-section-header {
+  align-items: flex-start;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.admin-feed-section-header h3,
+.admin-feed-post-card h4,
+.admin-feed-placement-card h4,
+.admin-feed-empty h4 {
+  margin: 0;
+}
+
+.admin-feed-post-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.admin-feed-post-card {
+  background: linear-gradient(145deg, rgba(8, 18, 31, 0.96), rgba(12, 33, 48, 0.94));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 26px;
+  color: #f8fbff;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 220px minmax(0, 1fr);
+  padding: 16px;
+}
+
+.admin-feed-post-media {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 20px;
+  color: rgba(255, 255, 255, 0.62);
+  display: flex;
+  font-size: 0.8rem;
+  font-weight: 900;
+  justify-content: center;
+  min-height: 260px;
+  overflow: hidden;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.admin-feed-post-media img {
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.admin-feed-post-body,
+.admin-feed-placement-card {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.admin-feed-row-top,
+.admin-feed-tags,
+.admin-feed-metrics,
+.admin-feed-toggle-row,
+.admin-feed-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-feed-row-top {
+  color: rgba(242, 247, 255, 0.68);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.admin-feed-status,
+.admin-feed-tags span,
+.admin-feed-metrics span {
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 900;
+  padding: 7px 10px;
+}
+
+.admin-feed-status {
+  background: rgba(255, 255, 255, 0.1);
+  color: #f8fbff;
+}
+
+.admin-feed-status.status-published,
+.admin-feed-status.status-active,
+.admin-feed-status.status-approved {
+  background: rgba(28, 164, 91, 0.24);
+  color: #9ff0bf;
+}
+
+.admin-feed-status.status-pending-review,
+.admin-feed-status.status-pending {
+  background: rgba(255, 188, 87, 0.2);
+  color: #ffd391;
+}
+
+.admin-feed-status.status-hidden,
+.admin-feed-status.status-paused,
+.admin-feed-status.status-archived {
+  background: rgba(123, 151, 183, 0.22);
+  color: #d2e3ff;
+}
+
+.admin-feed-status.status-rejected,
+.admin-feed-status.status-cancelled,
+.admin-feed-status.status-deleted {
+  background: rgba(255, 101, 101, 0.2);
+  color: #ffb4b4;
+}
+
+.admin-feed-tags span {
+  background: rgba(64, 191, 255, 0.12);
+  color: #bcecff;
+}
+
+.admin-feed-metrics span {
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(242, 247, 255, 0.74);
+}
+
+.admin-feed-controls,
+.admin-feed-placement-controls {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.admin-feed-placement-controls {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.admin-feed-toggle-row label {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 0.82rem;
+  font-weight: 900;
+  gap: 8px;
+  padding: 9px 12px;
+}
+
+.admin-feed-placement-stack {
+  display: grid;
+  gap: 14px;
+}
+
+.admin-feed-placement-card {
+  background: linear-gradient(145deg, rgba(8, 18, 31, 0.96), rgba(17, 38, 54, 0.94));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 26px;
+  color: #f8fbff;
+  padding: 18px;
+}
+
+.admin-feed-empty {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.92), rgba(244, 250, 255, 0.86)),
+    radial-gradient(circle at top left, rgba(255, 125, 17, 0.12), transparent 40%);
+  border: 1px dashed rgba(13, 32, 54, 0.22);
+  border-radius: 24px;
+  padding: 28px;
+}
+
+@media (max-width: 1080px) {
+  .admin-feed-moderation-hero,
+  .admin-feed-post-card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .admin-feed-post-media {
+    aspect-ratio: 16 / 9;
+    min-height: auto;
+  }
+
+  .admin-feed-placement-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .admin-feed-moderation-kpis,
+  .admin-feed-controls,
+  .admin-feed-placement-controls {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .admin-feed-section-header {
+    display: grid;
+  }
+}

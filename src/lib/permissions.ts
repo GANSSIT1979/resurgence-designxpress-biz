@@ -91,6 +91,7 @@ const pageRouteRules: readonly RoutePermissionRule[] = [
   { prefix: '/admin/users', permission: 'admin.users.manage' },
   { prefix: '/admin/reports', permission: 'admin.reports.manage' },
   { prefix: '/admin/content', permission: 'admin.cms.manage' },
+  { prefix: '/admin/feed', permission: 'admin.cms.manage' },
   { prefix: '/admin/creators', permission: 'admin.cms.manage' },
   { prefix: '/admin/creator-network', permission: 'admin.cms.manage' },
   { prefix: '/admin/gallery', permission: 'admin.cms.manage' },
