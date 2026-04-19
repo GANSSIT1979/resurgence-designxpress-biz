@@ -100,6 +100,17 @@ PRISMA_DB_PROVIDER=postgresql
 DATABASE_URL=<copy the full value from POSTGRES_PRISMA_URL>
 ```
 
+For schema deployment or seeding from your local machine, temporarily point `DATABASE_URL` to Supabase's direct/non-pooling URL:
+
+```powershell
+$env:PRISMA_DB_PROVIDER="postgresql"
+$env:DATABASE_URL="<copy the full value from POSTGRES_URL_NON_POOLING>"
+npm run db:deploy
+npm run db:seed
+```
+
+Use `POSTGRES_PRISMA_URL` for Vercel runtime and `POSTGRES_URL_NON_POOLING` for one-off Prisma schema operations. This avoids pooled-connection issues during `prisma db push`.
+
 Keep the generated Supabase variables if Vercel created them, but this app does not require Supabase Auth or Storage variables for the current Prisma-backed pages. Do not duplicate repeated variables such as `NEXT_PUBLIC_SUPABASE_ANON_KEY` or `SUPABASE_URL`; keep one value per variable name.
 
 Generate a production `JWT_SECRET` locally before pasting it into Vercel:
