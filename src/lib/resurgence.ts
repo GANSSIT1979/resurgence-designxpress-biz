@@ -311,7 +311,7 @@ export const rolePrefixes = {
   SYSTEM_ADMIN: ['/admin'],
   CASHIER: ['/cashier'],
   MEMBER: ['/member'],
-  SPONSOR: ['/sponsor/dashboard', '/sponsor/applications', '/sponsor/packages', '/sponsor/deliverables', '/sponsor/billing', '/sponsor/profile'],
+  SPONSOR: ['/sponsor/dashboard', '/sponsor/applications', '/sponsor/packages', '/sponsor/placements', '/sponsor/deliverables', '/sponsor/billing', '/sponsor/profile'],
   STAFF: ['/staff'],
   PARTNER: ['/partner'],
   CREATOR: ['/creator/dashboard', '/creator/posts'],

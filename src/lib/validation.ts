@@ -191,6 +191,23 @@ export const sponsorProfileSchema = z.object({
   assetLink: z.string().optional().or(z.literal('')),
 });
 
+export const sponsorPlacementSchema = z.object({
+  title: requiredText(3),
+  placementType: optionalText,
+  status: z.enum(['DRAFT', 'PENDING', 'CANCELLED']).default('PENDING'),
+  postId: optionalText,
+  productId: optionalText,
+  startsAt: optionalDateString,
+  endsAt: optionalDateString,
+  ctaLabel: optionalText,
+  ctaHref: optionalUrl,
+  budgetAmount: z.union([z.coerce.number().int().min(0), z.literal('')]).optional(),
+  impressionGoal: z.union([z.coerce.number().int().min(0), z.literal('')]).optional(),
+}).refine((value) => !value.startsAt || !value.endsAt || new Date(value.endsAt) >= new Date(value.startsAt), {
+  message: 'End date must be after the start date.',
+  path: ['endsAt'],
+});
+
 export const sponsorDeliverableSchema = z.object({
   title: z.string().min(2),
   category: z.string().min(2),

@@ -5,6 +5,7 @@ const links = [
   { href: "/sponsor/dashboard", label: "Overview" },
   { href: "/sponsor/applications", label: "Applications" },
   { href: "/sponsor/packages", label: "Packages" },
+  { href: "/sponsor/placements", label: "Feed Placements" },
   { href: "/sponsor/deliverables", label: "Deliverables" },
   { href: "/sponsor/billing", label: "Billing" },
   { href: "/sponsor/profile", label: "Profile" },
