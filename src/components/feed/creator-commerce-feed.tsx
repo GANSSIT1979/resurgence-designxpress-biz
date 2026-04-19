@@ -11,6 +11,11 @@ type Props = {
   source: 'content-post' | 'gallery-fallback';
 };
 
+const FEED_PAGE_SIZE = 8;
+const MEDIA_PREFETCH_DISTANCE = 1;
+
+type PendingFeedAction = 'like' | 'save' | 'follow' | 'comment';
+
 function compactNumber(value: number) {
   return new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(value);
 }
@@ -60,9 +65,11 @@ export function CreatorCommerceFeed({ initialItems, initialCursor = null, source
   const [nextCursor, setNextCursor] = useState(initialCursor);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [cartCount, setCartCount] = useState(0);
   const cardRefs = useRef<Array<HTMLElement | null>>([]);
+  const loadAbortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -90,22 +97,47 @@ export function CreatorCommerceFeed({ initialItems, initialCursor = null, source
     return () => window.removeEventListener(CART_UPDATED_EVENT, syncCart);
   }, []);
 
+  useEffect(() => {
+    return () => loadAbortRef.current?.abort();
+  }, []);
+
   async function loadMore() {
     if (!nextCursor || isLoadingMore) return;
+    loadAbortRef.current?.abort();
+    const controller = new AbortController();
+    loadAbortRef.current = controller;
     setIsLoadingMore(true);
-    const response = await fetch(`/api/feed?cursor=${encodeURIComponent(nextCursor)}&limit=8`);
-    const data = await response.json().catch(() => null);
-    setIsLoadingMore(false);
+    setLoadError(null);
 
-    if (!response.ok || !data?.items) {
-      setNotice(data?.error || 'Unable to load more feed posts.');
-      return;
+    try {
+      const response = await fetch(`/api/feed?cursor=${encodeURIComponent(nextCursor)}&limit=${FEED_PAGE_SIZE}`, {
+        headers: { Accept: 'application/json' },
+        signal: controller.signal,
+      });
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok || !data?.items) {
+        const message = data?.error || 'Unable to load more feed posts.';
+        setLoadError(message);
+        setNotice(message);
+        return;
+      }
+
+      startTransition(() => {
+        setItems((current) => [...current, ...data.items]);
+        setNextCursor(data.nextCursor || null);
+      });
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return;
+      const message = 'Feed connection interrupted. Please try again.';
+      setLoadError(message);
+      setNotice(message);
+    } finally {
+      if (loadAbortRef.current === controller) {
+        loadAbortRef.current = null;
+        setIsLoadingMore(false);
+      }
     }
-
-    startTransition(() => {
-      setItems((current) => [...current, ...data.items]);
-      setNextCursor(data.nextCursor || null);
-    });
   }
 
   if (!items.length) {
@@ -158,8 +190,18 @@ export function CreatorCommerceFeed({ initialItems, initialCursor = null, source
                 cardRefs.current[index] = node;
               }}
               setNotice={setNotice}
+              shouldLoadMedia={Math.abs(index - activeIndex) <= MEDIA_PREFETCH_DISTANCE}
             />
           ))}
+
+          {isLoadingMore ? <FeedSkeletonStack /> : null}
+
+          {loadError ? (
+            <div className="feed-load-status" role="status">
+              <span>{loadError}</span>
+              <button type="button" onClick={loadMore} disabled={isLoadingMore}>Retry</button>
+            </div>
+          ) : null}
 
           {nextCursor ? (
             <button className="feed-load-more" type="button" onClick={loadMore} disabled={isLoadingMore}>
@@ -199,36 +241,61 @@ function FeedCard({
   refCallback,
   setNotice,
   index,
+  shouldLoadMedia,
 }: {
   active: boolean;
   post: FeedPost;
   refCallback: (node: HTMLElement | null) => void;
   setNotice: (notice: string | null) => void;
   index: number;
+  shouldLoadMedia: boolean;
 }) {
   const [mediaIndex, setMediaIndex] = useState(0);
   const [liked, setLiked] = useState(Boolean(post.viewerState?.liked));
   const [saved, setSaved] = useState(Boolean(post.viewerState?.saved));
   const [following, setFollowing] = useState(Boolean(post.viewerState?.followingCreator));
+  const [pendingAction, setPendingAction] = useState<PendingFeedAction | null>(null);
   const [metrics, setMetrics] = useState(post.metrics);
   const media = post.mediaAssets[mediaIndex] || post.mediaAssets[0];
   const hashtags = useMemo(() => post.hashtags.slice(0, 6), [post.hashtags]);
   const primarySponsor = post.sponsorPlacements[0];
   const isActionablePost = post.source === 'content-post';
 
-  async function runAction(endpoint: string, label: string, onSuccess: (data: any) => void) {
+  async function runAction(
+    endpoint: string,
+    label: string,
+    onSuccess: (data: any) => void,
+    options: {
+      action: PendingFeedAction;
+      optimistic?: () => void;
+      rollback?: () => void;
+    },
+  ) {
     if (!isActionablePost) {
       setNotice('Interactive actions activate on published creator-commerce posts.');
       return;
     }
 
-    const response = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
-    const data = await response.json().catch(() => null);
-    if (!response.ok) {
-      setNotice(response.status === 401 ? `Please log in to ${label}.` : data?.error || `Unable to ${label}.`);
-      return;
+    if (pendingAction) return;
+
+    options.optimistic?.();
+    setPendingAction(options.action);
+
+    try {
+      const response = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+      const data = await response.json().catch(() => null);
+      if (!response.ok) {
+        options.rollback?.();
+        setNotice(response.status === 401 ? `Please log in to ${label}.` : data?.error || `Unable to ${label}.`);
+        return;
+      }
+      onSuccess(data);
+    } catch {
+      options.rollback?.();
+      setNotice(`Network issue while trying to ${label}.`);
+    } finally {
+      setPendingAction(null);
     }
-    onSuccess(data);
   }
 
   async function postComment() {
@@ -240,19 +307,26 @@ function FeedCard({
     const body = window.prompt('Add a comment');
     if (!body) return;
 
-    const response = await fetch(`/api/feed/${post.id}/comments`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ body }),
-    });
-    const data = await response.json().catch(() => null);
-    if (!response.ok) {
-      setNotice(response.status === 401 ? 'Please log in to comment.' : data?.error || 'Unable to comment.');
-      return;
-    }
+    setPendingAction('comment');
+    try {
+      const response = await fetch(`/api/feed/${post.id}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ body }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok) {
+        setNotice(response.status === 401 ? 'Please log in to comment.' : data?.error || 'Unable to comment.');
+        return;
+      }
 
-    setMetrics((current) => ({ ...current, comments: current.comments + 1 }));
-    setNotice('Comment posted.');
+      setMetrics((current) => ({ ...current, comments: current.comments + 1 }));
+      setNotice('Comment posted.');
+    } catch {
+      setNotice('Network issue while trying to comment.');
+    } finally {
+      setPendingAction(null);
+    }
   }
 
   function addToCart(product: FeedPost['productTags'][number]) {
@@ -282,7 +356,7 @@ function FeedCard({
     <article className={`feed-story-card ${active ? 'is-active' : ''}`} data-index={index} ref={refCallback}>
       <div className="feed-phone-frame">
         <div className="feed-media-stage">
-          {media ? <FeedMedia active={active} caption={post.caption} media={media} /> : <div className="feed-media-missing">No media available</div>}
+          {media ? <FeedMedia active={active} caption={post.caption} media={media} shouldLoad={shouldLoadMedia} /> : <div className="feed-media-missing">No media available</div>}
         </div>
 
         {post.mediaAssets.length > 1 ? (
@@ -312,11 +386,27 @@ function FeedCard({
             </div>
             {post.creator ? (
               <button
+                aria-busy={pendingAction === 'follow'}
+                aria-pressed={following}
                 className="feed-follow-button"
+                disabled={pendingAction !== null}
                 type="button"
-                onClick={() => runAction(`/api/feed/creators/${post.creator?.id}/follow`, 'follow creators', (data) => setFollowing(Boolean(data.following)))}
+                onClick={() => {
+                  const previousFollowing = following;
+                  const nextFollowing = !following;
+                  runAction(
+                    `/api/feed/creators/${post.creator?.id}/follow`,
+                    'follow creators',
+                    (data) => setFollowing(Boolean(data.following)),
+                    {
+                      action: 'follow',
+                      optimistic: () => setFollowing(nextFollowing),
+                      rollback: () => setFollowing(previousFollowing),
+                    },
+                  );
+                }}
               >
-                {following ? 'Following' : 'Follow'}
+                {pendingAction === 'follow' ? 'Saving' : following ? 'Following' : 'Follow'}
               </button>
             ) : null}
           </div>
@@ -340,7 +430,7 @@ function FeedCard({
 
                 return (
                   <div className="feed-product-chip" key={product.id}>
-                    <img src={product.imageUrl || '/assets/resurgence-poster.jpg'} alt={product.name} />
+                    <img src={product.imageUrl || '/assets/resurgence-poster.jpg'} alt={product.name} loading="lazy" decoding="async" />
                     <div>
                       <strong>{product.name}</strong>
                       <span>{product.price ? formatPeso(product.price) : 'View merch'} {product.stock !== null && product.stock !== undefined ? `- ${isSoldOut ? 'Sold out' : `${product.stock} left`}` : ''}</span>
@@ -359,29 +449,75 @@ function FeedCard({
 
       <div className="feed-action-rail">
         <button
+          aria-busy={pendingAction === 'like'}
+          aria-pressed={liked}
           className={liked ? 'active' : undefined}
+          disabled={pendingAction !== null}
           type="button"
-          onClick={() => runAction(`/api/feed/${post.id}/like`, 'like posts', (data) => {
-            setLiked(Boolean(data.liked));
-            setMetrics((current) => ({ ...current, likes: data.likeCount ?? current.likes }));
-          })}
+          onClick={() => {
+            const previousLiked = liked;
+            const previousLikes = metrics.likes;
+            const nextLiked = !liked;
+            runAction(
+              `/api/feed/${post.id}/like`,
+              'like posts',
+              (data) => {
+                setLiked(Boolean(data.liked));
+                setMetrics((current) => ({ ...current, likes: data.likeCount ?? current.likes }));
+              },
+              {
+                action: 'like',
+                optimistic: () => {
+                  setLiked(nextLiked);
+                  setMetrics((current) => ({ ...current, likes: Math.max(0, current.likes + (nextLiked ? 1 : -1)) }));
+                },
+                rollback: () => {
+                  setLiked(previousLiked);
+                  setMetrics((current) => ({ ...current, likes: previousLikes }));
+                },
+              },
+            );
+          }}
         >
-          <strong>{liked ? 'Liked' : 'Like'}</strong>
+          <strong>{pendingAction === 'like' ? 'Saving' : liked ? 'Liked' : 'Like'}</strong>
           <span>{compactNumber(metrics.likes)}</span>
         </button>
-        <button type="button" onClick={postComment}>
-          <strong>Comment</strong>
+        <button aria-busy={pendingAction === 'comment'} disabled={pendingAction !== null} type="button" onClick={postComment}>
+          <strong>{pendingAction === 'comment' ? 'Posting' : 'Comment'}</strong>
           <span>{compactNumber(metrics.comments)}</span>
         </button>
         <button
+          aria-busy={pendingAction === 'save'}
+          aria-pressed={saved}
           className={saved ? 'active' : undefined}
+          disabled={pendingAction !== null}
           type="button"
-          onClick={() => runAction(`/api/feed/${post.id}/save`, 'save posts', (data) => {
-            setSaved(Boolean(data.saved));
-            setMetrics((current) => ({ ...current, saves: data.saveCount ?? current.saves }));
-          })}
+          onClick={() => {
+            const previousSaved = saved;
+            const previousSaves = metrics.saves;
+            const nextSaved = !saved;
+            runAction(
+              `/api/feed/${post.id}/save`,
+              'save posts',
+              (data) => {
+                setSaved(Boolean(data.saved));
+                setMetrics((current) => ({ ...current, saves: data.saveCount ?? current.saves }));
+              },
+              {
+                action: 'save',
+                optimistic: () => {
+                  setSaved(nextSaved);
+                  setMetrics((current) => ({ ...current, saves: Math.max(0, current.saves + (nextSaved ? 1 : -1)) }));
+                },
+                rollback: () => {
+                  setSaved(previousSaved);
+                  setMetrics((current) => ({ ...current, saves: previousSaves }));
+                },
+              },
+            );
+          }}
         >
-          <strong>{saved ? 'Saved' : 'Save'}</strong>
+          <strong>{pendingAction === 'save' ? 'Saving' : saved ? 'Saved' : 'Save'}</strong>
           <span>{compactNumber(metrics.saves)}</span>
         </button>
         <Link href={post.creator ? `/creators/${post.creator.slug}` : '/creators'}>
@@ -393,20 +529,34 @@ function FeedCard({
   );
 }
 
-function FeedMedia({ media, active, caption }: { media: FeedPost['mediaAssets'][number]; active: boolean; caption: string }) {
+function FeedMedia({
+  media,
+  active,
+  caption,
+  shouldLoad,
+}: {
+  media: FeedPost['mediaAssets'][number];
+  active: boolean;
+  caption: string;
+  shouldLoad: boolean;
+}) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || media.mediaType !== 'VIDEO') return;
+    if (!video || media.mediaType !== 'VIDEO' || !shouldLoad) return;
     video.muted = true;
     video.playsInline = true;
     if (active) video.play().catch(() => null);
     else video.pause();
-  }, [active, media.mediaType]);
+  }, [active, media.mediaType, shouldLoad]);
+
+  if (!shouldLoad) {
+    return <FeedMediaPlaceholder caption={caption} media={media} />;
+  }
 
   if (media.mediaType === 'IMAGE') {
-    return <img className="feed-media" src={media.url} alt={media.altText || media.caption || caption} loading={active ? 'eager' : 'lazy'} />;
+    return <img className="feed-media" src={media.url} alt={media.altText || media.caption || caption} loading={active ? 'eager' : 'lazy'} decoding="async" />;
   }
 
   if (media.mediaType === 'VIDEO') {
@@ -421,6 +571,7 @@ function FeedMedia({ media, active, caption }: { media: FeedPost['mediaAssets'][
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
         allowFullScreen
         className="feed-media feed-embed"
+        loading={active ? 'eager' : 'lazy'}
         src={embedUrl}
         title={media.caption || caption}
       />
@@ -428,4 +579,32 @@ function FeedMedia({ media, active, caption }: { media: FeedPost['mediaAssets'][
   }
 
   return <a className="feed-external-media" href={media.url} target="_blank" rel="noopener noreferrer">Open media</a>;
+}
+
+function FeedMediaPlaceholder({ media, caption }: { media: FeedPost['mediaAssets'][number]; caption: string }) {
+  const previewUrl = media.thumbnailUrl || (media.mediaType === 'IMAGE' ? media.url : '');
+  const label = media.mediaType === 'VIDEO' ? 'Video queued' : media.mediaType === 'YOUTUBE' || media.mediaType === 'VIMEO' ? 'Embed queued' : 'Media queued';
+
+  return (
+    <div className="feed-media-placeholder" aria-label={`${label}: ${media.altText || media.caption || caption}`}>
+      {previewUrl ? <img src={previewUrl} alt="" loading="lazy" decoding="async" /> : null}
+      <div>
+        <span>{label}</span>
+        <small>Loads as this post enters view.</small>
+      </div>
+    </div>
+  );
+}
+
+function FeedSkeletonStack() {
+  return (
+    <div className="feed-skeleton-stack" aria-hidden="true">
+      {[0, 1].map((item) => (
+        <div className="feed-story-skeleton" key={item}>
+          <div />
+          <span />
+        </div>
+      ))}
+    </div>
+  );
 }
