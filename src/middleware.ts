@@ -27,6 +27,10 @@ export async function middleware(request: NextRequest) {
   }
 
   if (pathname === '/login') {
+    if (request.method !== 'GET' && request.method !== 'HEAD') {
+      return NextResponse.redirect(new URL('/login', request.url), 303);
+    }
+
     const payload = await verifySession(token);
     if (payload) {
       return NextResponse.redirect(new URL(getLoginRedirect(payload.role), request.url));
