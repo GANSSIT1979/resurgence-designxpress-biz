@@ -27,6 +27,7 @@ export const permissionCatalog = [
   { key: 'partner.profile.manage', label: 'Partner profile', area: 'Partner' },
   { key: 'creator.dashboard.view', label: 'Creator dashboard', area: 'Creator' },
   { key: 'creator.profile.manage', label: 'Creator profile and social links', area: 'Creator' },
+  { key: 'creator.posts.manage', label: 'Creator feed posts and tagged merch', area: 'Creator' },
   { key: 'coach.dashboard.view', label: 'Coach dashboard', area: 'Coach' },
   { key: 'referee.dashboard.view', label: 'Referee dashboard', area: 'Referee' },
   { key: 'uploads.manage', label: 'Upload platform image assets', area: 'Shared' },
@@ -70,6 +71,7 @@ export const rolePermissionMatrix: Record<AppRole, readonly PermissionKey[]> = {
   CREATOR: [
     'creator.dashboard.view',
     'creator.profile.manage',
+    'creator.posts.manage',
     'uploads.manage',
     'notifications.view',
   ],
@@ -123,6 +125,7 @@ const pageRouteRules: readonly RoutePermissionRule[] = [
   { prefix: '/partner/agreements', permission: 'partner.agreements.manage' },
   { prefix: '/partner/profile', permission: 'partner.profile.manage' },
   { prefix: '/partner', permission: 'partner.dashboard.view' },
+  { prefix: '/creator/posts', permission: 'creator.posts.manage' },
   { prefix: '/creator/dashboard', permission: 'creator.dashboard.view' },
   { prefix: '/coach', permission: 'coach.dashboard.view' },
   { prefix: '/referee', permission: 'referee.dashboard.view' },

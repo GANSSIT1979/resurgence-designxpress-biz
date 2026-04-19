@@ -314,7 +314,7 @@ export const rolePrefixes = {
   SPONSOR: ['/sponsor/dashboard', '/sponsor/applications', '/sponsor/packages', '/sponsor/deliverables', '/sponsor/billing', '/sponsor/profile'],
   STAFF: ['/staff'],
   PARTNER: ['/partner'],
-  CREATOR: ['/creator/dashboard'],
+  CREATOR: ['/creator/dashboard', '/creator/posts'],
   COACH: ['/coach'],
   REFEREE: ['/referee'],
 } as const;

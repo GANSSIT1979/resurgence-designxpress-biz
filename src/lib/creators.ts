@@ -1,5 +1,6 @@
 export const creatorNavItems = [
   { href: '/creator/dashboard', label: 'Dashboard' },
+  { href: '/creator/posts', label: 'Feed Posts' },
   { href: '/creators', label: 'Public Directory' },
 ] as const;
 

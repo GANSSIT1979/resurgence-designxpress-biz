@@ -37,6 +37,7 @@ RESURGENCE Powered by DesignXpress is a Next.js 15 + Prisma platform for sponsor
 - [AI_SUPPORT_PRODUCTION.md](./AI_SUPPORT_PRODUCTION.md)
 - [FEED_UPGRADE_PHASE_1_4.md](./FEED_UPGRADE_PHASE_1_4.md)
 - [FEED_UPGRADE_PHASE_5_6.md](./FEED_UPGRADE_PHASE_5_6.md)
+- [FEED_UPGRADE_PHASE_7.md](./FEED_UPGRADE_PHASE_7.md)
 
 ## Recommended Read Order
 
