@@ -3,11 +3,19 @@ import { getFeaturedShopProducts, getHomeData, getProductServices } from '@/lib/
 import { getPublicSettings } from '@/lib/settings';
 import { formatPeso } from '@/lib/shop';
 import { VerticalMediaFeed } from '@/components/vertical-media-feed';
+import { CreatorCommerceFeed } from '@/components/feed/creator-commerce-feed';
+import { getPublicFeed } from '@/lib/feed/queries';
 
 export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
-  const [{ contentMap, sponsors, partners, stats, creators, inventoryCategories, galleryEvents }, services, settings, shopProducts] = await Promise.all([getHomeData(), getProductServices(), getPublicSettings(), getFeaturedShopProducts(4)]);
+  const [{ contentMap, sponsors, partners, stats, creators, inventoryCategories, galleryEvents }, services, settings, shopProducts, feed] = await Promise.all([
+    getHomeData(),
+    getProductServices(),
+    getPublicSettings(),
+    getFeaturedShopProducts(4),
+    getPublicFeed({ limit: 8 }),
+  ]);
   const hero = contentMap['home.hero'];
   const about = contentMap['home.about'];
   const brandName = settings.brandName;
@@ -23,6 +31,8 @@ export default async function HomePage() {
 
   return (
     <main>
+      <CreatorCommerceFeed initialItems={feed.items} initialCursor={feed.nextCursor} source={feed.source} />
+
       <section className="hero">
         <div className="container hero-grid">
           <div>
