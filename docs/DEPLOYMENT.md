@@ -94,7 +94,7 @@ Recommended:
 
 - use platform-managed HTTPS or terminate TLS at a reverse proxy before traffic reaches Next.js
 
-- use persistent object storage for uploaded media in production
+- use `UPLOAD_STORAGE=database` or persistent object storage for uploaded media in production
 - keep `public/uploads` only for local or temporary workflows unless persistent disk support exists
 
 ## Docker
@@ -159,10 +159,12 @@ For HTTPS on a VPS, terminate TLS at Caddy or Nginx and forward requests to the 
 Local:
 
 - `public/uploads`
+- `UPLOAD_STORAGE=filesystem`
 
 Production:
 
-- prefer object storage such as S3-compatible storage, Cloudflare R2, or similar
+- Vercel/serverless: `UPLOAD_STORAGE=database` stores uploaded images in PostgreSQL and serves them through `/api/uploads/image/[id]`
+- larger catalogs: prefer object storage such as S3-compatible storage, Cloudflare R2, or similar
 
 ## Post-Deployment Validation
 

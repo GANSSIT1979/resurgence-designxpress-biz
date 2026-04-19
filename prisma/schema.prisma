@@ -138,6 +138,21 @@ model User {
   updatedAt      DateTime        @updatedAt
 }
 
+model UploadAsset {
+  id              String   @id @default(cuid())
+  scope           String
+  filename        String
+  contentType     String
+  size            Int
+  data            Bytes
+  uploadedById    String?
+  uploadedByEmail String?
+  createdAt       DateTime @default(now())
+
+  @@index([scope, createdAt])
+  @@index([uploadedByEmail])
+}
+
 model Inquiry {
   id                     String        @id @default(cuid())
   name                   String

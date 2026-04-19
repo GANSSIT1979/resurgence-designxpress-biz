@@ -103,7 +103,9 @@ For Vercel production setup, use `vercel.production.env.example` as the copy-rea
 ## Upload Configuration
 
 - upload API: `POST /api/uploads/image`
-- local storage path: `public/uploads/<scope>/<year>/<month>`
+- image serving API for database-backed uploads: `GET /api/uploads/image/[id]`
+- local filesystem storage path: `public/uploads/<scope>/<year>/<month>`
+- production/serverless storage: set `UPLOAD_STORAGE=database`, or omit it on Vercel where database storage is selected automatically
 - accepted file types: JPG, PNG, WEBP, GIF
 - size limit: `5 MB`
 - upload scopes: `sponsor`, `creator`, `brand-profile`, `merch`
@@ -127,4 +129,4 @@ Role access:
 - keep local development on SQLite unless you are testing deployment parity
 - use PostgreSQL for production
 - rotate `JWT_SECRET` and demo credentials before deployment
-- move uploads off the app filesystem for long-term production use
+- use database-backed uploads or external object storage in production; do not rely on Vercel app filesystem writes

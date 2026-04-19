@@ -139,7 +139,7 @@ const apiRouteRules: readonly RoutePermissionRule[] = [
   { prefix: '/api/partner/agreements', permission: 'partner.agreements.manage' },
   { prefix: '/api/partner/profile', permission: 'partner.profile.manage' },
   { prefix: '/api/creator/profile', permission: 'creator.profile.manage' },
-  { prefix: '/api/uploads/image', permission: 'uploads.manage' },
+  { prefix: '/api/uploads/image', permission: 'uploads.manage', methods: ['POST'] },
   { prefix: '/api/notifications', permission: 'notifications.view' },
 ];
 

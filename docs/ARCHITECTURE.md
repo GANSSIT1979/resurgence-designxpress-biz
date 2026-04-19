@@ -86,6 +86,7 @@ The package scripts mutate the datasource provider directly in `prisma/schema.pr
 ## Storage And Integrations
 
 - Prisma for relational data
-- local filesystem uploads under `public/uploads`
+- local filesystem uploads under `public/uploads` for development
+- database-backed uploaded image assets on Vercel/serverless production through `/api/uploads/image/[id]`
 - optional OpenAI workflow credentials
 - optional email webhook delivery through `EMAIL_WEBHOOK_URL`

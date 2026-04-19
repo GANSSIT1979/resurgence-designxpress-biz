@@ -108,9 +108,10 @@ Current server behavior in `src/app/api/checkout/route.ts`:
 
 System Admin users can upload merch images through the product manager. Uploads use the `merch` scope and are stored under:
 
-- `public/uploads/merch`
+- local development: `public/uploads/merch`
+- Vercel/serverless production: PostgreSQL-backed `UploadAsset` records served through `/api/uploads/image/[id]`
 
-Production deployments should still use persistent object storage if local filesystem writes are not durable.
+For large production catalogs, move image storage to object storage such as S3-compatible storage or Cloudflare R2.
 
 ## Prisma Models
 

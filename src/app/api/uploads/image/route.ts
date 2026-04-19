@@ -38,7 +38,10 @@ export async function POST(request: Request) {
   }
 
   try {
-    const url = await saveImageUpload(file, scopeValue);
+    const url = await saveImageUpload(file, scopeValue, {
+      userId: context.user.id,
+      userEmail: context.user.email,
+    });
     return NextResponse.json({ url }, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unable to upload image.';
