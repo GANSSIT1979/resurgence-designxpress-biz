@@ -15,7 +15,7 @@ Production-style provider:
 
 ```env
 PRISMA_DB_PROVIDER="postgresql"
-DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DB?schema=public"
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DATABASE?sslmode=require&schema=public"
 ```
 
 ### Authentication And Site Metadata
@@ -45,6 +45,18 @@ NEXT_PUBLIC_CONTACT_ADDRESS="Philippines"
 
 `ADMIN_PASSWORD_HASH` is only for the emergency fallback admin flow. Normal sign-in uses seeded database users.
 
+### Manual Shop Payment Instructions
+
+```env
+GCASH_NUMBER="replace-with-gcash-number"
+MAYA_NUMBER=""
+BANK_ACCOUNT_NAME="replace-with-bank-account-name"
+BANK_ACCOUNT_NUMBER="replace-with-bank-account-number"
+BANK_NAME="replace-with-bank-name"
+```
+
+These values are used on `/checkout` for customer-facing manual GCash, Maya, and bank transfer instructions.
+
 ### HTTPS
 
 ```env
@@ -67,12 +79,14 @@ HTTPS behavior:
 ```env
 OPENAI_API_KEY="your_openai_api_key"
 OPENAI_WORKFLOW_ID="wf_your_workflow_id"
+OPENAI_WORKFLOW_VERSION="1"
 OPENAI_WEBHOOK_SECRET="whsec_your_webhook_secret"
+OPENAI_DEFAULT_MODEL="gpt-4.1-mini"
 EMAIL_WEBHOOK_URL=""
 EMAIL_WEBHOOK_SECRET=""
 ```
 
-`OPENAI_WORKFLOW_VERSION` is optional. Add it manually if you want to pin a specific published workflow version.
+`OPENAI_WORKFLOW_VERSION` is optional. If set, use only the plain version number, such as `1`.
 
 ## Prisma Script Flow
 
@@ -81,6 +95,8 @@ EMAIL_WEBHOOK_SECRET=""
 - package scripts: `prisma:generate`, `db:push`, `db:migrate`, `db:seed`, `build`
 
 The package scripts use `scripts/prepare-prisma-schema.mjs` to switch the datasource provider directly inside `prisma/schema.prisma`.
+
+For Vercel production setup, use `vercel.production.env.example` as the copy-ready environment reference and run `npm run db:deploy` with `PRISMA_DB_PROVIDER=postgresql` and the production `DATABASE_URL`.
 
 `prisma/schema.template.prisma` and `scripts/prepare-prisma.mjs` are still in the repo, but they are legacy artifacts and are not the default path used by `package.json`.
 

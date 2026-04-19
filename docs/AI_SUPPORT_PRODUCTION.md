@@ -17,6 +17,8 @@ Today the stack includes:
 ## Supported Categories
 
 - sponsorships
+- orders
+- payments
 - events
 - custom apparel
 - partnerships
@@ -36,10 +38,12 @@ If you want a fully configured workflow-backed production setup, you still need 
 ```env
 OPENAI_API_KEY="sk-..."
 OPENAI_WORKFLOW_ID="pmpt_..."
-OPENAI_WORKFLOW_VERSION=""
+OPENAI_WORKFLOW_VERSION="1"
 OPENAI_WEBHOOK_SECRET="whsec_..."
 NEXT_PUBLIC_SITE_URL="https://resurgence-dx.biz"
 ```
+
+Use the plain workflow or prompt version number. Do not paste `version="1"` as the value.
 
 ## Verification
 

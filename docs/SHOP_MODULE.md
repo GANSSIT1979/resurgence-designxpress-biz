@@ -159,8 +159,8 @@ Relevant project configuration for the live repo includes:
 Important accuracy notes:
 
 - the current repository uses `JWT_SECRET`, not `AUTH_SECRET`
-- the live checkout code does not currently read `GCASH_NUMBER`, `BANK_ACCOUNT_NAME`, `BANK_ACCOUNT_NUMBER`, or `BANK_NAME`
-- business-level payment/contact information is configured through app settings and environment-backed defaults, not through dedicated checkout payment env vars
+- the live checkout page reads `GCASH_NUMBER`, optional `MAYA_NUMBER`, `BANK_ACCOUNT_NAME`, `BANK_ACCOUNT_NUMBER`, and `BANK_NAME` for customer-facing manual payment instructions
+- business-level payment/contact information is configured through app settings and environment-backed defaults
 
 ## Seeded Official Products
 

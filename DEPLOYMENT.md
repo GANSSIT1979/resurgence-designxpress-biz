@@ -41,5 +41,6 @@ As of 2026-04-19 the local production build is green. Real deployment readiness 
 
 - [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md)
 - [`docs/VERCEL.md`](./docs/VERCEL.md)
+- [`vercel.production.env.example`](./vercel.production.env.example)
 - [`docs/AI_SUPPORT_PRODUCTION.md`](./docs/AI_SUPPORT_PRODUCTION.md)
 - [`docs/TROUBLESHOOTING.md`](./docs/TROUBLESHOOTING.md)

@@ -12,7 +12,8 @@
     "db:push": "npm run prisma:prepare && prisma db push",
     "db:seed": "npm run prisma:prepare && tsx prisma/seed.ts",
     "db:migrate": "npm run prisma:prepare && prisma migrate dev",
-    "db:deploy": "npm run prisma:prepare && prisma migrate deploy",
+    "db:deploy": "npm run prisma:prepare && prisma db push",
+    "db:migrate:deploy": "npm run prisma:prepare && prisma migrate deploy",
     "support:verify": "node scripts/verify-support-routes.mjs",
     "postinstall": "npm run prisma:prepare && prisma generate"
   },

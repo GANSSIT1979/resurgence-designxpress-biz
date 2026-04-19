@@ -102,6 +102,7 @@ Recommended references:
 - [`docs/QUICKSTART.md`](./docs/QUICKSTART.md)
 - [`docs/API.md`](./docs/API.md)
 - [`docs/VERCEL.md`](./docs/VERCEL.md)
+- [`vercel.production.env.example`](./vercel.production.env.example)
 - [`docs/SHOP_MODULE.md`](./docs/SHOP_MODULE.md)
 - [`docs/DATABASE.md`](./docs/DATABASE.md)
 - [`docs/AI_SUPPORT_PRODUCTION.md`](./docs/AI_SUPPORT_PRODUCTION.md)

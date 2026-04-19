@@ -25,6 +25,7 @@ RESURGENCE Powered by DesignXpress is a Next.js 15 + Prisma platform for sponsor
 - [DATABASE.md](./DATABASE.md)
 - [DEPLOYMENT.md](./DEPLOYMENT.md)
 - [VERCEL.md](./VERCEL.md)
+- [vercel.production.env.example](../vercel.production.env.example)
 - [CONFIGURATION.md](./CONFIGURATION.md)
 - [SECURITY.md](./SECURITY.md)
 - [TESTING.md](./TESTING.md)
@@ -43,10 +44,11 @@ RESURGENCE Powered by DesignXpress is a Next.js 15 + Prisma platform for sponsor
 4. `DATABASE.md`
 5. `API.md`
 6. `VERCEL.md`
-7. `SHOP_MODULE.md`
-8. `AI_SUPPORT_PRODUCTION.md`
-9. `TROUBLESHOOTING.md`
-10. `ROADMAP.md`
+7. `../vercel.production.env.example`
+8. `SHOP_MODULE.md`
+9. `AI_SUPPORT_PRODUCTION.md`
+10. `TROUBLESHOOTING.md`
+11. `ROADMAP.md`
 
 ## Primary Working Areas
 

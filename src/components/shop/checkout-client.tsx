@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { computeShippingFee, formatPaymentMethod, formatPeso } from '@/lib/shop';
+import type { ShopPaymentInstructions } from '@/lib/shop-payment';
 
 type CartItem = {
   productId: string;
@@ -20,7 +21,58 @@ function cartKey(item: CartItem) {
   return `${item.productId}:${item.variantLabel || 'standard'}`;
 }
 
-export function CheckoutClient() {
+function instructionRows(paymentMethod: string, paymentInstructions: ShopPaymentInstructions) {
+  const supportLine = [paymentInstructions.supportEmail, paymentInstructions.supportPhone].filter(Boolean).join(' / ');
+
+  if (paymentMethod === 'GCASH_MANUAL') {
+    return [
+      ['Payment channel', 'GCash manual payment'],
+      ['GCash number', paymentInstructions.gcashNumber || 'To be confirmed by support'],
+      ['Confirmation', 'Send the payment reference number in the order notes or support desk.'],
+    ];
+  }
+
+  if (paymentMethod === 'MAYA_MANUAL') {
+    return [
+      ['Payment channel', 'Maya manual payment'],
+      ['Maya number', paymentInstructions.mayaNumber || paymentInstructions.gcashNumber || 'To be confirmed by support'],
+      ['Confirmation', 'Send the payment reference number in the order notes or support desk.'],
+    ];
+  }
+
+  if (paymentMethod === 'BANK_TRANSFER') {
+    return [
+      ['Payment channel', 'Bank transfer'],
+      ['Bank', paymentInstructions.bankName || 'To be confirmed by support'],
+      ['Account name', paymentInstructions.bankAccountName || 'To be confirmed by support'],
+      ['Account number', paymentInstructions.bankAccountNumber || 'To be confirmed by support'],
+      ['Confirmation', 'Send the deposit or transfer reference number for admin verification.'],
+    ];
+  }
+
+  if (paymentMethod === 'CARD_MANUAL') {
+    return [
+      ['Payment channel', 'Credit/Debit Card'],
+      ['Security reminder', 'Do not send card numbers in checkout notes, chat, or email.'],
+      ['Next step', 'The team will provide a safe card payment path when available.'],
+    ];
+  }
+
+  if (paymentMethod === 'CASH') {
+    return [
+      ['Payment channel', 'Cash'],
+      ['Next step', 'The team will confirm pickup, meet-up, or approved cash handling instructions.'],
+    ];
+  }
+
+  return [
+    ['Payment channel', 'Cash on Delivery'],
+    ['Next step', 'Pay when the order is delivered after the team confirms fulfillment.'],
+    ['Support', supportLine || 'Use the support desk for payment questions.'],
+  ];
+}
+
+export function CheckoutClient({ paymentInstructions }: { paymentInstructions: ShopPaymentInstructions }) {
   const router = useRouter();
   const [items, setItems] = useState<CartItem[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -94,7 +146,18 @@ export function CheckoutClient() {
           {paymentMethods.map((method) => <option key={method} value={method}>{formatPaymentMethod(method)}</option>)}
         </select>
         <div className="notice success">
-          Manual payment orders are created safely first. The team can confirm proof, update payment status, and move the order through packing and delivery in the admin orders dashboard.
+          <strong>Payment instructions</strong>
+          <div className="payment-instructions">
+            {instructionRows(form.paymentMethod, paymentInstructions).map(([label, value]) => (
+              <div key={label}>
+                <span>{label}</span>
+                <strong>{value}</strong>
+              </div>
+            ))}
+          </div>
+          <p>
+            Manual payment orders are created safely first. The team can confirm proof, update payment status, and move the order through packing and delivery in the admin orders dashboard.
+          </p>
         </div>
         <textarea className="textarea" placeholder="Order notes" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
         <button className="btn" type="submit" disabled={busy}>{busy ? 'Placing Order...' : 'Place Order'}</button>

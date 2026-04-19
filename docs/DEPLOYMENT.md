@@ -18,7 +18,7 @@ Required production steps:
 2. point the database to PostgreSQL
 3. run `npm run prisma:prepare`
 4. run `npm run prisma:generate`
-5. run schema deployment with `npx prisma migrate deploy`
+5. run schema deployment with `npm run db:deploy`
 6. build and start the app
 
 As of 2026-04-19, the local production build is green.
@@ -69,7 +69,7 @@ Typical flow:
 3. configure environment variables
 4. connect a PostgreSQL database
 5. run `npm run build` as the build command
-6. run schema deployment separately with `npm run db:deploy`
+6. run schema deployment separately with `PRISMA_DB_PROVIDER=postgresql npm run db:deploy`
 
 Important:
 
@@ -88,7 +88,7 @@ Typical flow:
 3. set environment variables
 4. run `npm run build`
 5. run `npm run start`
-6. run `npx prisma migrate deploy` during release or pre-start orchestration
+6. run `npm run db:deploy` during release or pre-start orchestration
 
 Recommended:
 
@@ -105,7 +105,7 @@ Typical pattern:
 - run `npm run prisma:prepare`
 - run `npm run prisma:generate`
 - run `npm run build`
-- run `npx prisma migrate deploy`
+- run `npm run db:deploy`
 - start the production server with `npm run start`
 
 Make sure:
@@ -125,7 +125,7 @@ Typical flow:
 4. run `npm install`
 5. run `npm run prisma:prepare`
 6. run `npm run prisma:generate`
-7. run `npx prisma migrate deploy`
+7. run `npm run db:deploy`
 8. run `npm run build`
 9. run `npm run start` behind a process manager or reverse proxy
 
@@ -135,7 +135,7 @@ For HTTPS on a VPS, terminate TLS at Caddy or Nginx and forward requests to the 
 
 - `npm run prisma:prepare` passes
 - `npm run prisma:generate` passes
-- `npx prisma migrate deploy` passes
+- `npm run db:deploy` passes
 - `npm run build` passes
 - `GET /api/health` returns `ok`
 - `NEXT_PUBLIC_SITE_URL` uses `https://`

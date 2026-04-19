@@ -1965,6 +1965,35 @@ th {
   align-items: center;
 }
 
+.payment-instructions {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.payment-instructions div {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(18, 23, 34, 0.08);
+  border-radius: 16px;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 10px 12px;
+}
+
+.payment-instructions span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.payment-instructions strong {
+  color: var(--ink);
+  text-align: right;
+}
+
 .status-PENDING,
 .status-AWAITING_PAYMENT,
 .status-PROCESSING,
