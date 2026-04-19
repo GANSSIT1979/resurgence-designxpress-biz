@@ -68,9 +68,26 @@ export const appSettingDefaults: PublicSettings = {
   reportFooter: `${brandName} - ${companyName}`,
 };
 
+function isMissingTableError(error: unknown) {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    (error as { code?: string }).code === 'P2021'
+  );
+}
+
 export async function getAppSettingsMap() {
-  const records = await prisma.appSetting.findMany();
-  return new Map(records.map((item) => [item.key, item.value] as const));
+  try {
+    const records = await prisma.appSetting.findMany();
+    return new Map(records.map((item) => [item.key, item.value] as const));
+  } catch (error) {
+    if (isMissingTableError(error)) {
+      return new Map<string, string>();
+    }
+
+    throw error;
+  }
 }
 
 export async function getPublicSettings(): Promise<PublicSettings> {
