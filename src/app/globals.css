@@ -3083,6 +3083,7 @@ th {
 
 .feed-follow-button,
 .feed-product-chip button,
+.feed-product-actions a,
 .feed-load-more,
 .feed-notice button {
   background: linear-gradient(135deg, #f59e0b, #ef4444);
@@ -3092,6 +3093,12 @@ th {
   cursor: pointer;
   font-weight: 950;
   padding: 10px 13px;
+}
+
+.feed-product-chip button:disabled {
+  background: rgba(255, 255, 255, 0.14);
+  color: rgba(235, 245, 255, 0.58);
+  cursor: not-allowed;
 }
 
 .feed-caption {
@@ -3156,6 +3163,18 @@ th {
   gap: 10px;
   grid-template-columns: 52px minmax(0, 1fr) auto;
   padding: 8px;
+}
+
+.feed-product-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  justify-content: flex-end;
+}
+
+.feed-product-actions a {
+  color: #07111f;
+  text-decoration: none;
 }
 
 .feed-product-chip img {
@@ -3229,6 +3248,24 @@ th {
 .feed-mini-stat span {
   color: rgba(235, 245, 255, 0.7);
   font-weight: 800;
+}
+
+.feed-cart-actions {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding-top: 14px;
+}
+
+.feed-cart-actions a {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  color: #f8fbff;
+  font-size: 0.82rem;
+  font-weight: 950;
+  padding: 10px 12px;
+  text-align: center;
 }
 
 .feed-notice {

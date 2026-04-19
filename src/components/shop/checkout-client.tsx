@@ -4,22 +4,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { computeShippingFee, formatPaymentMethod, formatPeso } from '@/lib/shop';
 import type { ShopPaymentInstructions } from '@/lib/shop-payment';
-
-type CartItem = {
-  productId: string;
-  slug: string;
-  name: string;
-  price: number;
-  quantity: number;
-  imageUrl: string;
-  variantLabel?: string;
-};
+import { cartKey, clearCart, readCart, StoredCartItem } from '@/lib/shop/cart-storage';
 
 const paymentMethods = ['COD', 'GCASH_MANUAL', 'MAYA_MANUAL', 'BANK_TRANSFER', 'CARD_MANUAL', 'CASH'];
-
-function cartKey(item: CartItem) {
-  return `${item.productId}:${item.variantLabel || 'standard'}`;
-}
 
 function instructionRows(paymentMethod: string, paymentInstructions: ShopPaymentInstructions) {
   const supportLine = [paymentInstructions.supportEmail, paymentInstructions.supportPhone].filter(Boolean).join(' / ');
@@ -74,7 +61,7 @@ function instructionRows(paymentMethod: string, paymentInstructions: ShopPayment
 
 export function CheckoutClient({ paymentInstructions }: { paymentInstructions: ShopPaymentInstructions }) {
   const router = useRouter();
-  const [items, setItems] = useState<CartItem[]>([]);
+  const [items, setItems] = useState<StoredCartItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({
@@ -91,8 +78,7 @@ export function CheckoutClient({ paymentInstructions }: { paymentInstructions: S
   });
 
   useEffect(() => {
-    const raw = window.localStorage.getItem('resurgence_cart');
-    setItems(raw ? JSON.parse(raw) : []);
+    setItems(readCart());
   }, []);
 
   const subtotal = useMemo(() => items.reduce((sum, item) => sum + item.price * item.quantity, 0), [items]);
@@ -117,8 +103,7 @@ export function CheckoutClient({ paymentInstructions }: { paymentInstructions: S
       setError(data.error || 'Unable to place order.');
       return;
     }
-    window.localStorage.removeItem('resurgence_cart');
-    window.dispatchEvent(new Event('resurgence-cart-updated'));
+    clearCart();
     router.push(`/account/orders?email=${encodeURIComponent(form.customerEmail)}&placed=${encodeURIComponent(data.orderNumber)}`);
   }
 

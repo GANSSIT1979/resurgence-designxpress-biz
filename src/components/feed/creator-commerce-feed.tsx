@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { startTransition, useEffect, useMemo, useRef, useState } from 'react';
 import { FeedPost } from '@/lib/feed/types';
+import { addProductToCart, CART_UPDATED_EVENT, getCartItemCount, readCart } from '@/lib/shop/cart-storage';
 
 type Props = {
   initialItems: FeedPost[];
@@ -60,6 +61,7 @@ export function CreatorCommerceFeed({ initialItems, initialCursor = null, source
   const [activeIndex, setActiveIndex] = useState(0);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [cartCount, setCartCount] = useState(0);
   const cardRefs = useRef<Array<HTMLElement | null>>([]);
 
   useEffect(() => {
@@ -80,6 +82,13 @@ export function CreatorCommerceFeed({ initialItems, initialCursor = null, source
 
     return () => observer.disconnect();
   }, [items.length]);
+
+  useEffect(() => {
+    const syncCart = () => setCartCount(getCartItemCount(readCart()));
+    syncCart();
+    window.addEventListener(CART_UPDATED_EVENT, syncCart);
+    return () => window.removeEventListener(CART_UPDATED_EVENT, syncCart);
+  }, []);
 
   async function loadMore() {
     if (!nextCursor || isLoadingMore) return;
@@ -165,6 +174,11 @@ export function CreatorCommerceFeed({ initialItems, initialCursor = null, source
             <div className="feed-mini-stat"><strong>{items.length}</strong><span>feed posts loaded</span></div>
             <div className="feed-mini-stat"><strong>{items.filter((item) => item.productTags.length).length}</strong><span>shoppable posts</span></div>
             <div className="feed-mini-stat"><strong>{items.filter((item) => item.sponsorPlacements.length).length}</strong><span>sponsor placements</span></div>
+            <div className="feed-mini-stat"><strong>{cartCount}</strong><span>items in cart</span></div>
+            <div className="feed-cart-actions">
+              <Link href="/cart">View Cart</Link>
+              <Link href="/checkout">Checkout</Link>
+            </div>
           </div>
 
           {notice ? (
@@ -242,35 +256,26 @@ function FeedCard({
   }
 
   function addToCart(product: FeedPost['productTags'][number]) {
-    if (!product.productId || !product.slug || !product.price) {
+    const result = addProductToCart({
+      productId: product.productId,
+      slug: product.slug,
+      name: product.name,
+      price: product.price,
+      stock: product.stock,
+      imageUrl: product.imageUrl,
+    });
+
+    if (!result.ok && result.reason === 'missing-product') {
       setNotice('This merch tag is missing product details.');
       return;
     }
-    if ((product.stock ?? 0) <= 0) {
+
+    if (!result.ok && result.reason === 'sold-out') {
       setNotice('This merch item is currently sold out.');
       return;
     }
 
-    const raw = window.localStorage.getItem('resurgence_cart');
-    const cart = raw ? JSON.parse(raw) : [];
-    const existing = cart.find((item: any) => item.productId === product.productId);
-    if (existing) {
-      existing.quantity = Math.min(product.stock ?? 1, existing.quantity + 1);
-    } else {
-      cart.push({
-        productId: product.productId,
-        slug: product.slug,
-        name: product.name,
-        price: product.price,
-        quantity: 1,
-        imageUrl: product.imageUrl || '/assets/resurgence-poster.jpg',
-        variantLabel: '',
-      });
-    }
-
-    window.localStorage.setItem('resurgence_cart', JSON.stringify(cart));
-    window.dispatchEvent(new Event('resurgence-cart-updated'));
-    setNotice(`${product.name} added to cart.`);
+    setNotice(result.capped ? `${product.name} is already at available stock in your cart.` : `${product.name} added to cart. Checkout is ready when you are.`);
   }
 
   return (
@@ -330,16 +335,23 @@ function FeedCard({
 
           {post.productTags.length ? (
             <div className="feed-product-shelf">
-              {post.productTags.slice(0, 3).map((product) => (
-                <div className="feed-product-chip" key={product.id}>
-                  <img src={product.imageUrl || '/assets/resurgence-poster.jpg'} alt={product.name} />
-                  <div>
-                    <strong>{product.name}</strong>
-                    <span>{product.price ? formatPeso(product.price) : 'View merch'}</span>
+              {post.productTags.slice(0, 3).map((product) => {
+                const isSoldOut = product.stock !== null && product.stock !== undefined && product.stock <= 0;
+
+                return (
+                  <div className="feed-product-chip" key={product.id}>
+                    <img src={product.imageUrl || '/assets/resurgence-poster.jpg'} alt={product.name} />
+                    <div>
+                      <strong>{product.name}</strong>
+                      <span>{product.price ? formatPeso(product.price) : 'View merch'} {product.stock !== null && product.stock !== undefined ? `- ${isSoldOut ? 'Sold out' : `${product.stock} left`}` : ''}</span>
+                    </div>
+                    <div className="feed-product-actions">
+                      {product.slug ? <Link href={`/shop/product/${product.slug}`}>{product.ctaLabel || 'View'}</Link> : null}
+                      <button type="button" onClick={() => addToCart(product)} disabled={isSoldOut}>{isSoldOut ? 'Sold Out' : 'Add'}</button>
+                    </div>
                   </div>
-                  <button type="button" onClick={() => addToCart(product)}>Add</button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : null}
         </div>

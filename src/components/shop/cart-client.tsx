@@ -3,41 +3,21 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { formatPeso } from '@/lib/shop';
-
-type CartItem = {
-  productId: string;
-  slug: string;
-  name: string;
-  price: number;
-  quantity: number;
-  imageUrl: string;
-  variantLabel?: string;
-};
-
-function cartKey(item: CartItem) {
-  return `${item.productId}:${item.variantLabel || 'standard'}`;
-}
-
-function readCart(): CartItem[] {
-  if (typeof window === 'undefined') return [];
-  const raw = window.localStorage.getItem('resurgence_cart');
-  return raw ? JSON.parse(raw) : [];
-}
+import { CART_UPDATED_EVENT, cartKey, readCart, StoredCartItem, writeCart } from '@/lib/shop/cart-storage';
 
 export function CartClient() {
-  const [items, setItems] = useState<CartItem[]>([]);
+  const [items, setItems] = useState<StoredCartItem[]>([]);
 
   useEffect(() => {
     const sync = () => setItems(readCart());
     sync();
-    window.addEventListener('resurgence-cart-updated', sync);
-    return () => window.removeEventListener('resurgence-cart-updated', sync);
+    window.addEventListener(CART_UPDATED_EVENT, sync);
+    return () => window.removeEventListener(CART_UPDATED_EVENT, sync);
   }, []);
 
-  function persist(next: CartItem[]) {
+  function persist(next: StoredCartItem[]) {
     setItems(next);
-    window.localStorage.setItem('resurgence_cart', JSON.stringify(next));
-    window.dispatchEvent(new Event('resurgence-cart-updated'));
+    writeCart(next);
   }
 
   const subtotal = useMemo(() => items.reduce((sum, item) => sum + item.price * item.quantity, 0), [items]);
