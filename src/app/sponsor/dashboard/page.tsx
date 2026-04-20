@@ -28,12 +28,7 @@ export default async function SponsorDashboardPage() {
   ]);
 
   const receipts = await prisma.receipt.findMany({
-    where: {
-      OR: [
-        { invoiceId: { in: invoices.map((item) => item.id) } },
-        { companyName: context.sponsorProfile.companyName },
-      ],
-    },
+    where: { invoiceId: { in: invoices.map((item) => item.id) } },
     orderBy: [{ issuedAt: 'desc' }],
     take: 5,
   });

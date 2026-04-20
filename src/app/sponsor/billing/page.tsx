@@ -21,8 +21,8 @@ export default async function SponsorBillingPage() {
   const invoices = await prisma.invoice.findMany({ where: invoiceWhere, orderBy: [{ issueDate: 'desc' }, { createdAt: 'desc' }] });
   const invoiceIds = invoices.map((item) => item.id);
   const [transactions, receipts] = await Promise.all([
-    prisma.cashierTransaction.findMany({ where: { OR: [{ invoiceId: { in: invoiceIds } }, { companyName: context.sponsorProfile.companyName }] }, orderBy: [{ transactionDate: 'desc' }] }),
-    prisma.receipt.findMany({ where: { OR: [{ invoiceId: { in: invoiceIds } }, { companyName: context.sponsorProfile.companyName }] }, orderBy: [{ issuedAt: 'desc' }] }),
+    prisma.cashierTransaction.findMany({ where: { invoiceId: { in: invoiceIds } }, orderBy: [{ transactionDate: 'desc' }] }),
+    prisma.receipt.findMany({ where: { invoiceId: { in: invoiceIds } }, orderBy: [{ issuedAt: 'desc' }] }),
   ]);
 
   const totals = {

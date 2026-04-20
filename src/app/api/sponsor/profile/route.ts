@@ -34,7 +34,6 @@ export async function PUT(request: Request) {
   const item = await prisma.sponsorProfile.update({
     where: { id: context.sponsorProfile.id },
     data: {
-      sponsorId: parsed.data.sponsorId || null,
       preferredPackageId: parsed.data.preferredPackageId || null,
       companyName: parsed.data.companyName,
       contactName: parsed.data.contactName,
