@@ -42,13 +42,5 @@ export async function getCurrentSponsorContext() {
 }
 
 export function buildSponsorInvoiceWhere(profile: { sponsorId: string | null; companyName: string; contactEmail: string }) {
-  const email = profile.contactEmail.trim();
-  const companyName = profile.companyName.trim();
-  const clauses: Array<Record<string, string>> = [];
-
-  if (profile.sponsorId) clauses.push({ sponsorId: profile.sponsorId });
-  if (companyName) clauses.push({ companyName });
-  if (email) clauses.push({ email });
-
-  return { OR: clauses };
+  return profile.sponsorId ? { sponsorId: profile.sponsorId } : { id: '__no-linked-sponsor__' };
 }
