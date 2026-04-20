@@ -13,7 +13,10 @@ type SessionPayload = {
 };
 
 function getJwtSecret() {
-  const value = process.env.JWT_SECRET || 'change-this-super-secret-key';
+  const value = process.env.JWT_SECRET;
+  if (!value) {
+    throw new Error('JWT_SECRET is not set');
+  }
   return new TextEncoder().encode(value);
 }
 
