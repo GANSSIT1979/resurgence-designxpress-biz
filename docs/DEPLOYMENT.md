@@ -1,6 +1,12 @@
 # DEPLOYMENT
 
-Updated: 2026-04-19
+Updated: 2026-04-21
+
+## Site Type
+
+- This is a `React/Node` deployment target built on `Next.js`.
+- Production hosting must support the Next.js server/runtime model.
+- WordPress hosting, Laravel/PHP-only hosting, or static-only hosting are not valid deployment targets for this codebase.
 
 ## Supported Targets
 
