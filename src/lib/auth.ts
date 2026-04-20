@@ -13,7 +13,10 @@ type SessionPayload = {
 };
 
 function getJwtSecret() {
-  const value = process.env.JWT_SECRET || 'change-this-super-secret-key';
+  const value = process.env.JWT_SECRET?.trim();
+  if (!value || value === 'change-this-super-secret-key' || value === 'replace-with-a-long-random-secret') {
+    throw new Error('JWT_SECRET must be set to a strong, unique value.');
+  }
   return new TextEncoder().encode(value);
 }
 
