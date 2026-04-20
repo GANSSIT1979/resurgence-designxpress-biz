@@ -1,8 +1,10 @@
 # VERCEL CONFIGURATION
 
-Updated: 2026-04-19
+Updated: 2026-04-21
 
 ## Repository Files
+
+This Vercel setup applies because the repository is a `React/Node` app built with `Next.js`, not a PHP or static-site project.
 
 This repository includes Vercel-specific deployment files:
 

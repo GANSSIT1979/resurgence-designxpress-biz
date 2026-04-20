@@ -1,8 +1,14 @@
 # Deployment Guide
 
-Updated: 2026-04-19
+Updated: 2026-04-21
 
 This root guide is the short deployment companion to `docs/DEPLOYMENT.md` and `docs/AI_SUPPORT_PRODUCTION.md`.
+
+## Site Type
+
+- This project is a `React/Node` application built with `Next.js`.
+- It must be deployed to a Node-capable platform or a platform with native Next.js support.
+- It is not deployable as WordPress, Laravel/PHP, or a plain static website.
 
 ## Production Baseline
 

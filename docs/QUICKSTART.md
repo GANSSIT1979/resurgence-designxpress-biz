@@ -1,6 +1,12 @@
 # QUICKSTART
 
-Updated: 2026-04-19
+Updated: 2026-04-21
+
+## Site Type
+
+- Exact category: `React/Node`
+- Runtime expectation: run it with `npm` and `Node.js`
+- Do not treat this repo as WordPress, Laravel/PHP, or a static export-only site
 
 ## Fast Local Startup
 
