@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { CreatorAnalyticsPanel } from '@/components/creator-analytics-panel';
 import { CreatorProfileDashboard } from '@/components/creator/creator-profile-dashboard';
 import { EventMediaCarousel } from '@/components/event-media-carousel';
-import { serializeCreatorProfile } from '@/lib/creators';
+import { serializePublicCreatorProfile } from '@/lib/creators';
 import { getCreatorBySlug } from '@/lib/site';
 
 export const dynamic = 'force-dynamic';
@@ -22,7 +22,7 @@ export default async function CreatorPublicProfilePage({ params }: { params: Pro
 
   return (
     <main>
-      <CreatorProfileDashboard creator={serializeCreatorProfile(creator)} />
+      <CreatorProfileDashboard creator={serializePublicCreatorProfile(creator)} />
 
       <CreatorAnalyticsPanel creator={creator} events={orderedEvents.map((event) => ({
         id: event.id,
