@@ -1,6 +1,6 @@
 # RESURGENCE Documentation
 
-Updated: 2026-04-19
+Updated: 2026-04-20
 
 ## Snapshot
 
@@ -34,6 +34,8 @@ RESURGENCE Powered by DesignXpress is a Next.js 15 + Prisma platform for sponsor
 - [USER_GUIDE.md](./USER_GUIDE.md)
 - [ADMIN_GUIDE.md](./ADMIN_GUIDE.md)
 - [ROADMAP.md](./ROADMAP.md)
+- [RUNTIME_VERIFICATION.md](./RUNTIME_VERIFICATION.md)
+- [FEED_RELEASE_HANDOFF.md](./FEED_RELEASE_HANDOFF.md)
 - [AI_SUPPORT_PRODUCTION.md](./AI_SUPPORT_PRODUCTION.md)
 - [FEED_UPGRADE_PHASE_1_4.md](./FEED_UPGRADE_PHASE_1_4.md)
 - [FEED_UPGRADE_PHASE_5_6.md](./FEED_UPGRADE_PHASE_5_6.md)
@@ -55,8 +57,10 @@ RESURGENCE Powered by DesignXpress is a Next.js 15 + Prisma platform for sponsor
 7. `../vercel.production.env.example`
 8. `SHOP_MODULE.md`
 9. `AI_SUPPORT_PRODUCTION.md`
-10. `TROUBLESHOOTING.md`
-11. `ROADMAP.md`
+10. `RUNTIME_VERIFICATION.md`
+11. `FEED_RELEASE_HANDOFF.md`
+12. `TROUBLESHOOTING.md`
+13. `ROADMAP.md`
 
 ## Primary Working Areas
 
