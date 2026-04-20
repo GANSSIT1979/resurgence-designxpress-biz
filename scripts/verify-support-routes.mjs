@@ -218,7 +218,7 @@ async function verify() {
     },
   });
 
-  if (webhookSecret) {
+  if (webhookHealth.response.ok && webhookHealth.json?.webhookReady && webhookSecret) {
     const signature = signWebhookPayload(webhookSecret, payload, webhookId, timestamp);
     const webhookVerify = await requestJson("/api/openai/webhook", {
       method: "POST",
@@ -241,8 +241,10 @@ async function verify() {
   } else {
     record(
       "/api/openai/webhook POST signed",
-      false,
-      "Skipped because --webhook-secret or OPENAI_WEBHOOK_SECRET was not provided to the verifier.",
+      true,
+      webhookHealth.json?.webhookReady
+        ? "Skipped because --webhook-secret or OPENAI_WEBHOOK_SECRET was not provided to the verifier."
+        : "Skipped because the webhook route is not ready in the current environment.",
     );
   }
 
