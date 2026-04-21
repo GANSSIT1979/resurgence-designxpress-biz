@@ -47,8 +47,9 @@ if (!supportedProviders.has(provider)) {
   );
 }
 
-const schemaPath = resolve(process.cwd(), 'prisma', 'schema.prisma');
-const schemaSource = readFileSync(schemaPath, 'utf8');
+const schemaSourcePath = resolve(process.cwd(), 'prisma', 'schema.prisma');
+const schemaOutputPath = resolve(process.cwd(), 'prisma', 'schema.generated.prisma');
+const schemaSource = readFileSync(schemaSourcePath, 'utf8');
 const updatedSchema = schemaSource.replace(
   /provider = "(sqlite|postgresql)"/,
   `provider = "${provider}"`,
@@ -58,8 +59,6 @@ if (updatedSchema === schemaSource && !schemaSource.includes(`provider = "${prov
   throw new Error('Unable to update prisma/schema.prisma datasource provider.');
 }
 
-if (updatedSchema !== schemaSource) {
-  writeFileSync(schemaPath, updatedSchema, 'utf8');
-}
+writeFileSync(schemaOutputPath, updatedSchema, 'utf8');
 
-console.log(`[prisma:prepare] datasource provider set to ${provider}`);
+console.log(`[prisma:prepare] datasource provider set to ${provider} in prisma/schema.generated.prisma`);
