@@ -1,6 +1,11 @@
 # INSTALL
 
-Updated: 2026-04-19
+Updated: 2026-04-21
+
+## Site Type
+
+- This repository is a `React/Node` application built with `Next.js`.
+- Local setup requires `Node.js`; it is not a PHP or static-site install flow.
 
 ## Requirements
 

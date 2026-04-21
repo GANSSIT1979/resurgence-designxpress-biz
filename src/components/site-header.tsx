@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { SiteHeaderAccountControls } from '@/components/site-header-account-controls';
 
 const links = [
   { href: '/', label: 'Home' },
@@ -12,7 +13,6 @@ const links = [
   { href: '/sponsor/apply', label: 'Sponsor Apply' },
   { href: '/support', label: 'AI Support' },
   { href: '/contact', label: 'Contact' },
-  { href: '/login', label: 'Log-in', cta: true },
 ];
 
 export function SiteHeader() {
@@ -31,10 +31,11 @@ export function SiteHeader() {
 
         <nav className="nav-links" aria-label="Primary navigation">
           {links.map((link) => (
-            <Link key={link.href} href={link.href} className={link.cta ? 'nav-login-link' : undefined}>
+            <Link key={link.href} href={link.href}>
               {link.label}
             </Link>
           ))}
+          <SiteHeaderAccountControls />
         </nav>
       </div>
     </header>

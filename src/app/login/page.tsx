@@ -24,12 +24,12 @@ const showDemoAccess = process.env.NODE_ENV !== "production";
 const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
 
 const demoAccounts = [
-  { role: "Admin", area: "System control", email: "admin@resurgence.local", password: "Admin123!" },
-  { role: "Cashier", area: "Finance desk", email: "cashier@resurgence.local", password: "Cashier123!" },
-  { role: "Sponsor", area: "Sponsor portal", email: "sponsor@resurgence.local", password: "Sponsor123!" },
-  { role: "Staff", area: "Operations desk", email: "staff@resurgence.local", password: "Staff123!" },
-  { role: "Partner", area: "Partner workspace", email: "partner@resurgence.local", password: "Partner123!" },
-  { role: "Creator", area: "Creator dashboard", email: "jake.anilao@resurgence.local", password: "Jake@2026Resurgence!" },
+  { role: "Admin", area: "System control", email: "admin@resurgence.local" },
+  { role: "Cashier", area: "Finance desk", email: "cashier@resurgence.local" },
+  { role: "Sponsor", area: "Sponsor portal", email: "sponsor@resurgence.local" },
+  { role: "Staff", area: "Operations desk", email: "staff@resurgence.local" },
+  { role: "Partner", area: "Partner workspace", email: "partner@resurgence.local" },
+  { role: "Creator", area: "Creator dashboard", email: "jake.anilao@resurgence.local" },
 ] as const;
 
 const accessHighlights = [
@@ -77,7 +77,7 @@ function LoginGatewayShell({
   const [signupMethod, setSignupMethod] = useState<SignupMethod>("google");
   const [selectedRole, setSelectedRole] = useState<PublicSignupRole>("MEMBER");
   const [identifier, setIdentifier] = useState(showDemoAccess ? defaultDemo.email : "");
-  const [password, setPassword] = useState(showDemoAccess ? defaultDemo.password : "");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [displayName, setDisplayName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -154,7 +154,6 @@ function LoginGatewayShell({
 
   function useDemoAccount(account: DemoAccount) {
     setIdentifier(account.email);
-    setPassword(account.password);
   }
 
   function showSuccess(title: string, message: string, redirectTo: string) {
@@ -418,7 +417,7 @@ function LoginGatewayShell({
                       <div className="login-demo-card">
                         <div>
                           <div className="section-kicker">Development Demo Access</div>
-                          <p className="helper">Quick-fill seeded local credentials. Production builds hide this helper automatically.</p>
+                          <p className="helper">Quick-fill seeded local email identifiers. Enter passwords manually.</p>
                         </div>
                         <div className="login-demo-grid">
                           {demoAccounts.map((account) => (

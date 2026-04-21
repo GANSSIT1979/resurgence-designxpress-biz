@@ -4,7 +4,7 @@ import {
   sponsorInventoryCategories as inventoryFallbacks,
   sponsorshipStats,
 } from '@/lib/resurgence';
-import { serializeCreatorProfile } from '@/lib/creators';
+import { serializeCreatorProfile, serializePublicCreatorProfile } from '@/lib/creators';
 
 type ContentFallback = {
   title: string;
@@ -225,10 +225,10 @@ export async function getCreators({ activeOnly = true }: { activeOnly?: boolean 
   });
 
   if (creators.length) {
-    return creators.map((item) => serializeCreatorProfile(item));
+    return creators.map((item) => serializePublicCreatorProfile(item));
   }
 
-  return creatorFallbacks.map((item, index) => serializeCreatorProfile({
+  return creatorFallbacks.map((item, index) => serializePublicCreatorProfile({
     id: String(index + 1),
     userId: null,
     user: null,

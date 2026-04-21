@@ -1,8 +1,17 @@
 # RESURGENCE Powered by DesignXpress
 
-Updated: 2026-04-19
+Updated: 2026-04-21
 
 RESURGENCE Powered by DesignXpress is a Next.js 15 + Prisma platform for public sponsorship marketing, live support intake, Official Resurgence Merch commerce, and role-based operations for admin, cashier, sponsor, creator, staff, and partner users.
+
+## Site Type
+
+- Exact category: `React/Node` web application
+- Framework: `Next.js 15` with the App Router in `src/app`
+- Frontend: `React 19`
+- Server/runtime: `Node.js 20.x`
+- Data layer: `Prisma ORM`
+- Not this: WordPress, Laravel/PHP, or a static HTML website
 
 ## Current Status
 

@@ -1,6 +1,15 @@
 # ARCHITECTURE
 
-Updated: 2026-04-19
+Updated: 2026-04-21
+
+## Site Type
+
+- Application class: `React/Node`
+- Framework: `Next.js 15 App Router`
+- UI model: React components under `src/app` and `src/components`
+- Server model: Next.js route handlers under `src/app/api` running on Node-compatible hosting
+- Persistence: Prisma-backed relational database access
+- Explicitly not a WordPress CMS, Laravel/PHP stack, or static-only site
 
 ## High-Level Layers
 

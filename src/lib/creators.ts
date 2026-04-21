@@ -337,6 +337,18 @@ export function serializeCreatorProfile<T extends CreatorDisplayProfile>(item: T
   };
 }
 
+export function serializePublicCreatorProfile<T extends CreatorDisplayProfile>(item: T) {
+  const creator = serializeCreatorProfile(item);
+
+  return {
+    ...creator,
+    user: null,
+    contactNumber: null,
+    address: null,
+    dateOfBirth: null,
+  };
+}
+
 function extractYouTubeId(url: string) {
   const match = url.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([A-Za-z0-9_-]{6,})/);
   return match?.[1] || '';

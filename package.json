@@ -4,20 +4,20 @@
   "private": true,
   "scripts": {
     "prisma:prepare": "node scripts/prepare-prisma-schema.mjs",
-    "prisma:generate": "npm run prisma:prepare && prisma generate",
+    "prisma:generate": "npm run prisma:prepare && prisma generate --schema prisma/schema.generated.prisma",
     "dev": "npm run prisma:prepare && next dev",
     "dev:https": "npm run prisma:prepare && next dev --experimental-https --experimental-https-key certificates/localhost-key.pem --experimental-https-cert certificates/localhost.pem",
     "build": "npm run prisma:generate && next build",
     "start": "next start",
-    "db:push": "npm run prisma:prepare && prisma db push",
+    "db:push": "node scripts/push-prisma-schema.mjs",
     "db:seed": "npm run prisma:prepare && tsx prisma/seed.ts",
-    "db:migrate": "npm run prisma:prepare && prisma migrate dev",
-    "db:deploy": "npm run prisma:prepare && prisma db push",
-    "db:migrate:deploy": "npm run prisma:prepare && prisma migrate deploy",
+    "db:migrate": "npm run prisma:prepare && prisma migrate dev --schema prisma/schema.generated.prisma",
+    "db:deploy": "node scripts/push-prisma-schema.mjs",
+    "db:migrate:deploy": "npm run prisma:prepare && prisma migrate deploy --schema prisma/schema.generated.prisma",
     "runtime:verify": "node scripts/verify-runtime-routes.mjs",
     "support:verify": "node scripts/verify-support-routes.mjs",
     "phase12:verify": "node scripts/verify-phase-12.mjs",
-    "postinstall": "npm run prisma:prepare && prisma generate"
+    "postinstall": "npm run prisma:generate"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1032.0",
