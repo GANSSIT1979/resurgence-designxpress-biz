@@ -68,6 +68,8 @@ export const appSettingDefaults: PublicSettings = {
   reportFooter: `${brandName} - ${companyName}`,
 };
 
+let appSettingsMapPromise: Promise<Map<string, string>> | null = null;
+
 function isMissingTableError(error: unknown) {
   return (
     typeof error === 'object' &&
@@ -77,11 +79,49 @@ function isMissingTableError(error: unknown) {
   );
 }
 
+async function hasAppSettingsTable() {
+  const provider = (process.env.PRISMA_DB_PROVIDER || 'sqlite').trim();
+
+  if (provider === 'postgresql') {
+    const rows = await prisma.$queryRaw<Array<{ table_name: string }>>`
+      SELECT table_name
+      FROM information_schema.tables
+      WHERE table_schema = 'public' AND table_name = 'AppSetting'
+      LIMIT 1
+    `;
+
+    return rows.length > 0;
+  }
+
+  const rows = await prisma.$queryRaw<Array<{ name: string }>>`
+    SELECT name
+    FROM sqlite_master
+    WHERE type = 'table' AND name = 'AppSetting'
+    LIMIT 1
+  `;
+
+  return rows.length > 0;
+}
+
 export async function getAppSettingsMap() {
   try {
-    const records = await prisma.appSetting.findMany();
-    return new Map(records.map((item) => [item.key, item.value] as const));
+    if (appSettingsMapPromise) {
+      return await appSettingsMapPromise;
+    }
+
+    appSettingsMapPromise = (async () => {
+      if (!(await hasAppSettingsTable())) {
+        return new Map<string, string>();
+      }
+
+      const records = await prisma.appSetting.findMany();
+      return new Map(records.map((item) => [item.key, item.value] as const));
+    })();
+
+    return await appSettingsMapPromise;
   } catch (error) {
+    appSettingsMapPromise = null;
+
     if (isMissingTableError(error)) {
       return new Map<string, string>();
     }
@@ -135,6 +175,8 @@ export async function upsertAppSettings(values: Partial<PublicSettings>) {
     });
     output[saved.key] = saved.value;
   }
+
+  appSettingsMapPromise = null;
 
   return output;
 }
