@@ -8,27 +8,40 @@ export function isMissingFeedTableError(error: unknown) {
   return code === 'P2021' || /does not exist|no such table|ContentPost|MediaAsset/i.test(message);
 }
 
+function logFeedFallback(scope: string, error: unknown) {
+  console.error(`[feed] Falling back to ${scope}.`, error);
+}
+
 function clampLimit(limit?: number) {
   if (!Number.isFinite(limit)) return 8;
   return Math.max(1, Math.min(24, Math.floor(limit || 8)));
 }
 
 export async function getGalleryFallbackFeed(limit = 8): Promise<FeedResponse> {
-  const events = await prisma.mediaEvent.findMany({
-    where: { isActive: true },
-    include: {
-      creator: true,
-      mediaItems: { orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] },
-    },
-    orderBy: [{ sortOrder: 'asc' }, { eventDate: 'desc' }, { createdAt: 'desc' }],
-    take: clampLimit(limit),
-  });
+  try {
+    const events = await prisma.mediaEvent.findMany({
+      where: { isActive: true },
+      include: {
+        creator: true,
+        mediaItems: { orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] },
+      },
+      orderBy: [{ sortOrder: 'asc' }, { eventDate: 'desc' }, { createdAt: 'desc' }],
+      take: clampLimit(limit),
+    });
 
-  return {
-    items: events.filter((event) => event.mediaItems.some((item) => item.url)).map(serializeGalleryEventAsFeedPost),
-    nextCursor: null,
-    source: 'gallery-fallback',
-  };
+    return {
+      items: events.filter((event) => event.mediaItems.some((item) => item.url)).map(serializeGalleryEventAsFeedPost),
+      nextCursor: null,
+      source: 'gallery-fallback',
+    };
+  } catch (error) {
+    logFeedFallback('an empty gallery feed', error);
+    return {
+      items: [],
+      nextCursor: null,
+      source: 'gallery-fallback',
+    };
+  }
 }
 
 export async function getPublicFeed({
@@ -91,7 +104,8 @@ export async function getPublicFeed({
       source: 'content-post',
     };
   } catch (error) {
-    if (!fallbackOnError || !isMissingFeedTableError(error)) throw error;
+    if (!fallbackOnError) throw error;
+    logFeedFallback('the gallery feed after a content-post query failure', error);
     return getGalleryFallbackFeed(take);
   }
 }
@@ -109,8 +123,8 @@ export async function getPromotedPlacements(limit = 4) {
       take: clampLimit(limit),
     });
   } catch (error) {
-    if (isMissingFeedTableError(error)) return [];
-    throw error;
+    logFeedFallback('an empty promoted placements list', error);
+    return [];
   }
 }
 

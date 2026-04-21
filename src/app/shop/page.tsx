@@ -4,11 +4,17 @@ import { MerchShopClient } from '@/components/shop/merch-shop-client';
 export const dynamic = 'force-dynamic';
 
 export default async function ShopPage() {
-  const products = await prisma.shopProduct.findMany({
-    where: { isActive: true },
-    include: { category: true },
-    orderBy: [{ isFeatured: 'desc' }, { sortOrder: 'asc' }, { createdAt: 'desc' }],
-  });
+  let products: Awaited<ReturnType<typeof prisma.shopProduct.findMany>> = [];
+
+  try {
+    products = await prisma.shopProduct.findMany({
+      where: { isActive: true },
+      include: { category: true },
+      orderBy: [{ isFeatured: 'desc' }, { sortOrder: 'asc' }, { createdAt: 'desc' }],
+    });
+  } catch (error) {
+    console.error('[shop-page] Falling back to an empty merch catalog.', error);
+  }
 
   return (
     <main className="section">
