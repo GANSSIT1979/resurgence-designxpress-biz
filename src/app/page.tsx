@@ -1,5 +1,7 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { getFeaturedShopProducts, getHomeData, getProductServices } from '@/lib/site';
+import { buildHomeMetadata } from '@/lib/metadata';
 import { getPublicSettings } from '@/lib/settings';
 import { formatPeso } from '@/lib/shop';
 import { VerticalMediaFeed } from '@/components/vertical-media-feed';
@@ -7,6 +9,11 @@ import { CreatorCommerceFeed } from '@/components/feed/creator-commerce-feed';
 import { getPublicFeed } from '@/lib/feed/queries';
 
 export const dynamic = 'force-dynamic';
+
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getPublicSettings();
+  return buildHomeMetadata(settings);
+}
 
 export default async function HomePage() {
   const [{ contentMap, sponsors, partners, stats, creators, inventoryCategories, galleryEvents }, services, settings, shopProducts, feed] = await Promise.all([

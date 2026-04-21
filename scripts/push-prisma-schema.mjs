@@ -101,6 +101,8 @@ const provider = resolveProvider();
 run(process.execPath, ['scripts/prepare-prisma-schema.mjs']);
 
 const generatedSchemaPath = resolve(process.cwd(), 'prisma', 'schema.generated.prisma');
+const postgresHardeningSqlPath = resolve(process.cwd(), 'prisma', 'postgres-hardening.sql');
+const postgresPublicReadPoliciesSqlPath = resolve(process.cwd(), 'prisma', 'postgres-public-read-policies.sql');
 const prismaBin = resolve(
   process.cwd(),
   'node_modules',
@@ -110,6 +112,12 @@ const prismaBin = resolve(
 
 if (provider !== 'sqlite') {
   run(prismaBin, ['db', 'push', '--schema', generatedSchemaPath]);
+  if (existsSync(postgresHardeningSqlPath)) {
+    run(prismaBin, ['db', 'execute', '--schema', generatedSchemaPath, '--file', postgresHardeningSqlPath]);
+  }
+  if (existsSync(postgresPublicReadPoliciesSqlPath)) {
+    run(prismaBin, ['db', 'execute', '--schema', generatedSchemaPath, '--file', postgresPublicReadPoliciesSqlPath]);
+  }
   process.exit(0);
 }
 

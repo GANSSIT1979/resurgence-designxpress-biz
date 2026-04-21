@@ -15,8 +15,16 @@ Production-style provider:
 
 ```env
 PRISMA_DB_PROVIDER="postgresql"
-DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DATABASE?sslmode=require&schema=public"
+DATABASE_URL="postgresql://postgres.dkipwveehizhmdiceabm:[YOUR-PASSWORD]@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres?sslmode=require&pgbouncer=true"
 ```
+
+Admin-only direct Supabase connection for one-off maintenance tasks:
+
+```env
+postgresql://postgres:[YOUR-PASSWORD]@db.dkipwveehizhmdiceabm.supabase.co:5432/postgres
+```
+
+For this project, keep the runtime `DATABASE_URL` on the session pooler. The direct `db.dkipwveehizhmdiceabm.supabase.co:5432` host is documented for admin use only and may not be reachable on IPv4-only networks.
 
 ### Authentication And Site Metadata
 
@@ -96,7 +104,9 @@ EMAIL_WEBHOOK_SECRET=""
 
 The package scripts use `scripts/prepare-prisma-schema.mjs` to switch the datasource provider directly inside `prisma/schema.prisma`.
 
-For Vercel production setup, use `vercel.production.env.example` as the copy-ready environment reference and run `npm run db:deploy` with `PRISMA_DB_PROVIDER=postgresql` and the production `DATABASE_URL`.
+For Vercel production setup, use `vercel.production.env.example` as the copy-ready environment reference and run `npm run db:deploy` with `PRISMA_DB_PROVIDER=postgresql` and the production pooler `DATABASE_URL`. Only swap in the direct Supabase host for admin-only maintenance tasks when your network can reach it.
+
+For PostgreSQL targets, `npm run db:deploy` prepares the Prisma schema, runs `prisma db push`, then applies the checked-in `prisma/postgres-hardening.sql` and `prisma/postgres-public-read-policies.sql` files.
 
 `prisma/schema.template.prisma` and `scripts/prepare-prisma.mjs` are still in the repo, but they are legacy artifacts and are not the default path used by `package.json`.
 

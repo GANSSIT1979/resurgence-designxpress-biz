@@ -57,7 +57,7 @@ Set these in Vercel under Project Settings > Environment Variables > Production.
 
 ```env
 PRISMA_DB_PROVIDER=postgresql
-DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DATABASE?sslmode=require&schema=public
+DATABASE_URL=postgresql://postgres.dkipwveehizhmdiceabm:[YOUR-PASSWORD]@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres?sslmode=require&pgbouncer=true
 JWT_SECRET=replace-with-a-long-random-production-secret
 FORCE_HTTPS=true
 NEXT_PUBLIC_SITE_URL=https://resurgence-dx.biz
@@ -89,31 +89,45 @@ You can copy the same list from [`../vercel.production.env.example`](../vercel.p
 Important database rule:
 
 - do not use `localhost`, `127.0.0.1`, or the local PostGIS connection for Vercel
-- use a managed PostgreSQL connection string from Vercel Storage, Prisma Postgres, Neon, Supabase, Railway, Render, or another internet-reachable provider
-- if Supabase/Vercel gives you `POSTGRES_PRISMA_URL`, copy that full value into `DATABASE_URL`
-- if `POSTGRES_PRISMA_URL` is unavailable, use `POSTGRES_URL`
-- replace every placeholder in the URL: `USER`, `PASSWORD`, `HOST`, and `DATABASE`
+- keep the runtime `DATABASE_URL` on the Supabase session pooler for this project
+- the working runtime host is `aws-1-ap-southeast-1.pooler.supabase.com:6543`
+- do not replace the runtime `DATABASE_URL` with the direct `db.dkipwveehizhmdiceabm.supabase.co:5432` host in Vercel
 - URL-encode special password characters before saving the URL, for example `@` becomes `%40`, `[` becomes `%5B`, and `]` becomes `%5D`
 
 Supabase/Vercel mapping for this app:
 
 ```env
 PRISMA_DB_PROVIDER=postgresql
-DATABASE_URL=<copy the full value from POSTGRES_PRISMA_URL>
+DATABASE_URL=postgresql://postgres.dkipwveehizhmdiceabm:[YOUR-PASSWORD]@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres?sslmode=require&pgbouncer=true
 ```
 
-For schema deployment or seeding from your local machine, temporarily point `DATABASE_URL` to Supabase's direct/non-pooling URL:
+Admin-only direct connection string:
+
+```env
+postgresql://postgres:[YOUR-PASSWORD]@db.dkipwveehizhmdiceabm.supabase.co:5432/postgres
+```
+
+Use the direct host only for admin or maintenance work from a network that can reach it. Supabase flags that host as not IPv4-compatible, so it is not the default runtime choice for this project.
+
+For schema deployment or seeding from your local machine, keep the pooler as the default `DATABASE_URL`. If you are on a compatible network and intentionally want the direct admin connection for a one-off task, temporarily swap it in:
 
 ```powershell
 $env:PRISMA_DB_PROVIDER="postgresql"
-$env:DATABASE_URL="<copy the full value from POSTGRES_URL_NON_POOLING>"
+$env:DATABASE_URL="postgresql://postgres.dkipwveehizhmdiceabm:[YOUR-PASSWORD]@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres?sslmode=require&pgbouncer=true"
 npm run db:deploy
 npm run db:seed
 ```
 
-Use `POSTGRES_PRISMA_URL` for Vercel runtime and `POSTGRES_URL_NON_POOLING` for one-off Prisma schema operations. This avoids pooled-connection issues during `prisma db push`.
+Optional direct admin override:
 
-Keep the generated Supabase variables if Vercel created them, but this app does not require Supabase Auth or Storage variables for the current Prisma-backed pages. Do not duplicate repeated variables such as `NEXT_PUBLIC_SUPABASE_ANON_KEY` or `SUPABASE_URL`; keep one value per variable name.
+```powershell
+$env:PRISMA_DB_PROVIDER="postgresql"
+$env:DATABASE_URL="postgresql://postgres:[YOUR-PASSWORD]@db.dkipwveehizhmdiceabm.supabase.co:5432/postgres"
+npm run db:deploy
+npm run db:seed
+```
+
+Keep generated helper variables if Vercel created them, but this app's runtime `DATABASE_URL` should stay aligned with the Supabase session pooler string above. Do not duplicate repeated variables such as `NEXT_PUBLIC_SUPABASE_ANON_KEY` or `SUPABASE_URL`; keep one value per variable name.
 
 Generate a production `JWT_SECRET` locally before pasting it into Vercel:
 
@@ -152,7 +166,7 @@ Recommended Preview values:
 
 ```env
 PRISMA_DB_PROVIDER=postgresql
-DATABASE_URL=postgresql://PREVIEW_USER:PREVIEW_PASSWORD@PREVIEW_HOST:5432/PREVIEW_DATABASE?sslmode=require&schema=public
+DATABASE_URL=postgresql://PREVIEW_POOLER_USER:PREVIEW_PASSWORD@PREVIEW_POOLER_HOST:6543/PREVIEW_DATABASE?sslmode=require&pgbouncer=true
 FORCE_HTTPS=true
 NEXT_PUBLIC_SITE_URL=https://resurgence-dx.biz
 ```
@@ -161,7 +175,7 @@ For Vercel Development environment, use the same values only if you are intentio
 
 ## Database Deployment
 
-This app currently uses a provider-switched Prisma schema and has an empty initial migration file. For a fresh Vercel PostgreSQL database, use the schema sync command below to create the tables.
+This app currently uses a provider-switched Prisma schema plus repo-managed PostgreSQL hardening SQL. For a fresh Vercel PostgreSQL database, use the schema sync command below to create the tables and apply the checked-in security scripts.
 
 Before the first production deployment, run schema deployment against the production database:
 
@@ -173,11 +187,11 @@ For Windows PowerShell:
 
 ```powershell
 $env:PRISMA_DB_PROVIDER="postgresql"
-$env:DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DATABASE?sslmode=require&schema=public"
+$env:DATABASE_URL="postgresql://postgres.dkipwveehizhmdiceabm:[YOUR-PASSWORD]@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres?sslmode=require&pgbouncer=true"
 npm run db:deploy
 ```
 
-`npm run db:deploy` runs `prisma db push` after preparing the Prisma provider. If you later add real Prisma migration history, use `npm run db:migrate:deploy` instead.
+`npm run db:deploy` prepares the Prisma provider, runs `prisma db push`, and then executes the checked-in `prisma/postgres-hardening.sql` and `prisma/postgres-public-read-policies.sql` files when `PRISMA_DB_PROVIDER=postgresql`. If you later add a fully migration-driven Postgres release flow, use `npm run db:migrate:deploy` intentionally instead of mixing both approaches.
 
 After schema deployment passes, deploy normally through Vercel. The Vercel build command runs Prisma Client generation through `npm run build`.
 
