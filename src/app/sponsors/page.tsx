@@ -1,22 +1,68 @@
 import { prisma } from '@/lib/prisma';
+import { sponsorInventoryCategories, sponsorPackageTemplates } from '@/lib/resurgence';
+import { getCreators } from '@/lib/site';
 
 export const dynamic = 'force-dynamic';
 
 export default async function SponsorsPage() {
-  const [packages, creators, inventory] = await Promise.all([
-    prisma.sponsorPackageTemplate.findMany({
-      where: { isActive: true },
-      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
-    }),
-    prisma.creatorProfile.findMany({
-      where: { isActive: true },
-      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
-    }),
-    prisma.sponsorInventoryCategory.findMany({
-      where: { isActive: true },
-      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
-    }),
-  ]);
+  let packages: Array<{ id: string; tier: string; name: string; rangeLabel: string; summary: string; benefits: string }> = [];
+  let creators: Array<{ id: string; name: string; roleLabel: string | null }> = [];
+  let inventory: Array<{ id: string; name: string }> = [];
+
+  try {
+    const [dbPackages, dbCreators, dbInventory] = await Promise.all([
+      prisma.sponsorPackageTemplate.findMany({
+        where: { isActive: true },
+        orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
+      }),
+      prisma.creatorProfile.findMany({
+        where: { isActive: true },
+        orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
+      }),
+      prisma.sponsorInventoryCategory.findMany({
+        where: { isActive: true },
+        orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
+      }),
+    ]);
+
+    packages = dbPackages.map((item) => ({
+      id: item.id,
+      tier: item.tier,
+      name: item.name,
+      rangeLabel: item.rangeLabel,
+      summary: item.summary,
+      benefits: item.benefits,
+    }));
+    creators = dbCreators.map((item) => ({
+      id: item.id,
+      name: item.name,
+      roleLabel: item.roleLabel,
+    }));
+    inventory = dbInventory.map((item) => ({
+      id: item.id,
+      name: item.name,
+    }));
+  } catch (error) {
+    console.error('[sponsors-page] Falling back to static sponsor data.', error);
+    const fallbackCreators = await getCreators();
+    packages = sponsorPackageTemplates.map((item, index) => ({
+      id: `fallback-package-${index + 1}`,
+      tier: item.tier,
+      name: item.name,
+      rangeLabel: item.rangeLabel,
+      summary: item.summary,
+      benefits: item.benefits.join('\n'),
+    }));
+    creators = fallbackCreators.map((item) => ({
+      id: item.id,
+      name: item.name,
+      roleLabel: item.roleLabel,
+    }));
+    inventory = sponsorInventoryCategories.map((item, index) => ({
+      id: `fallback-inventory-${index + 1}`,
+      name: item.name,
+    }));
+  }
 
   return (
     <main className="section">
@@ -47,6 +93,15 @@ export default async function SponsorsPage() {
               </ul>
             </article>
           ))}
+          {!packages.length ? (
+            <article className="card">
+              <div className="section-kicker">Package Refresh In Progress</div>
+              <h2 style={{ marginBottom: 4 }}>Sponsor packages are temporarily unavailable.</h2>
+              <p className="section-copy" style={{ fontSize: '1rem' }}>
+                The sponsorship catalog is being refreshed. Use the contact or application routes and the team can share the latest package details directly.
+              </p>
+            </article>
+          ) : null}
         </div>
 
         <div className="card-grid grid-2" style={{ marginTop: 28 }}>

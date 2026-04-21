@@ -126,109 +126,28 @@ const contentFallbacks: Record<string, ContentFallback> = {
   },
 };
 
-export async function getContentMap() {
-  const entries = await prisma.pageContent.findMany();
-  const map = new Map(entries.map((entry: any) => [entry.key, entry] as const));
+function logPublicSiteFallback(scope: string, error: unknown) {
+  console.error(`[site] Falling back to static ${scope}.`, error);
+}
 
+function buildFallbackContentMap() {
   return Object.fromEntries(
-    Object.entries(contentFallbacks).map(([key, fallback]) => {
-      const current = map.get(key) as any;
-      return [
+    Object.entries(contentFallbacks).map(([key, fallback]) => [
+      key,
+      {
         key,
-        {
-          key,
-          title: current?.title ?? fallback.title,
-          subtitle: current?.subtitle ?? fallback.subtitle,
-          body: current?.body ?? fallback.body,
-          ctaLabel: current?.ctaLabel ?? fallback.ctaLabel,
-          ctaHref: current?.ctaHref ?? fallback.ctaHref,
-        },
-      ];
-    }),
+        title: fallback.title,
+        subtitle: fallback.subtitle,
+        body: fallback.body,
+        ctaLabel: fallback.ctaLabel,
+        ctaHref: fallback.ctaHref,
+      },
+    ]),
   );
 }
 
-export async function getHomeData() {
-  const [contentMap, sponsors, partners, inquiryCount, creators, inventoryCategories, packageTemplates, galleryEvents] = await Promise.all([
-    getContentMap(),
-    prisma.sponsor.findMany({ where: { isActive: true }, orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }] }),
-    prisma.partner.findMany({ where: { isActive: true }, orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }] }),
-    prisma.inquiry.count(),
-    prisma.creatorProfile.findMany({ where: { isActive: true }, orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }] }),
-    prisma.sponsorInventoryCategory.findMany({ where: { isActive: true }, orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }] }),
-    prisma.sponsorPackageTemplate.findMany({ where: { isActive: true }, orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }] }),
-    getGalleryEvents(),
-  ]);
-
+function buildFallbackCreatorRecord(item: (typeof creatorFallbacks)[number], index: number) {
   return {
-    contentMap,
-    sponsors,
-    partners,
-    packageTemplates,
-    galleryEvents,
-    creators: creators.length ? creators : creatorFallbacks.map((item, index) => ({
-      id: String(index + 1),
-      name: item.name,
-      slug: item.slug,
-      roleLabel: item.role,
-      platformFocus: item.platformFocus,
-      audience: item.audience,
-      biography: item.biography,
-      journeyStory: item.journeyStory,
-      contactNumber: item.contactNumber,
-      address: item.address,
-      dateOfBirth: item.dateOfBirth,
-      jobDescription: item.jobDescription,
-      position: item.position,
-      height: item.height,
-      facebookPage: item.facebookPage,
-      facebookFollowers: item.facebookFollowers,
-      tiktokPage: item.tiktokPage,
-      tiktokFollowers: item.tiktokFollowers,
-      instagramPage: item.instagramPage,
-      instagramFollowers: item.instagramFollowers,
-      youtubePage: item.youtubePage,
-      youtubeFollowers: item.youtubeFollowers,
-      trendingVideoUrl: item.trendingVideoUrl,
-      shortBio: item.shortBio,
-      pointsPerGame: item.pointsPerGame,
-      assistsPerGame: item.assistsPerGame,
-      reboundsPerGame: item.reboundsPerGame,
-      imageUrl: item.imageUrl,
-      sortOrder: index + 1,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    })),
-    inventoryCategories: inventoryCategories.length
-      ? inventoryCategories
-      : inventoryFallbacks.map((item, index) => ({
-          id: String(index + 1),
-          name: item.name,
-          description: item.description,
-          examples: item.examples.join('\n'),
-        })),
-    stats: [
-      { label: 'Combined Followers', value: sponsorshipStats.combinedFollowers },
-      { label: 'Active Platforms', value: sponsorshipStats.activePlatforms },
-      { label: 'High-Engagement Creators', value: sponsorshipStats.creatorCount },
-      { label: 'Captured Inquiries', value: String(inquiryCount).padStart(2, '0') },
-    ],
-  };
-}
-
-export async function getCreators({ activeOnly = true }: { activeOnly?: boolean } = {}) {
-  const creators = await prisma.creatorProfile.findMany({
-    where: activeOnly ? { isActive: true } : {},
-    include: { user: true },
-    orderBy: [{ sortOrder: 'asc' }, { updatedAt: 'desc' }],
-  });
-
-  if (creators.length) {
-    return creators.map((item) => serializePublicCreatorProfile(item));
-  }
-
-  return creatorFallbacks.map((item, index) => serializePublicCreatorProfile({
     id: String(index + 1),
     userId: null,
     user: null,
@@ -263,49 +182,179 @@ export async function getCreators({ activeOnly = true }: { activeOnly?: boolean 
     isActive: true,
     createdAt: new Date(),
     updatedAt: new Date(),
+  };
+}
+
+function buildFallbackCreators() {
+  return creatorFallbacks.map((item, index) => buildFallbackCreatorRecord(item, index));
+}
+
+function buildFallbackInventoryCategories() {
+  return inventoryFallbacks.map((item, index) => ({
+    id: String(index + 1),
+    name: item.name,
+    description: item.description,
+    examples: item.examples.join('\n'),
   }));
+}
+
+function buildFallbackStats(inquiryCount = 0) {
+  return [
+    { label: 'Combined Followers', value: sponsorshipStats.combinedFollowers },
+    { label: 'Active Platforms', value: sponsorshipStats.activePlatforms },
+    { label: 'High-Engagement Creators', value: sponsorshipStats.creatorCount },
+    { label: 'Captured Inquiries', value: String(inquiryCount).padStart(2, '0') },
+  ];
+}
+
+export async function getContentMap() {
+  try {
+    const entries = await prisma.pageContent.findMany();
+    const map = new Map(entries.map((entry: any) => [entry.key, entry] as const));
+
+    return Object.fromEntries(
+      Object.entries(contentFallbacks).map(([key, fallback]) => {
+        const current = map.get(key) as any;
+        return [
+          key,
+          {
+            key,
+            title: current?.title ?? fallback.title,
+            subtitle: current?.subtitle ?? fallback.subtitle,
+            body: current?.body ?? fallback.body,
+            ctaLabel: current?.ctaLabel ?? fallback.ctaLabel,
+            ctaHref: current?.ctaHref ?? fallback.ctaHref,
+          },
+        ];
+      }),
+    );
+  } catch (error) {
+    logPublicSiteFallback('content', error);
+    return buildFallbackContentMap();
+  }
+}
+
+export async function getHomeData() {
+  try {
+    const [contentMap, sponsors, partners, inquiryCount, creators, inventoryCategories, packageTemplates, galleryEvents] = await Promise.all([
+      getContentMap(),
+      prisma.sponsor.findMany({ where: { isActive: true }, orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }] }),
+      prisma.partner.findMany({ where: { isActive: true }, orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }] }),
+      prisma.inquiry.count(),
+      prisma.creatorProfile.findMany({ where: { isActive: true }, orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }] }),
+      prisma.sponsorInventoryCategory.findMany({ where: { isActive: true }, orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }] }),
+      prisma.sponsorPackageTemplate.findMany({ where: { isActive: true }, orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }] }),
+      getGalleryEvents(),
+    ]);
+
+    return {
+      contentMap,
+      sponsors,
+      partners,
+      packageTemplates,
+      galleryEvents,
+      creators: creators.length ? creators : buildFallbackCreators(),
+      inventoryCategories: inventoryCategories.length ? inventoryCategories : buildFallbackInventoryCategories(),
+      stats: buildFallbackStats(inquiryCount),
+    };
+  } catch (error) {
+    logPublicSiteFallback('homepage data', error);
+    return {
+      contentMap: buildFallbackContentMap(),
+      sponsors: [],
+      partners: [],
+      packageTemplates: [],
+      galleryEvents: galleryFallbackEvents,
+      creators: buildFallbackCreators(),
+      inventoryCategories: buildFallbackInventoryCategories(),
+      stats: buildFallbackStats(),
+    };
+  }
+}
+
+export async function getCreators({ activeOnly = true }: { activeOnly?: boolean } = {}) {
+  try {
+    const creators = await prisma.creatorProfile.findMany({
+      where: activeOnly ? { isActive: true } : {},
+      include: { user: true },
+      orderBy: [{ sortOrder: 'asc' }, { updatedAt: 'desc' }],
+    });
+
+    if (creators.length) {
+      return creators.map((item) => serializePublicCreatorProfile(item));
+    }
+  } catch (error) {
+    logPublicSiteFallback('creator directory', error);
+  }
+
+  return buildFallbackCreators().map((item) => serializePublicCreatorProfile(item));
 }
 
 
 export async function getGalleryEvents() {
-  const events = await prisma.mediaEvent.findMany({
-    where: { isActive: true },
-    include: {
-      creator: true,
-      mediaItems: { orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] },
-    },
-    orderBy: [{ sortOrder: 'asc' }, { eventDate: 'desc' }, { createdAt: 'desc' }],
-  });
+  try {
+    const events = await prisma.mediaEvent.findMany({
+      where: { isActive: true },
+      include: {
+        creator: true,
+        mediaItems: { orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] },
+      },
+      orderBy: [{ sortOrder: 'asc' }, { eventDate: 'desc' }, { createdAt: 'desc' }],
+    });
 
-  return events.length ? events : galleryFallbackEvents;
+    return events.length ? events : galleryFallbackEvents;
+  } catch (error) {
+    logPublicSiteFallback('gallery events', error);
+    return galleryFallbackEvents;
+  }
 }
 
 export async function getCreatorBySlug(slug: string) {
-  return prisma.creatorProfile.findUnique({
-    where: { slug },
-    include: {
-      user: true,
-      mediaEvents: {
-        where: { isActive: true },
-        include: { mediaItems: { orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] } },
-        orderBy: [{ sortOrder: 'asc' }, { eventDate: 'desc' }, { createdAt: 'desc' }],
+  try {
+    return await prisma.creatorProfile.findUnique({
+      where: { slug },
+      include: {
+        user: true,
+        mediaEvents: {
+          where: { isActive: true },
+          include: { mediaItems: { orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] } },
+          orderBy: [{ sortOrder: 'asc' }, { eventDate: 'desc' }, { createdAt: 'desc' }],
+        },
       },
-    },
-  });
+    });
+  } catch (error) {
+    logPublicSiteFallback(`creator profile "${slug}"`, error);
+    const fallback = creatorFallbacks.find((item) => item.slug === slug);
+    if (!fallback) return null;
+    return {
+      ...buildFallbackCreatorRecord(fallback, creatorFallbacks.findIndex((item) => item.slug === slug)),
+      mediaEvents: [],
+    };
+  }
 }
 
 
 export async function getProductServices() {
-  const services = await prisma.productService.findMany({ where: { isActive: true }, orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] });
-  return services.length ? services : serviceFallbacks.map((item, index) => ({ id: String(index + 1), ...item, createdAt: new Date(), updatedAt: new Date(), isActive: true }));
+  try {
+    const services = await prisma.productService.findMany({ where: { isActive: true }, orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] });
+    return services.length ? services : serviceFallbacks.map((item, index) => ({ id: String(index + 1), ...item, createdAt: new Date(), updatedAt: new Date(), isActive: true }));
+  } catch (error) {
+    logPublicSiteFallback('product services', error);
+    return serviceFallbacks.map((item, index) => ({ id: String(index + 1), ...item, createdAt: new Date(), updatedAt: new Date(), isActive: true }));
+  }
 }
 
 
 export async function getFeaturedShopProducts(limit = 4) {
-  return prisma.shopProduct.findMany({
-    where: { isActive: true },
-    include: { category: true },
-    orderBy: [{ isFeatured: 'desc' }, { sortOrder: 'asc' }, { createdAt: 'desc' }],
-    take: limit,
-  });
+  try {
+    return await prisma.shopProduct.findMany({
+      where: { isActive: true },
+      include: { category: true },
+      orderBy: [{ isFeatured: 'desc' }, { sortOrder: 'asc' }, { createdAt: 'desc' }],
+      take: limit,
+    });
+  } catch (error) {
+    logPublicSiteFallback('featured merch', error);
+    return [];
+  }
 }
