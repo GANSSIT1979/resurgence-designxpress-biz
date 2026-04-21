@@ -38,6 +38,38 @@ function loadDotEnv(fileName, overrideLoadedValues = false) {
   }
 }
 
+function inferProviderFromDatabaseUrl(databaseUrl) {
+  const normalized = databaseUrl.trim().toLowerCase();
+  if (!normalized) return null;
+  if (normalized.startsWith('file:')) return 'sqlite';
+  if (normalized.startsWith('postgresql:') || normalized.startsWith('postgres:')) return 'postgresql';
+  return null;
+}
+
+function resolveProvider() {
+  const explicitProvider = process.env.PRISMA_DB_PROVIDER?.trim();
+  const inferredProvider = inferProviderFromDatabaseUrl(process.env.DATABASE_URL || '');
+  const isHostedRuntime = Boolean(process.env.VERCEL) || process.env.NODE_ENV === 'production';
+
+  if (explicitProvider) {
+    return explicitProvider;
+  }
+
+  if (inferredProvider) {
+    process.env.PRISMA_DB_PROVIDER = inferredProvider;
+    return inferredProvider;
+  }
+
+  if (isHostedRuntime) {
+    throw new Error(
+      'Unable to determine the Prisma provider for a hosted build. Set PRISMA_DB_PROVIDER or a DATABASE_URL that starts with "postgresql:", "postgres:", or "file:".',
+    );
+  }
+
+  process.env.PRISMA_DB_PROVIDER = 'sqlite';
+  return 'sqlite';
+}
+
 function run(command, args, options = {}) {
   const executable = process.platform === 'win32' && command.endsWith('.cmd') ? 'cmd.exe' : command;
   const executableArgs =
@@ -64,10 +96,10 @@ function toFileUrlFromCwd(absolutePath) {
 
 loadDotEnv('.env');
 loadDotEnv('.env.local', true);
+const provider = resolveProvider();
 
 run(process.execPath, ['scripts/prepare-prisma-schema.mjs']);
 
-const provider = (process.env.PRISMA_DB_PROVIDER || 'sqlite').trim();
 const generatedSchemaPath = resolve(process.cwd(), 'prisma', 'schema.generated.prisma');
 const prismaBin = resolve(
   process.cwd(),

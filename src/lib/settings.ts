@@ -70,15 +70,6 @@ export const appSettingDefaults: PublicSettings = {
 
 let appSettingsMapPromise: Promise<Map<string, string>> | null = null;
 
-function isMissingTableError(error: unknown) {
-  return (
-    typeof error === 'object' &&
-    error !== null &&
-    'code' in error &&
-    (error as { code?: string }).code === 'P2021'
-  );
-}
-
 async function hasAppSettingsTable() {
   const provider = (process.env.PRISMA_DB_PROVIDER || 'sqlite').trim();
 
@@ -121,12 +112,8 @@ export async function getAppSettingsMap() {
     return await appSettingsMapPromise;
   } catch (error) {
     appSettingsMapPromise = null;
-
-    if (isMissingTableError(error)) {
-      return new Map<string, string>();
-    }
-
-    throw error;
+    console.error('[settings] Falling back to default public settings.', error);
+    return new Map<string, string>();
   }
 }
 
