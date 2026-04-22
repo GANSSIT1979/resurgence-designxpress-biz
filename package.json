@@ -46,5 +46,22 @@
   },
   "engines": {
     "node": "20.x"
-  }
+  },
+  "description": "Updated: 2026-04-21",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GANSSIT1979/resurgence-designxpress-biz.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/GANSSIT1979/resurgence-designxpress-biz/issues"
+  },
+  "homepage": "https://github.com/GANSSIT1979/resurgence-designxpress-biz#readme"
 }
