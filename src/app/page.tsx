@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import type { FeedResponse } from '@/lib/feed/types';
 import { getFeaturedShopProducts, getHomeData, getProductServices } from '@/lib/site';
+import { buildHomeMetadata } from '@/lib/metadata';
 import { getPublicSettings } from '@/lib/settings';
 import { formatPeso } from '@/lib/shop';
 import { VerticalMediaFeed } from '@/components/vertical-media-feed';
@@ -9,14 +11,15 @@ import { getPublicFeed } from '@/lib/feed/queries';
 
 export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = {
-  title: 'Home | RESURGENCE',
-  description: 'RESURGENCE sponsor, creator, merch, and media platform.',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getPublicSettings();
+  return buildHomeMetadata(settings);
+}
 
 const fallbackHomeData = {
   contentMap: {
     'home.hero': {
+      key: 'home.hero',
       subtitle: 'Welcome',
       title: 'RESURGENCE',
       body: 'Sponsor, creator, merch, and event platform.',
@@ -24,6 +27,7 @@ const fallbackHomeData = {
       ctaLabel: 'Apply as Sponsor',
     },
     'home.about': {
+      key: 'home.about',
       subtitle: 'About',
       title: 'About RESURGENCE',
       body: 'Built for sponsor visibility, engagement, and activation.',
@@ -33,6 +37,7 @@ const fallbackHomeData = {
   },
   sponsors: [],
   partners: [],
+  packageTemplates: [],
   stats: [],
   creators: [],
   inventoryCategories: [],
@@ -55,8 +60,8 @@ const fallbackSettings = {
 const fallbackFeed = {
   items: [],
   nextCursor: null,
-  source: 'fallback',
-};
+  source: 'gallery-fallback',
+} satisfies FeedResponse;
 
 function getValue<T>(result: PromiseSettledResult<T>, fallback: T): T {
   return result.status === 'fulfilled' ? result.value : fallback;
@@ -113,7 +118,7 @@ export default async function HomePage() {
       <CreatorCommerceFeed
         initialItems={feed.items ?? []}
         initialCursor={feed.nextCursor ?? null}
-        source={feed.source ?? 'fallback'}
+        source={feed.source}
       />
 
       <section className="hero">
