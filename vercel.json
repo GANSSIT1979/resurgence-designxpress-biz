@@ -5,6 +5,52 @@
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
   "regions": ["sin1"],
+  "redirects": [
+    {
+      "source": "/product/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "shop.resurgence-dx.biz"
+        }
+      ],
+      "destination": "https://resurgence-dx.biz/shop/product/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "partnership.resurgence-dx.biz"
+        }
+      ],
+      "destination": "https://resurgence-dx.biz/partnerships",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "support.resurgence-dx.biz"
+        }
+      ],
+      "destination": "https://resurgence-dx.biz/support",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "shop.resurgence-dx.biz"
+        }
+      ],
+      "destination": "https://resurgence-dx.biz/shop",
+      "permanent": true
+    }
+  ],
   "headers": [
     {
       "source": "/:path*",
