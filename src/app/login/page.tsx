@@ -475,7 +475,7 @@ function LoginGatewayShell({
                         onChange={(event) => setTermsAccepted(event.target.checked)}
                       />
                       <label htmlFor="terms">
-                        I agree to the platform terms and privacy notice. I understand that joining as a member is free.
+                        I agree to the platform <Link href="/terms">terms</Link> and <Link href="/privacy">privacy notice</Link>. I understand that joining as a member is free.
                       </label>
                     </div>
 
