@@ -80,11 +80,18 @@ MAYA_NUMBER=
 BANK_ACCOUNT_NAME=replace-with-bank-account-name
 BANK_ACCOUNT_NUMBER=replace-with-bank-account-number
 BANK_NAME=replace-with-bank-name
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_ID=
 NEXT_TELEMETRY_DISABLED=1
 PRISMA_HIDE_UPDATE_MESSAGE=1
 ```
 
 You can copy the same list from [`../vercel.production.env.example`](../vercel.production.env.example).
+
+Google sign-in note:
+
+- `NEXT_PUBLIC_GOOGLE_CLIENT_ID` is required in Vercel for the client-side Gmail button on `/login`
+- `GOOGLE_CLIENT_ID` should be set to the same value so `/api/auth/google` can verify the credential audience server-side
 
 Important database rule:
 
