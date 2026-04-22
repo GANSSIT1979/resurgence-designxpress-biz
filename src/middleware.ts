@@ -3,6 +3,11 @@ import { COOKIE_NAME, getLoginRedirect, isPathAllowedForRole, verifySession } fr
 import { getRequiredPermission } from '@/lib/permissions';
 
 const localHttpsHosts = new Set(['localhost', '127.0.0.1', '0.0.0.0', '::1', '[::1]']);
+const hostRedirectTargets: Record<string, string> = {
+  'partnership.resurgence-dx.biz': '/partnerships',
+  'support.resurgence-dx.biz': '/support',
+  'shop.resurgence-dx.biz': '/shop',
+};
 
 function shouldRedirectToHttps(request: NextRequest) {
   if (process.env.FORCE_HTTPS !== 'true') return false;
@@ -15,6 +20,27 @@ function shouldRedirectToHttps(request: NextRequest) {
   return protocol === 'http';
 }
 
+function getHostRedirectUrl(request: NextRequest) {
+  const hostname = request.nextUrl.hostname.toLowerCase();
+  const targetPath = hostRedirectTargets[hostname];
+
+  if (!targetPath) {
+    return null;
+  }
+
+  const redirectUrl = request.nextUrl.clone();
+  redirectUrl.hostname = 'resurgence-dx.biz';
+  redirectUrl.protocol = 'https:';
+
+  if (hostname === 'shop.resurgence-dx.biz' && redirectUrl.pathname.startsWith('/product/')) {
+    redirectUrl.pathname = `/shop${redirectUrl.pathname}`;
+    return redirectUrl;
+  }
+
+  redirectUrl.pathname = targetPath;
+  return redirectUrl;
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   const token = request.cookies.get(COOKIE_NAME)?.value;
@@ -24,6 +50,11 @@ export async function middleware(request: NextRequest) {
     const httpsUrl = request.nextUrl.clone();
     httpsUrl.protocol = 'https:';
     return NextResponse.redirect(httpsUrl, 308);
+  }
+
+  const hostRedirectUrl = getHostRedirectUrl(request);
+  if (hostRedirectUrl) {
+    return NextResponse.redirect(hostRedirectUrl, 308);
   }
 
   if (pathname === '/login') {
