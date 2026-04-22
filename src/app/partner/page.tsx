@@ -72,6 +72,7 @@ export default async function PartnerDashboardPage() {
             title="Partner alerts and automation"
             notifications={inbox.notifications}
             emails={inbox.emails}
+            degradedMessage={inbox.degradedReason ?? null}
           />
         </div>
       </RoleShell>

@@ -80,6 +80,7 @@ export default async function StaffDashboardPage() {
             title="Operations inbox"
             notifications={inbox.notifications}
             emails={inbox.emails}
+            degradedMessage={inbox.degradedReason ?? null}
           />
         </div>
       </RoleShell>

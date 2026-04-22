@@ -22,7 +22,7 @@ export default async function CashierDashboardPage() {
   const pendingReceivables = invoices.reduce((sum, item) => sum + item.balanceAmount, 0);
   const paidInvoices = invoices.filter((item) => item.status === 'PAID').length;
   const overdueInvoices = invoices.filter((item) => item.status === 'OVERDUE').length;
-  const inbox = sessionContext ? await getAutomationInbox(sessionContext.user.role, sessionContext.user.id, 6) : { notifications: [], emails: [] };
+  const inbox = sessionContext ? await getAutomationInbox(sessionContext.user.role, sessionContext.user.id, 6) : { notifications: [], emails: [], degradedReason: null };
 
   return (
     <main>
@@ -110,6 +110,7 @@ export default async function CashierDashboardPage() {
             title="Finance alerts and automated emails"
             notifications={inbox.notifications}
             emails={inbox.emails}
+            degradedMessage={inbox.degradedReason ?? null}
           />
         </div>
       </RoleShell>

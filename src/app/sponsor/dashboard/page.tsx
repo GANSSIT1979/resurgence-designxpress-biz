@@ -171,6 +171,7 @@ export default async function SponsorDashboardPage() {
             title="Sponsor alerts and automated messages"
             notifications={inbox.notifications}
             emails={inbox.emails}
+            degradedMessage={inbox.degradedReason ?? null}
           />
         </div>
       </RoleShell>

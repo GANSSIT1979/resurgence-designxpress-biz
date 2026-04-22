@@ -90,6 +90,7 @@ export default async function CreatorDashboardPage() {
             title="Creator alerts and automation"
             notifications={inbox.notifications}
             emails={inbox.emails}
+            degradedMessage={inbox.degradedReason ?? null}
           />
         </div>
       </RoleShell>

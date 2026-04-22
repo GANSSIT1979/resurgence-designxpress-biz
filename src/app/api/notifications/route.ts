@@ -13,6 +13,6 @@ export async function GET(request: Request) {
   const limit = Number.isFinite(requestedLimit) ? Math.max(1, Math.min(20, requestedLimit)) : 6;
   const inbox = await getAutomationInbox(context.user.role, context.user.id, limit);
 
-  return NextResponse.json(inbox);
+  return NextResponse.json(inbox, { status: inbox.degradedReason ? 503 : 200 });
 }
 

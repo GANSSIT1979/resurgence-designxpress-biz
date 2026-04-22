@@ -27,10 +27,12 @@ export function NotificationCenter({
   title,
   notifications: initialNotifications,
   emails,
+  degradedMessage,
 }: {
   title: string;
   notifications: NotificationItem[];
   emails: EmailItem[];
+  degradedMessage?: string | null;
 }) {
   const [notifications, setNotifications] = useState(initialNotifications);
   const [error, setError] = useState<string | null>(null);
@@ -57,6 +59,7 @@ export function NotificationCenter({
     <section className="card">
       <div className="section-kicker">Notifications and Automation</div>
       <h2 style={{ marginTop: 0 }}>{title}</h2>
+      {degradedMessage ? <div className="notice error" style={{ marginTop: 16 }}>{degradedMessage}</div> : null}
       {error ? <div className="notice error" style={{ marginTop: 16 }}>{error}</div> : null}
 
       <div className="card-grid grid-2" style={{ marginTop: 18 }}>

@@ -44,7 +44,7 @@ export default async function AdminDashboardPage() {
     prisma.adminReport.count(),
     prisma.shopProduct.count(),
     prisma.shopOrder.count(),
-    sessionContext ? getAutomationInbox(sessionContext.user.role, sessionContext.user.id, 6) : Promise.resolve({ notifications: [], emails: [] }),
+    sessionContext ? getAutomationInbox(sessionContext.user.role, sessionContext.user.id, 6) : Promise.resolve({ notifications: [], emails: [], degradedReason: null }),
   ]);
 
   return (
@@ -110,6 +110,7 @@ export default async function AdminDashboardPage() {
             title="Executive workflow inbox"
             notifications={inbox.notifications}
             emails={inbox.emails}
+            degradedMessage={inbox.degradedReason ?? null}
           />
         </div>
       </AdminShell>

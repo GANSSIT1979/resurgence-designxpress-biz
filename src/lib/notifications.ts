@@ -1,5 +1,6 @@
 import { AnnouncementLevel, Prisma, UserRole } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
+import { isPrismaSchemaDriftError } from '@/lib/prisma-schema-health';
 
 type NotificationInput = {
   recipientRole?: UserRole | null;
@@ -22,6 +23,44 @@ type AutomatedEmailInput = {
   eventKey: string;
   relatedType?: string | null;
   relatedId?: string | null;
+};
+
+export type AutomationInbox = {
+  notifications: Array<{
+    id: string;
+    title: string;
+    message: string;
+    level: AnnouncementLevel;
+    href: string | null;
+    isRead: boolean;
+    createdAt: string;
+    updatedAt: string;
+    readAt: string | null;
+    recipientRole: UserRole | null;
+    recipientUserId: string | null;
+    metadataJson: string | null;
+  }>;
+  emails: Array<{
+    id: string;
+    recipientRole: UserRole | null;
+    recipientUserId: string | null;
+    toEmail: string;
+    toName: string | null;
+    subject: string;
+    bodyText: string;
+    bodyHtml: string | null;
+    eventKey: string;
+    relatedType: string | null;
+    relatedId: string | null;
+    status: string;
+    deliveryResponse: string | null;
+    errorMessage: string | null;
+    createdAt: string;
+    updatedAt: string;
+    sentAt: string | null;
+    lastAttemptAt: string | null;
+  }>;
+  degradedReason: string | null;
 };
 
 function serializeMetadata(metadata?: Record<string, unknown> | null) {
@@ -176,34 +215,50 @@ function buildEmailWhere(role: UserRole, userId?: string | null): Prisma.Automat
 }
 
 export async function getAutomationInbox(role: UserRole, userId?: string | null, limit = 6) {
-  const [notifications, emails] = await Promise.all([
-    prisma.platformNotification.findMany({
-      where: buildInboxWhere(role, userId),
-      orderBy: [{ isRead: 'asc' }, { createdAt: 'desc' }],
-      take: limit,
-    }),
-    prisma.automatedEmail.findMany({
-      where: buildEmailWhere(role, userId),
-      orderBy: [{ createdAt: 'desc' }],
-      take: limit,
-    }),
-  ]);
+  try {
+    const [notifications, emails] = await Promise.all([
+      prisma.platformNotification.findMany({
+        where: buildInboxWhere(role, userId),
+        orderBy: [{ isRead: 'asc' }, { createdAt: 'desc' }],
+        take: limit,
+      }),
+      prisma.automatedEmail.findMany({
+        where: buildEmailWhere(role, userId),
+        orderBy: [{ createdAt: 'desc' }],
+        take: limit,
+      }),
+    ]);
 
-  return {
-    notifications: notifications.map((item) => ({
-      ...item,
-      createdAt: item.createdAt.toISOString(),
-      updatedAt: item.updatedAt.toISOString(),
-      readAt: item.readAt?.toISOString() ?? null,
-    })),
-    emails: emails.map((item) => ({
-      ...item,
-      createdAt: item.createdAt.toISOString(),
-      updatedAt: item.updatedAt.toISOString(),
-      sentAt: item.sentAt?.toISOString() ?? null,
-      lastAttemptAt: item.lastAttemptAt?.toISOString() ?? null,
-    })),
-  };
+    return {
+      notifications: notifications.map((item) => ({
+        ...item,
+        createdAt: item.createdAt.toISOString(),
+        updatedAt: item.updatedAt.toISOString(),
+        readAt: item.readAt?.toISOString() ?? null,
+      })),
+      emails: emails.map((item) => ({
+        ...item,
+        createdAt: item.createdAt.toISOString(),
+        updatedAt: item.updatedAt.toISOString(),
+        sentAt: item.sentAt?.toISOString() ?? null,
+        lastAttemptAt: item.lastAttemptAt?.toISOString() ?? null,
+      })),
+      degradedReason: null,
+    } satisfies AutomationInbox;
+  } catch (error) {
+    if (!isPrismaSchemaDriftError(error)) {
+      throw error;
+    }
+
+    console.error('[automation-inbox] Workflow inbox is degraded because the database schema is out of sync.', error);
+
+    return {
+      notifications: [],
+      emails: [],
+      degradedReason:
+        'Workflow inbox is temporarily unavailable while the production database schema catches up. Check /api/health for the current drift status.',
+    } satisfies AutomationInbox;
+  }
 }
 
 export async function markNotificationAsRead(notificationId: string, role: UserRole, userId?: string | null) {
