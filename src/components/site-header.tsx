@@ -6,6 +6,7 @@ const links = [
   { href: '/feed', label: 'Feed' },
   { href: '/about', label: 'About' },
   { href: '/services', label: 'Services' },
+  { href: '/partnerships', label: 'Partnerships' },
   { href: '/shop', label: 'Merch' },
   { href: '/cart', label: 'Cart' },
   { href: '/creators', label: 'Creators' },
