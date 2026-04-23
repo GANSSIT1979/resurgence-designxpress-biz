@@ -132,6 +132,7 @@ export default async function HomePage() {
         initialCursor={feed.nextCursor ?? null}
         source={feed.source}
         surface="home"
+        viewer={user ? { id: user.id, role: user.role, displayName: user.displayName } : null}
       />
 
       <section className="hero">

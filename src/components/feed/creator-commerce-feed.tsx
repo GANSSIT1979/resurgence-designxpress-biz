@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { Fragment, startTransition, useEffect, useMemo, useRef, useState } from 'react';
+import { CommentsPanel } from '@/components/resurgence/CommentsPanel';
 import {
   FeedToastViewport,
   type FeedToastItem,
@@ -12,7 +13,6 @@ import {
   isCloudflareStreamAsset,
 } from '@/lib/cloudflare-stream';
 import {
-  createFeedComment,
   fetchFeedStats,
   getFeedInteractionErrorMessage,
   getFeedInteractionErrorStatus,
@@ -29,6 +29,11 @@ type Props = {
   initialCursor?: string | null;
   source: 'content-post' | 'gallery-fallback';
   surface?: 'home' | 'feed';
+  viewer?: {
+    id: string;
+    role: string;
+    displayName?: string | null;
+  } | null;
 };
 
 const FEED_PAGE_SIZE = 8;
@@ -81,7 +86,13 @@ function getEmbedUrl(media: FeedPost['mediaAssets'][number], active: boolean) {
   return '';
 }
 
-export function CreatorCommerceFeed({ initialItems, initialCursor = null, source, surface = 'feed' }: Props) {
+export function CreatorCommerceFeed({
+  initialItems,
+  initialCursor = null,
+  source,
+  surface = 'feed',
+  viewer = null,
+}: Props) {
   const [items, setItems] = useState(initialItems);
   const [nextCursor, setNextCursor] = useState(initialCursor);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -390,6 +401,7 @@ export function CreatorCommerceFeed({ initialItems, initialCursor = null, source
                 }}
                 pushToast={pushToast}
                 shouldLoadMedia={Math.abs(index - activeIndex) <= MEDIA_PREFETCH_DISTANCE}
+                viewer={viewer}
               />
 
               {(index + 1) % DISCOVERY_CLUSTER_INTERVAL === 0 ? (
@@ -485,6 +497,7 @@ function FeedCard({
   pushToast,
   index,
   shouldLoadMedia,
+  viewer,
 }: {
   active: boolean;
   post: FeedPost;
@@ -492,11 +505,17 @@ function FeedCard({
   pushToast: (message: string, tone?: FeedToastTone) => void;
   index: number;
   shouldLoadMedia: boolean;
+  viewer?: {
+    id: string;
+    role: string;
+    displayName?: string | null;
+  } | null;
 }) {
   const [mediaIndex, setMediaIndex] = useState(0);
   const [liked, setLiked] = useState(Boolean(post.viewerState?.liked));
   const [saved, setSaved] = useState(Boolean(post.viewerState?.saved));
   const [following, setFollowing] = useState(Boolean(post.viewerState?.followingCreator));
+  const [commentsOpen, setCommentsOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<PendingFeedAction | null>(null);
   const [metrics, setMetrics] = useState(post.metrics);
   const media = post.mediaAssets[mediaIndex] || post.mediaAssets[0];
@@ -514,6 +533,19 @@ function FeedCard({
       // Keep the current optimistic state when stats refresh is unavailable.
     }
   }
+
+  useEffect(() => {
+    if (!commentsOpen) return;
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setCommentsOpen(false);
+      }
+    }
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [commentsOpen]);
 
   async function runAction<T>(
     request: () => Promise<T>,
@@ -562,34 +594,12 @@ function FeedCard({
     }
   }
 
-  async function postComment() {
+  function openComments() {
     if (!isActionablePost) {
       pushToast('Comments activate on published creator-commerce posts.');
       return;
     }
-
-    const body = window.prompt('Add a comment')?.trim();
-    if (!body) return;
-
-    const previousComments = metrics.comments;
-    setMetrics((current) => ({ ...current, comments: current.comments + 1 }));
-    setPendingAction('comment');
-    try {
-      await createFeedComment(post.id, body);
-      await refreshMetrics();
-      pushToast('Comment posted.', 'success');
-    } catch (error) {
-      setMetrics((current) => ({ ...current, comments: previousComments }));
-      const status = getFeedInteractionErrorStatus(error);
-      pushToast(
-        status === 401
-          ? 'Please log in to comment.'
-          : getFeedInteractionErrorMessage(error, 'Network issue while trying to comment.'),
-        'error',
-      );
-    } finally {
-      setPendingAction(null);
-    }
+    setCommentsOpen(true);
   }
 
   function addToCart(product: FeedPost['productTags'][number]) {
@@ -669,6 +679,41 @@ function FeedCard({
 
   return (
     <article className={`feed-story-card ${active ? 'is-active' : ''}`} data-index={index} id={`post-${post.id}`} ref={refCallback}>
+      {commentsOpen ? (
+        <div className="feed-comments-overlay" role="dialog" aria-modal="true" aria-label="Feed comments">
+          <button
+            type="button"
+            className="feed-comments-backdrop"
+            aria-label="Close comments"
+            onClick={() => setCommentsOpen(false)}
+          />
+          <div className="feed-comments-sheet">
+            <div className="feed-comments-sheet-head">
+              <div>
+                <div className="section-kicker">Conversation</div>
+                <h3>{post.creator?.name || post.author?.displayName || 'Resurgence'}</h3>
+                <p>{post.caption}</p>
+              </div>
+              <button type="button" className="feed-comments-close" onClick={() => setCommentsOpen(false)}>
+                Close
+              </button>
+            </div>
+
+            <CommentsPanel
+              postId={post.id}
+              viewer={viewer ?? null}
+              initialCount={metrics.comments}
+              onStatsChange={(stats) => {
+                setMetrics((current) => ({
+                  ...current,
+                  comments: stats.visibleCount,
+                }));
+              }}
+            />
+          </div>
+        </div>
+      ) : null}
+
       <div className="feed-phone-frame">
         <div className="feed-media-stage">
           {media ? <FeedMedia active={active} caption={post.caption} media={media} shouldLoad={shouldLoadMedia} /> : <div className="feed-media-missing">No media available</div>}
@@ -810,8 +855,8 @@ function FeedCard({
           <strong>{pendingAction === 'like' ? 'Saving' : liked ? 'Liked' : 'Like'}</strong>
           <span>{compactNumber(metrics.likes)}</span>
         </button>
-        <button aria-busy={pendingAction === 'comment'} disabled={pendingAction !== null} type="button" onClick={postComment}>
-          <strong>{pendingAction === 'comment' ? 'Posting' : 'Comment'}</strong>
+        <button aria-pressed={commentsOpen} disabled={pendingAction !== null} type="button" onClick={openComments}>
+          <strong>{commentsOpen ? 'Opened' : 'Comment'}</strong>
           <span>{compactNumber(metrics.comments)}</span>
         </button>
         <button

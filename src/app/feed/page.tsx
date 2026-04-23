@@ -10,7 +10,13 @@ export default async function FeedPage() {
 
   return (
     <main>
-      <CreatorCommerceFeed initialItems={feed.items} initialCursor={feed.nextCursor} source={feed.source} surface="feed" />
+      <CreatorCommerceFeed
+        initialItems={feed.items}
+        initialCursor={feed.nextCursor}
+        source={feed.source}
+        surface="feed"
+        viewer={user ? { id: user.id, role: user.role, displayName: user.displayName } : null}
+      />
     </main>
   );
 }
