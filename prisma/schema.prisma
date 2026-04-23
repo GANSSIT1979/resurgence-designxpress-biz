@@ -145,6 +145,20 @@ enum ContentPostMediaType {
   EXTERNAL
 }
 
+enum ContentPostCommentStatus {
+  ACTIVE
+  HIDDEN
+  REMOVED
+  PENDING_REVIEW
+  SPAM
+}
+
+enum ContentPostCommentVisibility {
+  PUBLIC
+  FOLLOWERS_ONLY
+  PRIVATE
+}
+
 enum SponsoredPlacementStatus {
   DRAFT
   PENDING
@@ -157,35 +171,36 @@ enum SponsoredPlacementStatus {
 }
 
 model User {
-  id                 String                 @id @default(cuid())
-  email              String                 @unique
-  phoneNumber        String?                @unique
-  password           String
-  displayName        String
-  title              String?
-  role               UserRole
-  authProvider       String                 @default("PASSWORD")
-  isEmailVerified    Boolean                @default(false)
-  isPhoneVerified    Boolean                @default(false)
-  referralCode       String?
-  profileImageUrl    String?
-  termsAcceptedAt    DateTime?
-  isActive           Boolean                @default(true)
-  lastLoginAt        DateTime?
-  sponsorProfile     SponsorProfile?
-  staffProfile       StaffProfile?
-  partnerProfile     PartnerProfile?
-  creatorProfile     CreatorProfile?
-  notifications      PlatformNotification[] @relation("NotificationRecipient")
-  actorNotifications PlatformNotification[] @relation("NotificationActor")
-  emails             AutomatedEmail[]       @relation("EmailRecipient")
-  contentPosts       ContentPost[]          @relation("PostAuthor")
-  postLikes          PostLike[]             @relation("PostLikeUser")
-  postComments       PostComment[]          @relation("PostCommentAuthor")
-  postSaves          PostSave[]             @relation("PostSaveUser")
-  following          Follow[]               @relation("CreatorFollowUser")
-  createdAt          DateTime               @default(now())
-  updatedAt          DateTime               @updatedAt
+  id                    String                 @id @default(cuid())
+  email                 String                 @unique
+  phoneNumber           String?                @unique
+  password              String
+  displayName           String
+  title                 String?
+  role                  UserRole
+  authProvider          String                 @default("PASSWORD")
+  isEmailVerified       Boolean                @default(false)
+  isPhoneVerified       Boolean                @default(false)
+  referralCode          String?
+  profileImageUrl       String?
+  termsAcceptedAt       DateTime?
+  isActive              Boolean                @default(true)
+  lastLoginAt           DateTime?
+  sponsorProfile        SponsorProfile?
+  staffProfile          StaffProfile?
+  partnerProfile        PartnerProfile?
+  creatorProfile        CreatorProfile?
+  notifications         PlatformNotification[] @relation("NotificationRecipient")
+  actorNotifications    PlatformNotification[] @relation("NotificationActor")
+  emails                AutomatedEmail[]       @relation("EmailRecipient")
+  contentPosts          ContentPost[]          @relation("PostAuthor")
+  postLikes             PostLike[]             @relation("PostLikeUser")
+  postComments          PostComment[]          @relation("PostCommentAuthor")
+  moderatedPostComments PostComment[]          @relation("PostCommentModerator")
+  postSaves             PostSave[]             @relation("PostSaveUser")
+  following             Follow[]               @relation("CreatorFollowUser")
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
 }
 
 model VerificationCode {
@@ -662,6 +677,7 @@ model ContentPost {
   archivedAt          DateTime?
   likeCount           Int                    @default(0)
   commentCount        Int                    @default(0)
+  lastCommentedAt     DateTime?
   saveCount           Int                    @default(0)
   shareCount          Int                    @default(0)
   viewCount           Int                    @default(0)
@@ -681,30 +697,32 @@ model ContentPost {
   @@index([creatorProfileId, status, publishedAt])
   @@index([authorUserId, createdAt])
   @@index([isFeatured, publishedAt])
+  @@index([commentCount])
+  @@index([lastCommentedAt])
   @@index([publishedAt])
 }
 
 model MediaAsset {
-  id              String               @id @default(cuid())
-  postId          String
-  post            ContentPost          @relation(fields: [postId], references: [id], onDelete: Cascade)
-  mediaType       ContentPostMediaType @default(IMAGE)
-  url             String
-  thumbnailUrl    String?
+  id               String               @id @default(cuid())
+  postId           String
+  post             ContentPost          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  mediaType        ContentPostMediaType @default(IMAGE)
+  url              String
+  thumbnailUrl     String?
   originalFileName String?
-  storageProvider String?
-  storageKey      String?
-  contentType     String?
-  size            Int?
-  width           Int?
-  height          Int?
-  durationSeconds Int?
-  altText         String?
-  caption         String?
-  sortOrder       Int                  @default(0)
-  metadataJson    Json?
-  createdAt       DateTime             @default(now())
-  updatedAt       DateTime             @updatedAt
+  storageProvider  String?
+  storageKey       String?
+  contentType      String?
+  size             Int?
+  width            Int?
+  height           Int?
+  durationSeconds  Int?
+  altText          String?
+  caption          String?
+  sortOrder        Int                  @default(0)
+  metadataJson     Json?
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
 
   @@index([postId, sortOrder])
   @@index([mediaType, createdAt])
@@ -747,22 +765,48 @@ model PostLike {
 }
 
 model PostComment {
-  id              String        @id @default(cuid())
-  postId          String
-  userId          String?
-  parentCommentId String?
-  post            ContentPost   @relation(fields: [postId], references: [id], onDelete: Cascade)
-  user            User?         @relation("PostCommentAuthor", fields: [userId], references: [id], onDelete: SetNull)
-  parentComment   PostComment?  @relation("CommentReplies", fields: [parentCommentId], references: [id], onDelete: SetNull)
-  replies         PostComment[] @relation("CommentReplies")
-  body            String
-  isHidden        Boolean       @default(false)
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id               String                       @id @default(cuid())
+  postId           String
+  userId           String?
+  parentCommentId  String?
+  post             ContentPost                  @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user             User?                        @relation("PostCommentAuthor", fields: [userId], references: [id], onDelete: SetNull)
+  parentComment    PostComment?                 @relation("CommentReplies", fields: [parentCommentId], references: [id], onDelete: SetNull)
+  replies          PostComment[]                @relation("CommentReplies")
+  body             String
+  bodyPlain        String?
+  status           ContentPostCommentStatus     @default(ACTIVE)
+  visibility       ContentPostCommentVisibility @default(PUBLIC)
+  isHidden         Boolean                      @default(false)
+  isPinned         Boolean                      @default(false)
+  isEdited         Boolean                      @default(false)
+  likeCount        Int                          @default(0)
+  replyCount       Int                          @default(0)
+  sortOrder        Int                          @default(0)
+  moderationReason String?
+  moderationNotes  String?
+  moderatedById    String?
+  moderator        User?                        @relation("PostCommentModerator", fields: [moderatedById], references: [id], onDelete: SetNull)
+  moderatedAt      DateTime?
+  editedAt         DateTime?
+  deletedAt        DateTime?
+  publishedAt      DateTime?                    @default(now())
+  hashtags         Json?
+  mentions         Json?
+  metadataJson     Json?
+  createdAt        DateTime                     @default(now())
+  updatedAt        DateTime                     @updatedAt
 
   @@index([postId, createdAt])
+  @@index([postId, status, createdAt])
+  @@index([postId, visibility, createdAt])
+  @@index([postId, parentCommentId, createdAt])
   @@index([userId, createdAt])
   @@index([parentCommentId])
+  @@index([moderatedById])
+  @@index([status, moderatedAt])
+  @@index([deletedAt])
+  @@index([isPinned, createdAt])
 }
 
 model PostSave {

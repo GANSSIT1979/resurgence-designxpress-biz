@@ -3663,7 +3663,7 @@ th {
   text-transform: uppercase;
 }
 
-.feed-comment-status-visible {
+.feed-comment-status-active {
   background: rgba(77, 192, 255, 0.12);
   border: 1px solid rgba(77, 192, 255, 0.22);
   color: #cdeeff;
@@ -3679,6 +3679,13 @@ th {
   background: rgba(239, 68, 68, 0.14);
   border: 1px solid rgba(239, 68, 68, 0.24);
   color: #fecaca;
+}
+
+.feed-comment-status-pending_review,
+.feed-comment-status-spam {
+  background: rgba(245, 158, 11, 0.14);
+  border: 1px solid rgba(245, 158, 11, 0.24);
+  color: #fde3a7;
 }
 
 .feed-comment-body {

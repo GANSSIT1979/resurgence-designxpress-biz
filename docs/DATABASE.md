@@ -3,6 +3,7 @@
 Updated: 2026-04-19
 
 For the current additive `ContentPost` / `MediaAsset` migration rollout, also use [PRISMA_MIGRATION_ROLLOUT_CHECKLIST.md](./PRISMA_MIGRATION_ROLLOUT_CHECKLIST.md).
+For the additive comment-schema rollout on the existing `PostComment` table, also use [PRISMA_CONTENTPOST_COMMENT_SCHEMA_INTEGRATION.md](./PRISMA_CONTENTPOST_COMMENT_SCHEMA_INTEGRATION.md) and [contentpost-comment-migration-checks.sql](./contentpost-comment-migration-checks.sql).
 
 ## Provider Strategy
 

@@ -227,11 +227,21 @@ export async function createPostComment(actor: FeedActor, postId: string, body: 
         userId: actor.id,
         parentCommentId: nullableText(parsed.data.parentCommentId),
         body: parsed.data.body,
+        bodyPlain: parsed.data.body,
+        status: 'ACTIVE',
+        visibility: 'PUBLIC',
+        isHidden: false,
       },
       include: { user: { select: { id: true, displayName: true, role: true } } },
     });
 
-    await tx.contentPost.update({ where: { id: postId }, data: { commentCount: { increment: 1 } } });
+    await tx.contentPost.update({
+      where: { id: postId },
+      data: {
+        commentCount: { increment: 1 },
+        lastCommentedAt: created.createdAt,
+      },
+    });
     return created;
   });
 

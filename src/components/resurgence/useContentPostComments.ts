@@ -198,7 +198,7 @@ export function useContentPostComments({
         parentId: parentId ?? null,
         body,
         depth: parentId ? 1 : 0,
-        status: 'VISIBLE',
+        status: 'ACTIVE',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         author: {
@@ -308,7 +308,7 @@ export function useContentPostComments({
             ? removeComment(current.comments, commentId)
             : patchComment(current.comments, commentId, (row) => ({
                 ...row,
-                status: moderation.action === 'hide' ? 'HIDDEN' : 'VISIBLE',
+                status: moderation.action === 'hide' ? 'HIDDEN' : 'ACTIVE',
               }));
 
         return { ...current, comments };

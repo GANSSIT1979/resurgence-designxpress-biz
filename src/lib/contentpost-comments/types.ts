@@ -1,4 +1,4 @@
-export type CommentModerationStatus = 'VISIBLE' | 'HIDDEN' | 'REMOVED';
+export type CommentModerationStatus = 'ACTIVE' | 'HIDDEN' | 'REMOVED' | 'PENDING_REVIEW' | 'SPAM';
 
 export type ContentPostCommentAuthor = {
   id: string | null;

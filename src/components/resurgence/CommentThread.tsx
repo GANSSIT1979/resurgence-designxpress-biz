@@ -118,15 +118,15 @@ export function CommentThread({
 
           {canModerate ? (
             <>
-              <button
-                type="button"
-                className="feed-comment-action"
-                onClick={() =>
-                  onModerate(comment.id, {
-                    action: comment.status === 'HIDDEN' ? 'unhide' : 'hide',
-                  })
-                }
-              >
+                <button
+                  type="button"
+                  className="feed-comment-action"
+                  onClick={() =>
+                    onModerate(comment.id, {
+                      action: comment.status === 'HIDDEN' ? 'unhide' : 'hide',
+                    })
+                  }
+                >
                 {comment.status === 'HIDDEN' ? 'Unhide' : 'Hide'}
               </button>
               <button

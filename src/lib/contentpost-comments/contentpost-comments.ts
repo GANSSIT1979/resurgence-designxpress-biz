@@ -1,4 +1,9 @@
-import { Prisma, type ContentPostStatus, type ContentPostVisibility } from '@prisma/client';
+import {
+  Prisma,
+  type ContentPostCommentStatus,
+  type ContentPostStatus,
+  type ContentPostVisibility,
+} from '@prisma/client';
 import { z } from 'zod';
 import { canManageAnyFeedPost } from '@/lib/feed/authorization';
 import { feedCommentInputSchema } from '@/lib/feed/validation';
@@ -49,8 +54,10 @@ type ContentPostAccessRow = {
 
 type DbClient = Prisma.TransactionClient | typeof prisma;
 
-function normalizeStatus(isHidden: boolean): ContentPostCommentRecord['status'] {
-  return isHidden ? 'HIDDEN' : 'VISIBLE';
+function normalizeStatus(row: Pick<CommentRow, 'status' | 'isHidden' | 'deletedAt'>): ContentPostCommentRecord['status'] {
+  if (row.deletedAt) return 'REMOVED';
+  if (row.status) return row.status as ContentPostCommentRecord['status'];
+  return row.isHidden ? 'HIDDEN' : 'ACTIVE';
 }
 
 function serializeComment(row: CommentRow, depth = 0): ContentPostCommentRecord {
@@ -61,7 +68,7 @@ function serializeComment(row: CommentRow, depth = 0): ContentPostCommentRecord 
     parentId: row.parentCommentId ?? null,
     body: row.body,
     depth,
-    status: normalizeStatus(row.isHidden),
+    status: normalizeStatus(row),
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
     author: row.user
@@ -131,13 +138,15 @@ async function getCommentStatsWithClient(client: DbClient, postId: string): Prom
     client.postComment.count({
       where: {
         postId,
-        isHidden: false,
+        deletedAt: null,
+        status: 'ACTIVE',
       },
     }),
     client.postComment.count({
       where: {
         postId,
-        isHidden: true,
+        deletedAt: null,
+        status: { in: ['HIDDEN', 'PENDING_REVIEW', 'SPAM'] },
       },
     }),
   ]);
@@ -152,11 +161,41 @@ async function getCommentStatsWithClient(client: DbClient, postId: string): Prom
 
 async function syncPostCommentCount(client: DbClient, postId: string) {
   const stats = await getCommentStatsWithClient(client, postId);
+  const latestActive = await client.postComment.findFirst({
+    where: {
+      postId,
+      deletedAt: null,
+      status: 'ACTIVE',
+    },
+    select: { createdAt: true },
+    orderBy: [{ createdAt: 'desc' }],
+  });
+
   await client.contentPost.update({
     where: { id: postId },
-    data: { commentCount: stats.visibleCount },
+    data: {
+      commentCount: stats.visibleCount,
+      lastCommentedAt: latestActive?.createdAt ?? null,
+    },
   });
   return stats;
+}
+
+async function syncParentReplyCount(client: DbClient, parentCommentId?: string | null) {
+  if (!parentCommentId) return;
+
+  const replyCount = await client.postComment.count({
+    where: {
+      parentCommentId,
+      deletedAt: null,
+      status: { not: 'REMOVED' },
+    },
+  });
+
+  await client.postComment.update({
+    where: { id: parentCommentId },
+    data: { replyCount },
+  });
 }
 
 function buildPermissions(actor: CommentActor | null, post: ContentPostAccessRow | null): CommentPermissions {
@@ -164,6 +203,10 @@ function buildPermissions(actor: CommentActor | null, post: ContentPostAccessRow
     canComment: Boolean(actor && post && isPublicCommentablePost(post)),
     canModerate: canModerateComments(actor, post),
   };
+}
+
+function isRemovedComment(row: Pick<CommentRow, 'status' | 'deletedAt'>) {
+  return row.deletedAt !== null || row.status === 'REMOVED';
 }
 
 export async function listContentPostComments(postId: string, actor: CommentActor | null): Promise<CommentTreeResponse | null> {
@@ -175,7 +218,10 @@ export async function listContentPostComments(postId: string, actor: CommentActo
     prisma.postComment.findMany({
       where: {
         postId,
-        ...(permissions.canModerate ? {} : { isHidden: false }),
+        deletedAt: null,
+        ...(permissions.canModerate
+          ? { status: { not: 'REMOVED' } }
+          : { status: 'ACTIVE' as ContentPostCommentStatus }),
       },
       include: {
         user: {
@@ -219,6 +265,8 @@ export async function createContentPostComment(actor: CommentActor, postId: stri
       where: {
         id: parsed.data.parentCommentId,
         postId,
+        deletedAt: null,
+        status: { not: 'REMOVED' },
       },
       select: { id: true },
     });
@@ -235,6 +283,10 @@ export async function createContentPostComment(actor: CommentActor, postId: stri
         userId: actor.id,
         parentCommentId: parsed.data.parentCommentId || null,
         body: parsed.data.body,
+        bodyPlain: parsed.data.body,
+        status: 'ACTIVE',
+        visibility: 'PUBLIC',
+        isHidden: false,
       },
       include: {
         user: {
@@ -247,6 +299,7 @@ export async function createContentPostComment(actor: CommentActor, postId: stri
       },
     });
 
+    await syncParentReplyCount(tx, parsed.data.parentCommentId || null);
     const stats = await syncPostCommentCount(tx, postId);
     return { created, stats };
   });
@@ -295,11 +348,24 @@ export async function updateContentPostComment(actor: CommentActor, postId: stri
     return { error: 'Only the comment author can edit this comment.' };
   }
 
+  if (isRemovedComment(comment)) {
+    return { error: 'Removed comments can no longer be edited.' };
+  }
+
+  if (comment.status !== 'ACTIVE') {
+    return { error: 'Only active comments can be edited.' };
+  }
+
   const updated = await prisma.postComment.update({
     where: { id: comment.id },
     data: {
       body: parsed.data.body,
+      bodyPlain: parsed.data.body,
+      status: 'ACTIVE',
       isHidden: false,
+      isEdited: true,
+      editedAt: new Date(),
+      deletedAt: null,
     },
     include: {
       user: {
@@ -326,22 +392,27 @@ export async function deleteContentPostComment(actor: CommentActor, postId: stri
     return { error: 'You do not have permission to remove this comment.' };
   }
 
-  const previousParentId = access.comment.parentCommentId ?? null;
+  if (isRemovedComment(access.comment)) {
+    return { error: 'Comment already removed.' };
+  }
 
   const stats = await prisma.$transaction(async (tx) => {
-    await tx.postComment.updateMany({
-      where: { parentCommentId: access.comment!.id },
-      data: { parentCommentId: previousParentId },
+    await tx.postComment.update({
+      where: { id: access.comment!.id },
+      data: {
+        status: 'REMOVED',
+        isHidden: true,
+        deletedAt: new Date(),
+      },
     });
 
-    await tx.postComment.delete({ where: { id: access.comment!.id } });
+    await syncParentReplyCount(tx, access.comment!.parentCommentId);
     return syncPostCommentCount(tx, postId);
   });
 
   return {
     comment: {
       ...serializeComment(access.comment),
-      parentId: previousParentId,
       status: 'REMOVED' as const,
     },
     stats,
@@ -361,6 +432,10 @@ export async function moderateContentPostComment(actor: CommentActor, postId: st
     return { error: 'Only the creator owner, staff, or admin can moderate comments on this post.' };
   }
 
+  if (isRemovedComment(access.comment)) {
+    return { error: 'Removed comments cannot be moderated further.' };
+  }
+
   if (parsed.data.action === 'remove') {
     return deleteContentPostComment(actor, postId, commentId);
   }
@@ -369,7 +444,11 @@ export async function moderateContentPostComment(actor: CommentActor, postId: st
     const row = await tx.postComment.update({
       where: { id: access.comment!.id },
       data: {
+        status: parsed.data.action === 'hide' ? 'HIDDEN' : 'ACTIVE',
         isHidden: parsed.data.action === 'hide',
+        moderationReason: parsed.data.reason ?? null,
+        moderatedById: actor.id,
+        moderatedAt: new Date(),
       },
       include: {
         user: {
