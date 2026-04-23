@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## 2026-04-23
+
+### Documentation Refresh
+
+- refreshed the root `README.md` and canonical `docs/` overview pages to reflect the live route map
+- documented the member dashboard, community feed, and free public signup flows more clearly
+- updated architecture and API docs to include Gmail signup, mobile OTP signup, feed interactions, notifications, and current support routing categories
+- refreshed the merch module guide to describe how shop flows now intersect with the member dashboard and creator-commerce feed
+- expanded the user and admin guides so role expectations match the current product surface
+
 ## 2026-04-19
 
 ### Repository Health

@@ -1,17 +1,17 @@
 # API
 
-Updated: 2026-04-19
+Updated: 2026-04-23
 
 ## Overview
 
-Route handlers live under `src/app/api`. Middleware protects `/api/*` using the role permission matrix in `src/lib/permissions.ts`.
+Route handlers live under `src/app/api`. Middleware protects `/api/*` with the role permission matrix in `src/lib/permissions.ts`.
 
-Important behavior note:
+Accuracy notes:
 
-- many admin module handlers use `POST` for create and update flows instead of strict REST-only verbs
-- dashboard page redirects such as `/admin/revenue-monitoring` and `/cashier/revenue-monitoring` are page compatibility routes, not separate API modules
+- many admin and dashboard-backed modules use pragmatic form-oriented handlers rather than a strict REST-only style
+- some page compatibility redirects exist in the UI layer and should not be treated as separate API modules
 
-## Public Routes
+## Public Health, Inquiry, And Commerce Entry Points
 
 - `GET /api/health`
 - `POST /api/inquiries`
@@ -20,22 +20,57 @@ Important behavior note:
 - `GET /api/shop/products/[slug]`
 - `POST /api/checkout`
 
-Commerce behavior note:
+Commerce behavior notes:
 
-- the current cart is stored client-side and does not have a dedicated `/api/cart` route
-- checkout accepts official merch variants through each item `variantLabel`
-- supported checkout payment methods are `COD`, `GCASH_MANUAL`, `MAYA_MANUAL`, `BANK_TRANSFER`, `CARD_MANUAL`, and `CASH`
-- `/account/orders` is a page-level email lookup flow, not an API resource
+- the cart is client-side and there is no active collection-level `/api/cart` route
+- checkout accepts merch variants through each item `variantLabel`
+- supported payment methods are `COD`, `GCASH_MANUAL`, `MAYA_MANUAL`, `BANK_TRANSFER`, `CARD_MANUAL`, and `CASH`
+- `/account/orders` is a page-level email lookup flow, not an order API resource
 
-## Auth And Shared Protected Routes
+## Auth And Session Routes
 
 - `POST /api/auth/login`
 - `POST /api/auth/logout`
 - `GET /api/auth/me`
+- `POST /api/auth/google`
+- `POST /api/auth/mobile/request-otp`
+- `POST /api/auth/mobile/verify-otp`
+
+These routes power both standard sign-in and free public account creation from `/login`.
+
+## Feed And Community Routes
+
+- `GET /api/feed`
+- `POST /api/feed`
+- `GET /api/feed/[postId]`
+- `PATCH /api/feed/[postId]`
+- `DELETE /api/feed/[postId]`
+- `GET /api/feed/[postId]/comments`
+- `POST /api/feed/[postId]/comments`
+- `POST /api/feed/[postId]/like`
+- `POST /api/feed/[postId]/save`
+- `POST /api/feed/[postId]/products`
+- `POST /api/feed/creators/[creatorId]/follow`
+- `POST /api/creators/[creatorId]/follow`
+- `GET /api/feed/promoted`
+
+Community behavior notes:
+
+- public reads work without authentication
+- create/update/delete flows are limited to allowed feed actors such as creator, staff, or admin users
+- follow, like, comment, and save actions require an authenticated actor
+- `/api/creators/[creatorId]/follow` is a compatibility alias that re-exports the feed follow handler
+
+## Notifications, Uploads, And Shared Protected Routes
+
 - `GET /api/notifications`
 - `PATCH /api/notifications/[id]`
 - `GET /api/activity-logs`
 - `POST /api/uploads/image`
+- `GET /api/uploads/image/[id]`
+- `GET /api/uploads/r2/[...key]`
+
+`GET /api/notifications` returns the role/user inbox view backed by `PlatformNotification` and `AutomatedEmail` records.
 
 ## Support Routes
 
@@ -46,12 +81,21 @@ Commerce behavior note:
 - `GET /api/openai/webhook`
 - `POST /api/openai/webhook`
 
-Current support behavior:
+Current support routing categories:
+
+- sponsorships
+- orders
+- payments
+- events
+- custom-apparel
+- partnerships
+
+Support behavior notes:
 
 - `GET /api/chatkit/session` returns support bootstrap status for the widget
 - `POST /api/chatkit/session` returns either a conversation bootstrap or a local ChatKit-style session payload
-- `POST /api/chatkit/message` routes questions into `sponsorships`, `events`, `custom-apparel`, or `partnerships`
-- `POST /api/chatkit/lead` creates an `Inquiry` and queues platform notifications and automated emails
+- `POST /api/chatkit/message` routes support questions into the configured category lanes above
+- `POST /api/chatkit/lead` creates `Inquiry`, notification, and automated email records
 - `POST /api/openai/webhook` verifies signed webhook payloads
 
 ## Sponsor Portal Routes
@@ -60,7 +104,10 @@ Current support behavior:
 - `/api/sponsor/deliverables` and `/api/sponsor/deliverables/[id]`
 - `/api/sponsor/packages`
 - `/api/sponsor/billing`
+- `/api/sponsor/placements` and `/api/sponsor/placements/[id]`
 - `/api/sponsor/profile`
+
+These routes back the sponsor dashboard, applications, deliverables, billing, placements, and profile pages.
 
 ## Partner Routes
 
@@ -90,28 +137,20 @@ Admin module routes exist for:
 
 - content
 - creator network
-- gallery media
+- creators
+- feed moderation
+- gallery media and media events
 - inquiries
-- media events
 - partners
 - product services
 - reports
 - settings
 - merch orders
-- official merch products
+- merch products
 - sponsor inventory
 - sponsor packages
 - sponsor submissions
 - sponsors
 - users
 
-Some admin modules expose collection and item endpoints that are thin form-backed CRUD handlers rather than a fully uniform REST surface.
-
-Official merch admin endpoints specifically include:
-
-- `GET /api/admin/shop-products`
-- `POST /api/admin/shop-products`
-- `PUT /api/admin/shop-products/[id]`
-- `DELETE /api/admin/shop-products/[id]`
-- `GET /api/admin/shop-orders`
-- `PUT /api/admin/shop-orders/[id]`
+Admin route families live under `/api/admin/*` and are intentionally aligned with the admin dashboard modules rather than exposed as a public third-party API surface.

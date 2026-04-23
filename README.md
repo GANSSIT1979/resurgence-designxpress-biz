@@ -1,41 +1,74 @@
 # RESURGENCE Powered by DesignXpress
 
-Updated: 2026-04-21
+Updated: 2026-04-23
 
-RESURGENCE Powered by DesignXpress is a Next.js 15 + Prisma platform for public sponsorship marketing, live support intake, Official Resurgence Merch commerce, and role-based operations for admin, cashier, sponsor, creator, staff, and partner users.
+RESURGENCE Powered by DesignXpress is a Next.js 15 + Prisma platform for basketball community access, creator visibility, Official Resurgence Merch commerce, sponsorship and partnership workflows, support intake, and role-based business operations.
 
-## Site Type
+## Platform Snapshot
 
-- Exact category: `React/Node` web application
-- Framework: `Next.js 15` with the App Router in `src/app`
+- Public discovery pages for the brand, services, sponsors, creators, partnerships, support, and commerce
+- Free account creation for `MEMBER`, `CREATOR`, `COACH`, `REFEREE`, `SPONSOR`, and `PARTNER`
+- Protected workspaces for admin, cashier, member, sponsor, creator, coach, referee, staff, and partner users
+- Community feed experiences that connect creators, sponsor placements, merch tags, follows, likes, comments, and saved posts
+- Official merch browsing, checkout, and email-based order lookup
+
+## Stack Reality
+
+- Framework: `Next.js 15` App Router in `src/app`
 - Frontend: `React 19`
-- Server/runtime: `Node.js 20.x`
-- Data layer: `Prisma ORM`
-- Not this: WordPress, Laravel/PHP, or a static HTML website
+- Runtime: `Node.js 20.x`
+- ORM: `Prisma`
+- Database provider workflow: `scripts/prepare-prisma-schema.mjs` writes `prisma/schema.generated.prisma` based on `PRISMA_DB_PROVIDER` or `DATABASE_URL`
+- This is not a WordPress site, Laravel/PHP app, or static HTML-only project
 
-## Current Status
+## Current Product Surface
 
-- The active application lives in `src/`.
-- `npx tsc --noEmit --pretty false` passes.
-- `npm run build` passes.
-- `npm run support:verify` passes against a running local instance.
-- The `docs/` folder is the canonical documentation set.
-- Root-level patch-note Markdown files are historical notes, not the source of truth.
+Public routes include:
 
-## Product Areas
+- `/`
+- `/about`
+- `/services`
+- `/sponsors`
+- `/partnerships`
+- `/creators`
+- `/creators/[slug]`
+- `/creator/[slug]`
+- `/feed`
+- `/shop`
+- `/shop/product/[slug]`
+- `/cart`
+- `/checkout`
+- `/account/orders`
+- `/contact`
+- `/support`
+- `/quotation`
+- `/sponsor/apply`
+- `/login`
+- `/privacy`
+- `/terms`
 
-- Public pages: `/`, `/about`, `/services`, `/sponsors`, `/creators`, `/creators/[slug]`, `/creator/[slug]`, `/contact`, `/support`, `/shop`, `/cart`, `/checkout`, `/account/orders`, `/sponsor/apply`
-- Protected dashboards: `/admin`, `/cashier`, `/creator/dashboard`, `/sponsor/dashboard`, `/staff`, `/partner`
-- Sponsor portal pages: `/sponsor/applications`, `/sponsor/packages`, `/sponsor/deliverables`, `/sponsor/billing`, `/sponsor/profile`
-- Support APIs: `/api/chatkit/session`, `/api/chatkit/message`, `/api/chatkit/lead`, `/api/openai/webhook`
-- Commerce and finance APIs: official merch products, checkout, invoices, transactions, receipts, reports
-- Admin CMS and operations APIs: users, sponsors, packages, submissions, creators, gallery media, reports, settings, merch data
+Protected role areas include:
 
-Commerce note:
+- `/admin`
+- `/cashier`
+- `/member`
+- `/creator/dashboard`
+- `/creator/posts`
+- `/coach`
+- `/referee`
+- `/sponsor/dashboard`
+- `/staff`
+- `/partner`
 
-- the cart is client-side in the current app
-- official merch supports selectable variants such as size and color
-- `/account/orders` is an email-based order lookup page, not a signed-in customer dashboard
+Compatibility pages such as `/partner/dashboard`, `/admin/revenue-monitoring`, `/cashier/revenue-monitoring`, and nested sponsor dashboard subpages are preserved for redirect/backward-compatibility purposes.
+
+## Registration And Auth
+
+- `/login` handles both sign-in and free account creation
+- Public signup supports Gmail or mobile OTP flows
+- Public signup roles are `MEMBER`, `CREATOR`, `COACH`, `REFEREE`, `SPONSOR`, and `PARTNER`
+- Seeded local accounts exist for admin, cashier, sponsor, staff, partner, and creator testing
+- Member, coach, and referee local testing can be exercised by signing up through `/login`
 
 ## Quick Start
 
@@ -63,22 +96,16 @@ npm run db:seed
 npm run dev
 ```
 
-Windows local HTTPS:
+If you changed `PRISMA_DB_PROVIDER` or `DATABASE_URL`, rerun `npm run prisma:generate` before building or deploying.
 
-```powershell
-npm run dev:https
-```
-
-If you change `PRISMA_DB_PROVIDER`, rerun `npm run prisma:generate` before pushing, migrating, or building.
-
-## Demo Accounts
+## Verified Seeded Local Accounts
 
 - System Admin: `admin@resurgence.local` / `Admin123!`
 - Cashier: `cashier@resurgence.local` / `Cashier123!`
 - Sponsor: `sponsor@resurgence.local` / `Sponsor123!`
 - Staff: `staff@resurgence.local` / `Staff123!`
 - Partner: `partner@resurgence.local` / `Partner123!`
-- Creator examples: `jake.anilao@resurgence.local` / `Jake@2026Resurgence!`
+- Creator example: `jake.anilao@resurgence.local` / `Jake@2026Resurgence!`
 
 ## Verification
 
@@ -87,38 +114,42 @@ npx tsc --noEmit --pretty false
 npm run build
 ```
 
-Support verification:
+Support verification against a running local server:
 
 ```bash
 npm run support:verify -- --base-url=http://localhost:3000
 ```
 
-## Core URLs
+## Core Local URLs
 
 - `http://localhost:3000`
 - `https://localhost:3000` with `npm run dev:https`
 - `http://localhost:3000/login`
+- `http://localhost:3000/member`
+- `http://localhost:3000/feed`
+- `http://localhost:3000/shop`
 - `http://localhost:3000/support`
 - `http://localhost:3000/api/health`
 
 ## Documentation
 
-Start with [`docs/README.md`](./docs/README.md).
+Start with [docs/README.md](./docs/README.md).
 
 Recommended references:
 
-- [`docs/INSTALL.md`](./docs/INSTALL.md)
-- [`docs/QUICKSTART.md`](./docs/QUICKSTART.md)
-- [`docs/API.md`](./docs/API.md)
-- [`docs/VERCEL.md`](./docs/VERCEL.md)
-- [`vercel.production.env.example`](./vercel.production.env.example)
-- [`docs/SHOP_MODULE.md`](./docs/SHOP_MODULE.md)
-- [`docs/DATABASE.md`](./docs/DATABASE.md)
-- [`docs/AI_SUPPORT_PRODUCTION.md`](./docs/AI_SUPPORT_PRODUCTION.md)
-- [`docs/TROUBLESHOOTING.md`](./docs/TROUBLESHOOTING.md)
+- [docs/INSTALL.md](./docs/INSTALL.md)
+- [docs/QUICKSTART.md](./docs/QUICKSTART.md)
+- [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)
+- [docs/API.md](./docs/API.md)
+- [docs/SHOP_MODULE.md](./docs/SHOP_MODULE.md)
+- [docs/USER_GUIDE.md](./docs/USER_GUIDE.md)
+- [docs/ADMIN_GUIDE.md](./docs/ADMIN_GUIDE.md)
+- [docs/VERCEL.md](./docs/VERCEL.md)
+- [docs/TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md)
 
 ## Notes
 
-- Local development defaults to SQLite with `prisma/dev.db`.
-- Production deployments can switch to PostgreSQL through `PRISMA_DB_PROVIDER=postgresql`.
-- The Prisma prep step wired into npm scripts is `scripts/prepare-prisma-schema.mjs`.
+- Local development falls back to SQLite when neither `PRISMA_DB_PROVIDER` nor a provider-shaped `DATABASE_URL` is set.
+- Hosted environments should use PostgreSQL and set `PRISMA_DB_PROVIDER=postgresql` or a PostgreSQL `DATABASE_URL`.
+- The `docs/` folder is the canonical documentation set.
+- Root-level patch-note Markdown files are retained as historical implementation notes, not the source of truth.

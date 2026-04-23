@@ -1,87 +1,40 @@
 # USER GUIDE
 
-Updated: 2026-04-19
+Updated: 2026-04-23
 
 ## What This Platform Is
 
-RESURGENCE Powered by DesignXpress is a sponsorship and business operations platform with:
+RESURGENCE Powered by DesignXpress is a basketball-focused platform that combines:
 
-- public information pages
-- sponsor applications
-- support and contact channels
-- creator and gallery presentation
-- sponsor-facing portal access
-- creator-facing dashboard access when a creator account is linked
-- free public registration for members, creators, coaches, referees, sponsors, and partners
-- internal dashboards for admin, cashier, staff, and partner users
-
-Important accuracy note:
-
-- creator dashboard access depends on a `CREATOR` role account and a matching creator profile record
+- public brand and service pages
+- creators and community content
+- support and contact flows
+- sponsorship and partnership inquiry paths
+- Official Resurgence Merch commerce
+- free public role registration
+- protected role-based workspaces
 
 ## Public Visitors
 
-You can:
+Without signing in, you can:
 
-- browse sponsorship information and public site content
-- submit a sponsor application on `/sponsor/apply`
-- send a general inquiry through the public contact flow
-- use the support area on `/support`
-- browse sponsor and creator content
-- browse Official Resurgence Merch on `/shop`, manage `/cart`, complete `/checkout`, and look up orders on `/account/orders`
-- select merch size/color variants on product pages when options are available
+- browse the homepage, services, sponsors, partnerships, and creator pages
+- explore the public community feed on `/feed`
+- browse Official Resurgence Merch on `/shop`
+- add items to `/cart` and complete `/checkout`
+- look up orders on `/account/orders` using the checkout email
+- submit sponsor applications on `/sponsor/apply`
+- reach out through `/contact`, `/support`, or `/quotation`
 
-## Sponsor Users
+## Create A Free Account
 
-Sponsor users can typically access:
+Open `/login` to:
 
-- sponsor overview
-- applications
-- deliverables
-- billing reference
-- profile updates
+- sign in with an existing account
+- create a new free account with Gmail
+- create a new free account with mobile OTP verification
 
-What you should expect:
-
-- only sponsor-linked data should be visible to your account
-- profile details should save through the sponsor profile page
-- deliverables and application history should reflect current sponsor records
-
-## Creator Users
-
-Creator content is public, and creator users can access creator dashboard features when their account is configured.
-
-What you should expect:
-
-- public creator profiles appear in the creators directory
-- creator dashboard access requires a `CREATOR` role login
-- creator dashboard features work best when the signed-in email is linked to a `CreatorProfile`
-- creator records are managed through the platform's admin tools
-
-## Official Merch
-
-The merch flow supports:
-
-- searchable product browsing on `/shop`
-- product details with stock, material, fit, care, size, and color options
-- cart lines that preserve selected variants
-- checkout payment choices for Cash on Delivery, GCash, Maya, Bank Transfer, Credit/Debit Card, and Cash
-- email-based order lookup on `/account/orders`
-
-## Support
-
-The Support page may operate in one of two modes:
-
-- live AI enabled
-- graceful disabled mode with guidance to use contact channels
-
-When support captures enough lead detail, the platform can create inquiry and follow-up records for the internal team.
-
-## Login
-
-Use the credentials provided by the platform administrator, sign in with a registered mobile number and password, or create a new free account from `/login`.
-
-New users can choose:
+Public signup roles are:
 
 - Regular Member
 - Creator
@@ -90,34 +43,128 @@ New users can choose:
 - Sponsor
 - Partner
 
-Signup options:
+After signup or login, the platform redirects you to the dashboard that matches your role.
 
-- Continue with Gmail when Google authentication is configured
-- Continue with Mobile Number with OTP verification
+## Role Experiences
 
-Membership registration is free for all public account types.
+### Regular Member
 
-Current signed-in role areas are:
+Members use `/member` as their community home base.
 
-- admin
-- cashier
-- regular member
-- creator
-- coach
-- referee
-- sponsor
-- staff
-- partner
+The member dashboard can show:
+
+- merch order summary and quick lookup links
+- followed creators
+- saved feed posts
+- community highlights
+- featured merch recommendations
+- notifications and automated workflow inbox items
+
+### Creator
+
+Creator users can access:
+
+- `/creator/dashboard`
+- `/creator/posts`
+
+What to expect:
+
+- public creator profiles still appear in the creators directory
+- dashboard access requires a `CREATOR` role login
+- the best experience happens when the signed-in email is linked to a `CreatorProfile`
+- creators can manage feed-post activity from the creator workspace
+
+### Coach And Referee
+
+Coach and referee accounts currently provide lighter dashboard shells at:
+
+- `/coach`
+- `/referee`
+
+These roles are positioned for profile completion, future coordination, and community access rather than deep workflow management today.
+
+### Sponsor
+
+Sponsor users can access:
+
+- `/sponsor/dashboard`
+- `/sponsor/applications`
+- `/sponsor/packages`
+- `/sponsor/placements`
+- `/sponsor/deliverables`
+- `/sponsor/billing`
+- `/sponsor/profile`
+
+### Partner
+
+Partner users can access:
+
+- `/partner`
+- `/partner/campaigns`
+- `/partner/referrals`
+- `/partner/agreements`
+- `/partner/profile`
+
+### Staff, Cashier, And Admin
+
+These internal roles are provisioned by the platform team and are not part of the public self-signup flow.
+
+Internal role areas include:
+
+- `/staff`
+- `/cashier`
+- `/admin`
+
+## Community Feed
+
+The feed is available on `/feed` and also appears on the homepage.
+
+What signed-in users can do depends on role and permissions, but the platform supports:
+
+- reading public creator and community posts
+- following creators
+- liking posts
+- saving posts
+- commenting on posts
+- opening merch linked from product tags or sponsor placements
+
+## Official Merch
+
+The merch flow supports:
+
+- product browsing on `/shop`
+- product detail pages with stock, material, fit, care, size, and color options
+- cart lines that preserve selected variants
+- checkout payment choices for COD, GCash, Maya, bank transfer, card, and cash
+- email-based order lookup on `/account/orders`
+
+Important accuracy note:
+
+- even if you are signed in as a member, merch order lookup is still keyed to the checkout email, not a separate customer-account order system
+
+## Support And Quotation Help
+
+Use `/support` for guided help with:
+
+- sponsorships
+- orders
+- payments
+- events
+- custom apparel
+- partnerships
+
+Use `/quotation` or the support/contact flows when you have serious business intent such as custom uniforms, large apparel orders, sponsorships, or partnership requests.
 
 ## If Something Looks Missing
 
 This usually means one of these:
 
-- your account is not linked to the correct role or related record
-- data has not been created yet
-- a module is partially configured but not populated
+- your account is not linked to the right role or related record
+- required data has not been created yet
+- your role has a lightweight shell today and a deeper workflow is planned later
+- the relevant feature needs a human team member to confirm next steps
 
-When in doubt, contact the admin team.
+When in doubt, contact the admin or support team.
 
 ## Compatibility Notes
 

@@ -1,17 +1,17 @@
 # ADMIN GUIDE
 
-Updated: 2026-04-19
+Updated: 2026-04-23
 
 ## Admin Scope
 
 System Admin users oversee:
 
 - users and role assignments
-- sponsors, sponsor packages, submissions, and sponsor inventory
-- creators, media events, gallery media, and content
-- inquiries and support lead follow-up
-- official merch products and merch orders
-- settings and executive reports
+- sponsors, sponsor packages, submissions, placements, and sponsor inventory
+- creators, feed content, media events, gallery media, and public presentation
+- inquiries, support leads, notifications, and automation visibility
+- Official Resurgence Merch products and merch orders
+- settings, reports, and executive operational visibility
 
 ## Core Admin Areas
 
@@ -20,6 +20,8 @@ System Admin users oversee:
 - `/admin/inquiries`
 - `/admin/content`
 - `/admin/creator-network`
+- `/admin/creators`
+- `/admin/feed`
 - `/admin/gallery`
 - `/admin/partners`
 - `/admin/product-services`
@@ -32,16 +34,43 @@ System Admin users oversee:
 - `/admin/sponsor-submissions`
 - `/admin/sponsors`
 
-`/admin/revenue-monitoring` is now just a compatibility redirect to `/admin/reports`.
+`/admin/revenue-monitoring` is a compatibility redirect to `/admin/reports`.
 
 ## Daily Admin Checklist
 
-1. Review new inquiries and support leads
-2. Review sponsor submissions and sponsor records
-3. Check creator, gallery, and public content changes
-4. Review official merch stock, featured drops, and open merch orders
-5. Review reports, settings, and notifications
-6. Review email automation failures if `EMAIL_WEBHOOK_URL` is configured
+1. Review new inquiries, support leads, and unread notifications
+2. Review sponsor submissions, placements, deliverables, and sponsor records
+3. Review creator, gallery, and feed content changes
+4. Review merch products, stock, featured drops, and open merch orders
+5. Review user records, role assignments, and linked sponsor/partner/creator profiles
+6. Review reports, settings, and email automation failures when `EMAIL_WEBHOOK_URL` is configured
+
+## User And Role Administration
+
+Use `/admin/users` to:
+
+- activate or deactivate users
+- assign roles
+- validate whether a role-linked record exists
+- help troubleshoot why a dashboard or protected page is not loading as expected
+
+Important examples:
+
+- creator dashboards depend on a `CREATOR` login plus a linked `CreatorProfile`
+- sponsor and partner dashboards depend on linked profile records
+- member accounts can self-register, but merch order history still depends on checkout email
+
+## Content And Community Operations
+
+Admin content responsibilities span:
+
+- creator directory records
+- feed moderation and post visibility
+- promoted sponsor placement oversight
+- media events and gallery uploads
+- public content sections and settings-driven copy
+
+Use `/admin/feed` when you need to moderate creator-commerce content or review promoted placements.
 
 ## Official Merch Admin
 
@@ -56,17 +85,18 @@ Use `/admin/products` to create and update official merch products with:
 
 Use `/admin/orders` to review merch orders, selected variants, shipping details, payment method, payment status, and fulfillment status.
 
-## Support Oversight
+## Support And Workflow Oversight
 
-The support desk can create:
+The support and automation layer can create:
 
 - `Inquiry` records
 - `PlatformNotification` records
 - `AutomatedEmail` records
 
-Support lead follow-up usually starts from `/admin/inquiries`.
+Support follow-up usually starts from `/admin/inquiries`, but admins should also be aware of notification inbox behavior and degraded workflow states reported by the app.
 
 ## API Notes
 
-- many admin collection and item routes are dashboard form handlers and use `POST`
+- admin collection and item routes live under `/api/admin/*`
+- many admin handlers are form-oriented `POST`/`PUT`/`DELETE` flows rather than a public REST contract
 - admin-only data access is enforced by middleware and the permission matrix

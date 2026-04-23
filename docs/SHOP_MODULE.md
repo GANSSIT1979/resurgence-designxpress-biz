@@ -1,18 +1,20 @@
 # OFFICIAL RESURGENCE MERCH MODULE
 
-Updated: 2026-04-19
+Updated: 2026-04-23
 
 ## Overview
 
-The Resurgence shop is now the Official Resurgence Merch module. It is already built into this repository and does not need to be imported as a separate starter package.
+The Resurgence shop is the Official Resurgence Merch module already integrated into this repository. It powers public merch browsing, checkout, order lookup, and admin product/order operations from the same application that serves the community feed and role dashboards.
 
 The live commerce flow covers:
 
-- searchable/filterable merch browsing on `/shop`
-- product detail pages on `/shop/product/[slug]` with size, color, quantity, stock, material, fit, and care details
-- cart management on `/cart` with separate lines for selected variants
-- checkout on `/checkout` with selected variants stored on order items
+- merch browsing on `/shop`
+- product detail pages on `/shop/product/[slug]`
+- cart management on `/cart`
+- checkout on `/checkout`
 - email-based order lookup on `/account/orders`
+- member dashboard links and merch recommendations on `/member`
+- merch-aware community feed product tags on `/feed`
 - admin merch product management on `/admin/products`
 - admin merch order management on `/admin/orders`
 
@@ -25,6 +27,7 @@ Pages:
 - `src/app/cart/page.tsx`
 - `src/app/checkout/page.tsx`
 - `src/app/account/orders/page.tsx`
+- `src/app/member/page.tsx`
 - `src/app/admin/products/page.tsx`
 - `src/app/admin/orders/page.tsx`
 
@@ -51,22 +54,27 @@ Reusable UI and domain logic live in:
 - `src/components/image-upload-field.tsx`
 - `src/lib/shop.ts`
 - `src/lib/shop/types.ts`
+- `src/lib/shop/cart-storage.ts`
 
-Important implementation note:
+Important implementation notes:
 
 - the cart is client-side state stored in local storage under `resurgence_cart`
-- there is no dedicated `/api/cart` route in the current app
-- there is no `src/lib/shop/session.ts` in the live repo because checkout does not depend on a signed-in storefront account
+- there is no collection-level `/api/cart` route in the current app
+- checkout does not depend on a signed-in storefront account
+- the member dashboard improves discovery and access, but order ownership remains tied to checkout email
 
 ## Access Model
 
 Commerce access currently works like this:
 
 - `/shop`, `/shop/product/[slug]`, `/cart`, and `/checkout` are public
-- `/account/orders` is a public order lookup page that filters by checkout email
+- `/account/orders` is a public order lookup page filtered by checkout email
+- `/member` can deep-link a signed-in member into their email-based order lookup and merch highlights
 - `/admin/products` and `/admin/orders` are protected by admin middleware and the role permission matrix
 
-This means the shop does not currently use a customer account login flow. Older wording that describes `/account/orders` as a signed-in account dashboard is not accurate for this repository.
+Important accuracy note:
+
+- the presence of a member dashboard does not mean the merch module has become a full customer-account storefront with server-owned carts and account-native order history
 
 ## Checkout And Payment Behavior
 
@@ -104,21 +112,29 @@ Current server behavior in `src/app/api/checkout/route.ts`:
 
 `ShopOrderItem` stores `variantLabel` so fulfillment can see selections such as `Size: L / Color: Black`.
 
+## Community Feed Integration
+
+The merch module is also connected to the creator-commerce feed:
+
+- posts can carry merch product tags
+- promoted placements can point users into merch detail pages
+- the member dashboard can surface recommended featured products alongside feed activity
+
+This means commerce is not isolated to the shop route alone; it is also discoverable through community and dashboard experiences.
+
 ## Admin Uploads
 
 System Admin users can upload merch images through the product manager. Uploads use the `merch` scope and are stored under:
 
 - local development: `public/uploads/merch`
-- Vercel/serverless production: PostgreSQL-backed `UploadAsset` records served through `/api/uploads/image/[id]`
-- Cloudflare R2 production: object keys such as `merch/2026/04/file-name.jpg`, served through `R2_PUBLIC_BASE_URL` or `/api/uploads/r2`
-
-For large production catalogs, move image storage to object storage such as S3-compatible storage or Cloudflare R2.
+- database-backed production modes: `UploadAsset` records served through `/api/uploads/image/[id]`
+- object-storage-backed delivery: `/api/uploads/r2/[...key]` with public base URL support when configured
 
 ## Prisma Models
 
 The active shop schema is already merged into `prisma/schema.prisma`.
 
-Commerce models and enums currently include:
+Commerce models and enums include:
 
 - `ShopCategory`
 - `ShopProduct`
@@ -131,59 +147,25 @@ Commerce models and enums currently include:
 Related files:
 
 - active schema: `prisma/schema.prisma`
+- generated schema: `prisma/schema.generated.prisma`
 - active seed: `prisma/seed.ts`
-- sample shop seed/reference: `prisma/seed-shop.ts`
-- legacy reference patch: `prisma/shop-extension.prisma`
-
-`prisma/shop-extension.prisma` is retained as a reference artifact. It is not a required merge step for this repository because the live schema already contains the commerce models.
-
-## Stack Reality
-
-The live shop uses the same stack as the rest of the application:
-
-- Next.js App Router
-- TypeScript
-- Prisma ORM
-- the existing Resurgence auth, middleware, and permission layer
-- the current project styling system
-
-Older starter text that assumes Tailwind-only integration or a separate auth adapter file does not reflect how this repository is currently wired.
 
 ## Environment And Configuration Notes
 
-Relevant project configuration for the live repo includes:
+Relevant project configuration includes:
 
 - `DATABASE_URL`
 - `PRISMA_DB_PROVIDER`
 - `JWT_SECRET`
 - `NEXT_PUBLIC_SITE_URL`
+- `GCASH_NUMBER`
+- `MAYA_NUMBER`
+- `BANK_ACCOUNT_NAME`
+- `BANK_ACCOUNT_NUMBER`
+- `BANK_NAME`
 
-Important accuracy notes:
+Accuracy notes:
 
 - the current repository uses `JWT_SECRET`, not `AUTH_SECRET`
-- the live checkout page reads `GCASH_NUMBER`, optional `MAYA_NUMBER`, `BANK_ACCOUNT_NAME`, `BANK_ACCOUNT_NUMBER`, and `BANK_NAME` for customer-facing manual payment instructions
-- business-level payment/contact information is configured through app settings and environment-backed defaults
-
-## Seeded Official Products
-
-`prisma/seed.ts` creates the official categories and products used for local/demo environments:
-
-- Jerseys
-- Training Apparel
-- Lifestyle Apparel
-- Accessories
-- Creator Drops
-
-Seeded products include the Resurgence Pro Jersey, Training Hoodie, Court Tee, Signature Cap, DesignXpress Game Shorts, Courtside Tumbler, and Jake Anilao Creator Tee.
-
-## Integration Guidance For Other Repositories
-
-If you reuse this commerce module in another project, the adaptation work is mostly:
-
-1. merge the commerce models into that project's Prisma schema
-2. copy the shop pages, route handlers, components, and helpers
-3. connect the Prisma import path if the destination project exposes Prisma differently
-4. connect route protection for admin product and order management
-5. decide whether to keep the current public email-based order lookup or replace it with a customer account model
-
-That guidance applies to external reuse only. It is not a setup step for this repository because the shop is already integrated.
+- business payment/contact details are resolved through app settings and environment-backed defaults
+- the provider-selection step is handled before Prisma commands by `scripts/prepare-prisma-schema.mjs`

@@ -1,87 +1,140 @@
 # ARCHITECTURE
 
-Updated: 2026-04-21
+Updated: 2026-04-23
 
 ## Site Type
 
 - Application class: `React/Node`
-- Framework: `Next.js 15 App Router`
-- UI model: React components under `src/app` and `src/components`
-- Server model: Next.js route handlers under `src/app/api` running on Node-compatible hosting
+- Framework: `Next.js 15` App Router
+- UI model: React server and client components under `src/app` and `src/components`
+- Server model: Next.js route handlers under `src/app/api`
 - Persistence: Prisma-backed relational database access
-- Explicitly not a WordPress CMS, Laravel/PHP stack, or static-only site
+- Explicitly not a WordPress CMS, Laravel/PHP stack, or static-only export
 
 ## High-Level Layers
 
-1. Public marketing and commerce pages
-2. Role-based dashboards
+1. Public marketing, community, and commerce pages
+2. Auth, registration, role redirects, and protected dashboards
 3. Route handlers and domain helpers
-4. Prisma persistence
-5. Optional external webhooks and workflow integrations
+4. Prisma persistence and upload/storage workflows
+5. External webhooks, notifications, and automation integrations
 
-## UI Layer
+## Public Route Surface
 
-Public routes include:
+Primary public pages include:
 
 - `/`
 - `/about`
 - `/services`
 - `/sponsors`
-- `/sponsor/apply`
-- `/contact`
-- `/support`
-- `/shop`
-- `/cart`
-- `/checkout`
-- `/account/orders`
+- `/partnerships`
 - `/creators`
 - `/creators/[slug]`
 - `/creator/[slug]`
+- `/feed`
+- `/shop`
+- `/shop/product/[slug]`
+- `/cart`
+- `/checkout`
+- `/account/orders`
+- `/contact`
+- `/support`
+- `/quotation`
+- `/sponsor/apply`
+- `/login`
+- `/privacy`
+- `/terms`
 
-Protected dashboard entry points:
+The homepage and `/feed` both mount the creator-commerce feed experience, with fallbacks into gallery content when feed tables are unavailable.
+
+## Protected Dashboards
+
+Protected dashboard entry points include:
 
 - `/admin`
 - `/cashier`
+- `/member`
 - `/creator/dashboard`
+- `/creator/posts`
+- `/coach`
+- `/referee`
 - `/sponsor/dashboard`
 - `/staff`
 - `/partner`
 
-Creator dashboard access is available for configured `CREATOR` role accounts. Creator records also appear as public profile content managed by admin tools.
+Role experience shape:
 
-The Official Resurgence Merch flow uses public browsing, client-side cart state, checkout, and email order lookup. Order review happens on `/account/orders` through checkout email lookup rather than a signed-in customer account session.
+- `MEMBER` has a dedicated dashboard that aggregates orders, follows, saved posts, community highlights, merch recommendations, and notifications
+- `CREATOR`, `SPONSOR`, `PARTNER`, `STAFF`, `CASHIER`, and `SYSTEM_ADMIN` have workflow-oriented dashboards
+- `COACH` and `REFEREE` currently use lighter community dashboard shells that prepare for future profile and coordination workflows
+
+Compatibility routes such as `/partner/dashboard` and nested `/sponsor/dashboard/*` paths redirect into their primary top-level destinations.
 
 ## Auth And Permissions
 
 - session cookie name: `resurgence_admin_session`
-- session signing: `src/lib/auth.ts`
+- session signing and verification: `src/lib/auth.ts`
 - server-side session lookup: `src/lib/session-server.ts`
-- route protection: `src/middleware.ts`
+- protected route middleware: `src/middleware.ts`
 - permission matrix: `src/lib/permissions.ts`
+- role metadata and redirect mapping: `src/lib/resurgence.ts`
 
-Middleware protects `/admin`, `/cashier`, `/staff`, `/partner`, the sponsor portal routes, and `/api/*`.
+Auth flows include:
 
-## Server Layer
+- standard login through `/api/auth/login`
+- public Gmail signup through `/api/auth/google`
+- public mobile OTP signup through `/api/auth/mobile/request-otp` and `/api/auth/mobile/verify-otp`
+- role-based redirect after successful authentication or signup
 
-The route handlers in `src/app/api` cover:
+## Community And Commerce Layer
 
-- auth
+Community feed capabilities include:
+
+- public feed reads
+- creator follow/unfollow
+- like/unlike, comment, and save/unsave interactions
+- product tags that deep-link into merch
+- promoted sponsor placements
+- admin moderation support
+
+Commerce capabilities include:
+
+- public shop browsing
+- client-side cart storage
+- checkout with selected variants
+- transactional order creation and stock deduction
+- email-based order lookup on `/account/orders`
+
+Important commerce nuance:
+
+- the member dashboard can prefill order lookup links for the signed-in user
+- the merch order system is still email-based and is not a server-side customer account order history model
+
+## API Domains
+
+Route handlers in `src/app/api` cover:
+
+- auth and session
 - public inquiries and sponsor submissions
+- feed and creator-commerce interactions
 - support routing and lead capture
-- official merch listing, checkout, and admin merch management
-- admin CRUD modules
+- merch listing and checkout
+- notifications and uploads
 - sponsor, partner, staff, and cashier workflows
-- uploads, notifications, and health checks
-
-For commerce specifically, merch browsing is backed by public shop APIs, checkout posts selected variants to `/api/checkout`, and cart state is stored client-side in the browser rather than in a dedicated server-side cart service.
+- admin CRUD and reporting modules
 
 ## Data Layer
 
-- active schema: `prisma/schema.prisma`
-- active prep script: `scripts/prepare-prisma-schema.mjs`
+- source schema: `prisma/schema.prisma`
+- generated schema for Prisma CLI: `prisma/schema.generated.prisma`
+- provider prep script: `scripts/prepare-prisma-schema.mjs`
 - seed file: `prisma/seed.ts`
 
-The package scripts mutate the datasource provider directly in `prisma/schema.prisma`. The older template-based path remains in the repo for reference only.
+Provider behavior:
+
+- local development can fall back to SQLite
+- hosted builds should use PostgreSQL
+- the provider is inferred from `PRISMA_DB_PROVIDER` or `DATABASE_URL`
 
 ## Support And Automation Flow
 
@@ -90,12 +143,23 @@ The package scripts mutate the datasource provider directly in `prisma/schema.pr
 3. Messages are posted to `/api/chatkit/message`.
 4. Lead capture posts to `/api/chatkit/lead`.
 5. The server creates `Inquiry`, `PlatformNotification`, and `AutomatedEmail` records.
-6. Signed OpenAI-style webhook events can be received on `/api/openai/webhook`.
+6. Signed webhook events can be received on `/api/openai/webhook`.
+
+Current support routing categories are:
+
+- sponsorships
+- orders
+- payments
+- events
+- custom-apparel
+- partnerships
 
 ## Storage And Integrations
 
 - Prisma for relational data
-- local filesystem uploads under `public/uploads` for development
-- database-backed uploaded image assets on Vercel/serverless production through `/api/uploads/image/[id]`
+- browser local storage for cart state
+- filesystem uploads under `public/uploads` for local development
+- database-backed uploads served through `/api/uploads/image/[id]` for serverless/database-backed deployment modes
+- optional R2-backed delivery through `/api/uploads/r2/[...key]`
 - optional OpenAI workflow credentials
 - optional email webhook delivery through `EMAIL_WEBHOOK_URL`
