@@ -5,6 +5,11 @@ const optionalText = z.preprocess(
   z.string().optional().default(''),
 );
 
+const optionalInteger = z.preprocess((value) => {
+  if (value === null || value === undefined || value === '') return undefined;
+  return value;
+}, z.coerce.number().int().min(0).optional());
+
 const urlValue = z.preprocess((value) => {
   if (typeof value !== 'string') return '';
   const trimmed = value.trim();
@@ -19,8 +24,8 @@ export const feedMediaAssetInputSchema = z.object({
   storageProvider: optionalText,
   storageKey: optionalText,
   contentType: optionalText,
-  size: z.coerce.number().int().min(0).optional(),
-  durationSeconds: z.coerce.number().int().min(0).optional(),
+  size: optionalInteger,
+  durationSeconds: optionalInteger,
   metadata: z.record(z.string(), z.unknown()).nullable().optional(),
   altText: optionalText,
   caption: optionalText,

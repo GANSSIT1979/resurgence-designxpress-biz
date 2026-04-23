@@ -1,8 +1,10 @@
 # VERCEL CONFIGURATION
 
-Updated: 2026-04-21
+Updated: 2026-04-23
 
 For the route-by-route release gate and production rollout checks, also use [VERCEL_DEPLOYMENT_CHECKLIST.md](./VERCEL_DEPLOYMENT_CHECKLIST.md).
+
+For the Cloudflare Stream creator-upload merge, also use [VERCEL_CLOUDFLARE_STREAM_MERGE.md](./VERCEL_CLOUDFLARE_STREAM_MERGE.md).
 
 ## Repository Files
 
@@ -65,6 +67,12 @@ FORCE_HTTPS=true
 NEXT_PUBLIC_SITE_URL=https://resurgence-dx.biz
 NEXT_PUBLIC_SITE_NAME=Resurgence Powered by DesignXpress
 COMPANY_NAME=DesignXpress Merchandising OPC
+CLOUDFLARE_ACCOUNT_ID=
+CLOUDFLARE_STREAM_TOKEN=
+CLOUDFLARE_STREAM_CUSTOMER_CODE=
+CLOUDFLARE_STREAM_ALLOWED_ORIGINS=https://www.resurgence-dx.biz,https://resurgence-dx.biz
+CLOUDFLARE_STREAM_MAX_DURATION_SECONDS=180
+CLOUDFLARE_REQUIRE_SIGNED_URLS=false
 NEXT_PUBLIC_CONTACT_NAME=Jake Anilao
 NEXT_PUBLIC_CONTACT_ROLE=Sponsorship / Partnerships
 NEXT_PUBLIC_CONTACT_EMAIL=partnerships@resurgence-dx.biz
@@ -94,6 +102,12 @@ Google sign-in note:
 
 - `NEXT_PUBLIC_GOOGLE_CLIENT_ID` is required in Vercel for the client-side Gmail button on `/login`
 - `GOOGLE_CLIENT_ID` should be set to the same value so `/api/auth/google` can verify the credential audience server-side
+
+Cloudflare Stream note:
+
+- `/api/media/cloudflare/direct-upload` now expects `CLOUDFLARE_STREAM_CUSTOMER_CODE` so the app can build playback and thumbnail URLs without hardcoding your account-specific Stream host
+- keep `CLOUDFLARE_REQUIRE_SIGNED_URLS=false` for the current rollout, because signed playback tokens are not wired into `/feed` yet
+- the upload route is role-gated to the same creator/staff/admin boundary used by feed post creation
 
 Important database rule:
 

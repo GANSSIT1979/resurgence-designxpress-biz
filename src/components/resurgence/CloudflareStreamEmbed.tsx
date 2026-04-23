@@ -1,3 +1,5 @@
+'use client';
+
 import { getCloudflareStreamEmbedUrl } from '@/lib/cloudflare-stream';
 
 export default function CloudflareStreamEmbed({
