@@ -11,6 +11,7 @@ import { getCreatorStats } from '@/lib/creators';
 import { serializeCreatorProfile } from '@/lib/creators';
 import { getAutomationInbox } from '@/lib/notifications';
 import { prisma } from '@/lib/prisma';
+import { isPrismaSchemaDriftError } from '@/lib/prisma-schema-health';
 import { getCurrentSessionUser } from '@/lib/session-server';
 
 export const dynamic = 'force-dynamic';
@@ -70,7 +71,7 @@ export default async function CreatorDashboardPage() {
 
   const creatorProfile = serializeCreatorProfile(creator);
   const creatorStats = getCreatorStats(creatorProfile);
-  const [inbox, creatorPosts] = await Promise.all([
+  const [inboxResult, creatorPostsResult] = await Promise.allSettled([
     getAutomationInbox(context.user.role, context.user.id, 6),
     prisma.contentPost.findMany({
       where: {
@@ -79,7 +80,6 @@ export default async function CreatorDashboardPage() {
       },
       select: {
         id: true,
-        title: true,
         caption: true,
         status: true,
         visibility: true,
@@ -107,13 +107,27 @@ export default async function CreatorDashboardPage() {
       orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }],
     }),
   ]);
+
+  const inbox = inboxResult.status === 'fulfilled' ? inboxResult.value : { notifications: [], emails: [], degradedReason: 'Creator alerts are temporarily unavailable.' };
+  let creatorPosts = creatorPostsResult.status === 'fulfilled' ? creatorPostsResult.value : [];
+  let creatorPostsNotice: string | null = null;
+
+  if (creatorPostsResult.status === 'rejected') {
+    if (!isPrismaSchemaDriftError(creatorPostsResult.reason)) {
+      throw creatorPostsResult.reason;
+    }
+
+    console.error('[creator-dashboard] Falling back to an empty creator post summary after a content schema drift.', creatorPostsResult.reason);
+    creatorPostsNotice =
+      'Recent creator posts are temporarily unavailable while the latest content-post migration is still being applied in production.';
+  }
   const publishedCount = creatorPosts.filter((post) => post.status === 'PUBLISHED').length;
   const draftCount = creatorPosts.filter((post) => post.status === 'DRAFT').length;
   const unreadAlerts = inbox.notifications.filter((item) => !item.isRead).length;
   const recentPostItems: CreatorPostsManagerItem[] = creatorPosts.map((post) => ({
     id: post.id,
     creatorId: creator.id,
-    title: post.title ?? null,
+    title: null,
     caption: post.caption,
     status:
       post.status === 'PUBLISHED'
@@ -195,6 +209,7 @@ export default async function CreatorDashboardPage() {
           }))}
           taggedProducts={Array.from(taggedProductsMap.values()).sort((left, right) => right.tagCount - left.tagCount).slice(0, 4)}
         />
+        {creatorPostsNotice ? <div className="notice" style={{ marginTop: 20 }}>{creatorPostsNotice}</div> : null}
         <div style={{ marginTop: 20 }}>
           <RecentPostsWidget posts={recentPostItems} title="Recent post activity" />
         </div>

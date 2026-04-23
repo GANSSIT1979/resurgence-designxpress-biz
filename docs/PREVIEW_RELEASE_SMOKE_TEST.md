@@ -43,8 +43,10 @@ If any critical check fails, do **not** promote the build.
 - `src/app/api/creator/posts/create/route.ts`
 - `/feed`
 - `/`
+- `/creators/[slug]`
 - `/creator/dashboard`
 - `/creator/posts`
+- `/api/health`
 - member/dashboard feed cards that consume the same normalized feed model
 
 ### Out Of Scope
@@ -129,9 +131,11 @@ Confirm the Preview deployment is reachable and not failing immediately on migra
 1. Open the Vercel Preview deployment URL.
 2. Load `/`.
 3. Load `/feed`.
-4. Load `/login`.
-5. Load `/creator/dashboard` while signed out and observe expected access handling.
-6. Load `/creator/posts/new` while signed out and observe expected access handling.
+4. Load `/creators/[slug]` for a creator with published media history.
+5. Load `/login`.
+6. Load `/creator/dashboard` while signed out and observe expected access handling.
+7. Load `/creator/posts/new` while signed out and observe expected access handling.
+8. Load `/api/health` and confirm the schema probe reflects additive column drift accurately.
 
 ### Pass Criteria
 
@@ -143,6 +147,7 @@ Confirm the Preview deployment is reachable and not failing immediately on migra
 ### Blockers
 
 - missing table errors
+- missing additive column errors such as `ContentPost.title`
 - missing column errors
 - fatal route handler errors
 - build mismatch behavior after migration
@@ -394,6 +399,7 @@ Spot obvious Preview instability before Production promotion.
 
 - `relation does not exist`
 - `column does not exist`
+- `The column ContentPost.title does not exist in the current database`
 - Prisma connection pool timeout errors
 - unauthorized upload route access because of incorrect session gating
 - invalid origin or CORS failures from Cloudflare Stream
@@ -470,6 +476,7 @@ LIMIT 10;
 - [ ] Cloudflare direct upload passes
 - [ ] Prisma save passes
 - [ ] public feed playback passes after the post is actually published
+- [ ] `/creators/[slug]` passes without content-post schema drift errors
 - [ ] creator dashboard and workspace surfaces pass
 - [ ] no blocking schema drift errors remain
 - [ ] no blocking pool-timeout or stability issue is observed

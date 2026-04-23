@@ -28,7 +28,8 @@ It also assumes the current Cloudflare Stream upload and save flow:
 
 This rollout is designed to prevent the same schema drift already seen in deployed environments:
 
-- homepage/feed code queried `ContentPost` before the database matched the app code
+- homepage/feed code queried additive `ContentPost` columns such as `title` before the database matched the app code
+- creator profile code on `/creators/[slug]` queried creator-linked `ContentPost` rows before PostgreSQL had the same additive columns
 - creator/admin notifications queried `PlatformNotification.actorUserId` before that column existed
 - hosted PostgreSQL also showed connection pool timeout symptoms during request handling
 
@@ -242,7 +243,9 @@ Run these before promoting anything:
 
 Confirm these error patterns are gone:
 
-- missing `ContentPost` table errors
+- `The column ContentPost.title does not exist in the current database`
+- homepage feed fallback logs caused by `prisma.contentPost.findMany()` schema drift
+- `/creators/[slug]` Prisma `P2022` errors during creator-channel post reads
 - missing `PlatformNotification.actorUserId` column errors if that column was bundled
 - repeated Prisma pool timeout bursts during normal page load
 
@@ -443,8 +446,9 @@ Prefer **forward fixes** over destructive rollback when the schema change is add
 
 The release is healthy only when all of these are true:
 
-- `/` loads without `ContentPost` missing-table errors
+- `/` loads without additive `ContentPost` column errors such as missing `title`
 - `/feed` loads without fallback caused by schema failure
+- `/creators/[slug]` loads without creator-channel `ContentPost` query failures
 - `/creator/dashboard` loads without `PlatformNotification.actorUserId` errors if that column was included
 - creator post creation succeeds through the Prisma save route
 - uploaded Cloudflare Stream videos can be saved and rendered back in the feed

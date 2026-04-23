@@ -7,6 +7,7 @@ import { ProductCard } from '@/components/shop/product-card';
 import { serializePublicCreatorProfile } from '@/lib/creators';
 import { serializeContentPost } from '@/lib/feed/serializers';
 import { prisma } from '@/lib/prisma';
+import { isPrismaSchemaDriftError } from '@/lib/prisma-schema-health';
 import { getCreatorBySlug } from '@/lib/site';
 
 export const dynamic = 'force-dynamic';
@@ -22,54 +23,69 @@ export default async function CreatorPublicProfilePage({ params }: { params: Pro
     const rightDate = right.eventDate ? new Date(right.eventDate).getTime() : 0;
     return rightDate - leftDate;
   });
-  const [channelPosts, taggedProducts] = await Promise.all([
-    prisma.contentPost.findMany({
-      where: {
-        creatorProfileId: creator.id,
-        status: 'PUBLISHED',
-        visibility: 'PUBLIC',
-      },
-      include: {
-        authorUser: { select: { id: true, displayName: true, role: true } },
-        creatorProfile: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-            roleLabel: true,
-            imageUrl: true,
+  let channelPosts: Awaited<ReturnType<typeof prisma.contentPost.findMany>> = [];
+  let taggedProducts: Awaited<ReturnType<typeof prisma.shopProduct.findMany>> = [];
+  let feedDataNotice: string | null = null;
+
+  try {
+    [channelPosts, taggedProducts] = await Promise.all([
+      prisma.contentPost.findMany({
+        where: {
+          creatorProfileId: creator.id,
+          status: 'PUBLISHED',
+          visibility: 'PUBLIC',
+        },
+        include: {
+          authorUser: { select: { id: true, displayName: true, role: true } },
+          creatorProfile: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              roleLabel: true,
+              imageUrl: true,
+            },
+          },
+          mediaAssets: { orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] },
+          hashtags: { include: { hashtag: true } },
+          productTags: { include: { product: true }, orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] },
+          sponsoredPlacements: {
+            where: { status: { in: ['APPROVED', 'ACTIVE'] } },
+            include: { sponsor: true, sponsorProfile: true },
+            orderBy: [{ createdAt: 'desc' }],
           },
         },
-        mediaAssets: { orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] },
-        hashtags: { include: { hashtag: true } },
-        productTags: { include: { product: true }, orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] },
-        sponsoredPlacements: {
-          where: { status: { in: ['APPROVED', 'ACTIVE'] } },
-          include: { sponsor: true, sponsorProfile: true },
-          orderBy: [{ createdAt: 'desc' }],
-        },
-      },
-      orderBy: [{ isPinned: 'desc' }, { isFeatured: 'desc' }, { publishedAt: 'desc' }],
-      take: 4,
-    }),
-    prisma.shopProduct.findMany({
-      where: {
-        isActive: true,
-        postProductTags: {
-          some: {
-            post: {
-              creatorProfileId: creator.id,
-              status: 'PUBLISHED',
-              visibility: 'PUBLIC',
+        orderBy: [{ isPinned: 'desc' }, { isFeatured: 'desc' }, { publishedAt: 'desc' }],
+        take: 4,
+      }),
+      prisma.shopProduct.findMany({
+        where: {
+          isActive: true,
+          postProductTags: {
+            some: {
+              post: {
+                creatorProfileId: creator.id,
+                status: 'PUBLISHED',
+                visibility: 'PUBLIC',
+              },
             },
           },
         },
-      },
-      include: { category: true },
-      orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
-      take: 4,
-    }),
-  ]);
+        include: { category: true },
+        orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
+        take: 4,
+      }),
+    ]);
+  } catch (error) {
+    if (!isPrismaSchemaDriftError(error)) {
+      throw error;
+    }
+
+    console.error('[creator-profile] Falling back to creator-only public profile sections after a content schema drift.', error);
+    feedDataNotice =
+      'Creator feed posts and tagged merch are temporarily unavailable while the latest content-post migration is still being applied in production.';
+  }
+
   const serializedChannelPosts = channelPosts.map((item) => serializeContentPost(item));
 
   return (
@@ -90,6 +106,7 @@ export default async function CreatorPublicProfilePage({ params }: { params: Pro
           <p className="section-copy" style={{ maxWidth: 760 }}>
             This channel surface blends creator-led feed content, sponsor-ready highlights, and merch links without leaving the creator profile.
           </p>
+          {feedDataNotice ? <div className="notice" style={{ marginTop: 18 }}>{feedDataNotice}</div> : null}
 
           <div className="card-grid grid-2" style={{ marginTop: 24 }}>
             <section className="card">

@@ -5,17 +5,44 @@ import { formatPrismaSchemaDrift } from "@/lib/prisma-schema-health";
 import { NextResponse } from "next/server";
 
 async function runSchemaChecks() {
-  const checks = await Promise.allSettled([
-    db.contentPost.findFirst({ select: { id: true } }),
-    db.platformNotification.findFirst({ select: { id: true, actorUserId: true } }),
-  ]);
+  const probes = [
+    {
+      scope: "content-post column probe failed",
+      query: db.contentPost.findFirst({
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          viewCount: true,
+          metadataJson: true,
+        },
+      }),
+    },
+    {
+      scope: "media-asset cloudflare probe failed",
+      query: db.mediaAsset.findFirst({
+        select: {
+          id: true,
+          originalFileName: true,
+          storageProvider: true,
+          storageKey: true,
+        },
+      }),
+    },
+    {
+      scope: "notification actor probe failed",
+      query: db.platformNotification.findFirst({ select: { id: true, actorUserId: true } }),
+    },
+  ] as const;
+
+  const checks = await Promise.allSettled(probes.map((probe) => probe.query));
 
   const issues = checks.flatMap((result, index) => {
     if (result.status === "fulfilled") return [];
 
     return [
       formatPrismaSchemaDrift(
-        index === 0 ? "content-post probe failed" : "notification actor probe failed",
+        probes[index]?.scope ?? "schema probe failed",
         result.reason,
       ),
     ];

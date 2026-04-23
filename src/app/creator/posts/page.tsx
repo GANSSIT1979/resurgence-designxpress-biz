@@ -125,7 +125,7 @@ export default async function CreatorPostsPage() {
     posts = await getCreatorPosts(context.user.id, creator.id);
   } catch (error) {
     console.error('Unable to load creator feed studio data.', error);
-    dataError = 'Creator feed tables are not ready yet. Run the feed schema migration before using the post studio.';
+    dataError = 'Creator feed data is temporarily unavailable because the live database is missing one or more additive ContentPost columns expected by this release.';
   }
 
   const postItems = mapFeedPostsToCreatorPostsManagerItems(posts);

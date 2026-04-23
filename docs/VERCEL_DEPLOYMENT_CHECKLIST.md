@@ -121,9 +121,11 @@ Do not mix these casually in one release. Pick the intended path and run it deli
 
 ### Historical Drift Symptoms To Treat As Release Blockers
 
-Examples already seen during prior rollout checks include:
+Examples already seen during real rollout checks and April 23, 2026 production log exports include:
 
-- `public.ContentPost does not exist`
+- `The column ContentPost.title does not exist in the current database`
+- homepage `/` falling back to the gallery feed after a `prisma.contentPost.findMany()` failure
+- `/creators/[slug]` throwing Prisma `P2022` because additive `ContentPost` columns were deployed in code before PostgreSQL was updated
 - `PlatformNotification.actorUserId does not exist`
 
 Any missing-table or missing-column error means application code reached Vercel before the target database matched the expected schema.
@@ -241,6 +243,8 @@ After every Preview and Production deployment, manually test at least these:
 
 - `/api/health`
 - `/api/auth/me`
+
+The health probe should verify additive content-post columns such as `title` and `slug`, Cloudflare-related media columns such as `originalFileName` and `storageKey`, and notification actor columns such as `actorUserId`.
 
 ## 7. Serverless And Runtime Checks
 
