@@ -172,6 +172,7 @@ export default async function CreatorPostsPage() {
           </section>
         ) : (
           <CreatorPostManager
+            creatorId={creator.id}
             creatorName={creator.name}
             initialPosts={posts}
             products={products}

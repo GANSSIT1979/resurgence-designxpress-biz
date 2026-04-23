@@ -94,8 +94,19 @@ async function replaceMediaAssets(tx: any, postId: string, mediaAssets: any[]) {
         mediaType: asset.mediaType,
         url: asset.url,
         thumbnailUrl: nullableText(asset.thumbnailUrl),
+        storageProvider: nullableText(asset.storageProvider),
+        storageKey: nullableText(asset.storageKey),
+        contentType: nullableText(asset.contentType),
+        size: Number.isFinite(asset.size) ? Math.max(0, Math.floor(asset.size)) : null,
+        durationSeconds: Number.isFinite(asset.durationSeconds)
+          ? Math.max(0, Math.floor(asset.durationSeconds))
+          : null,
         altText: nullableText(asset.altText),
         caption: nullableText(asset.caption),
+        metadataJson:
+          asset.metadata && typeof asset.metadata === 'object' && !Array.isArray(asset.metadata)
+            ? asset.metadata
+            : null,
         sortOrder: asset.sortOrder ?? index,
       },
     });

@@ -1,3 +1,8 @@
+import {
+  getCloudflareStreamEmbedUrl,
+  isCloudflareStreamAsset,
+} from '@/lib/cloudflare-stream';
+
 export function MediaRenderer({
   item,
   className = '',
@@ -6,6 +11,9 @@ export function MediaRenderer({
     mediaType: 'IMAGE' | 'VIDEO' | 'YOUTUBE' | 'VIMEO' | string;
     url: string;
     thumbnailUrl?: string | null;
+    storageProvider?: string | null;
+    storageKey?: string | null;
+    metadata?: Record<string, unknown> | null;
     caption?: string | null;
   };
   className?: string;
@@ -15,6 +23,22 @@ export function MediaRenderer({
   }
 
   if (item.mediaType === 'VIDEO') {
+    if (isCloudflareStreamAsset(item)) {
+      const embedUrl = getCloudflareStreamEmbedUrl(item, { muted: true });
+      if (!embedUrl) return null;
+
+      return (
+        <iframe
+          src={embedUrl}
+          title={item.caption || 'Cloudflare Stream video'}
+          allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          className={className}
+          style={{ width: '100%', aspectRatio: '16 / 9', border: 0, borderRadius: 16 }}
+        />
+      );
+    }
+
     return <video src={item.url} controls className={className} style={{ width: '100%', borderRadius: 16, display: 'block' }} />;
   }
 

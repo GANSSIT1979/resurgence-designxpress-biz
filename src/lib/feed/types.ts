@@ -1,5 +1,7 @@
 export type FeedMediaType = 'IMAGE' | 'VIDEO' | 'YOUTUBE' | 'VIMEO' | 'EXTERNAL';
 
+export type FeedMediaMetadata = Record<string, unknown> | null;
+
 export type FeedPost = {
   id: string;
   caption: string;
@@ -28,6 +30,12 @@ export type FeedPost = {
     mediaType: FeedMediaType;
     url: string;
     thumbnailUrl: string | null;
+    storageProvider?: string | null;
+    storageKey?: string | null;
+    contentType?: string | null;
+    size?: number | null;
+    durationSeconds?: number | null;
+    metadata?: FeedMediaMetadata;
     altText: string | null;
     caption: string | null;
     sortOrder: number;

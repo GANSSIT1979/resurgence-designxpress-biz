@@ -1,8 +1,12 @@
 'use client';
 
 import { useDeferredValue, useMemo, useState } from 'react';
+import CloudflareDirectUploadForm, {
+  type CloudflareUploadCompletePayload,
+} from '@/components/resurgence/CloudflareDirectUploadForm';
 import { FilterChipRow } from '@/components/filter-chip-row';
 import { ImageUploadField } from '@/components/image-upload-field';
+import { CLOUDFLARE_STREAM_STORAGE_PROVIDER } from '@/lib/cloudflare-stream';
 import type { FeedMediaType, FeedPost } from '@/lib/feed/types';
 
 type CreatorProductOption = {
@@ -21,6 +25,12 @@ type PostFormState = {
   mediaType: FeedMediaType;
   mediaUrl: string;
   thumbnailUrl: string;
+  storageProvider: string;
+  storageKey: string;
+  contentType: string;
+  size: number | null;
+  durationSeconds: number | null;
+  mediaMetadata: Record<string, unknown> | null;
   altText: string;
   mediaCaption: string;
   hashtags: string;
@@ -34,11 +44,23 @@ const defaultForm: PostFormState = {
   mediaType: 'IMAGE',
   mediaUrl: '',
   thumbnailUrl: '',
+  storageProvider: '',
+  storageKey: '',
+  contentType: '',
+  size: null,
+  durationSeconds: null,
+  mediaMetadata: null,
   altText: '',
   mediaCaption: '',
   hashtags: 'resurgence, basketball',
   productIds: [],
 };
+
+function toMetadataRecord(value: unknown) {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+}
 
 function formatDate(value: string | null | undefined) {
   if (!value) return 'Not yet published';
@@ -83,6 +105,12 @@ function hydrateForm(post: FeedPost): PostFormState {
     mediaType: media?.mediaType ?? 'IMAGE',
     mediaUrl: media?.url ?? '',
     thumbnailUrl: media?.thumbnailUrl ?? '',
+    storageProvider: media?.storageProvider ?? '',
+    storageKey: media?.storageKey ?? '',
+    contentType: media?.contentType ?? '',
+    size: media?.size ?? null,
+    durationSeconds: media?.durationSeconds ?? null,
+    mediaMetadata: toMetadataRecord(media?.metadata),
     altText: media?.altText ?? '',
     mediaCaption: media?.caption ?? '',
     hashtags: post.hashtags.map((tag) => tag.label.replace(/^#/, '')).join(', '),
@@ -108,11 +136,13 @@ async function requestJson(url: string, init: RequestInit) {
 }
 
 export function CreatorPostManager({
+  creatorId,
   creatorName,
   initialPosts,
   products,
   publicProfileHref,
 }: {
+  creatorId: string;
   creatorName: string;
   initialPosts: FeedPost[];
   products: CreatorProductOption[];
@@ -156,6 +186,23 @@ export function CreatorPostManager({
     setForm((current) => ({ ...current, [key]: value }));
   }
 
+  function updateMediaType(value: FeedMediaType) {
+    setForm((current) => ({
+      ...current,
+      mediaType: value,
+      ...(value === 'VIDEO'
+        ? {}
+        : {
+            storageProvider: '',
+            storageKey: '',
+            contentType: '',
+            size: null,
+            durationSeconds: null,
+            mediaMetadata: null,
+          }),
+    }));
+  }
+
   function resetForm() {
     setSelectedId(null);
     setForm(defaultForm);
@@ -177,6 +224,10 @@ export function CreatorPostManager({
       .split(',')
       .map((tag) => tag.trim())
       .filter(Boolean);
+    const metadata =
+      form.mediaMetadata && Object.keys(form.mediaMetadata).length
+        ? form.mediaMetadata
+        : undefined;
 
     return {
       caption: form.caption.trim(),
@@ -188,6 +239,12 @@ export function CreatorPostManager({
           mediaType: form.mediaType,
           url: mediaUrl,
           thumbnailUrl: form.thumbnailUrl.trim(),
+          storageProvider: form.storageProvider.trim(),
+          storageKey: form.storageKey.trim(),
+          contentType: form.contentType.trim(),
+          size: form.size,
+          durationSeconds: form.durationSeconds,
+          metadata,
           altText: form.altText.trim(),
           caption: form.mediaCaption.trim(),
           sortOrder: 0,
@@ -246,6 +303,33 @@ export function CreatorPostManager({
     } finally {
       setDeletingId(null);
     }
+  }
+
+  async function handleCloudflareUploadComplete(
+    payload: CloudflareUploadCompletePayload,
+  ) {
+    setForm((current) => ({
+      ...current,
+      mediaType: 'VIDEO',
+      mediaUrl: payload.previewURL,
+      thumbnailUrl: payload.thumbnailURL,
+      storageProvider: CLOUDFLARE_STREAM_STORAGE_PROVIDER,
+      storageKey: payload.cloudflareVideoId,
+      contentType: payload.contentType,
+      size: payload.size,
+      mediaCaption: current.mediaCaption || payload.fileName,
+      mediaMetadata: {
+        ...(current.mediaMetadata ?? {}),
+        cloudflareVideoId: payload.cloudflareVideoId,
+        customerCode: payload.customerCode,
+        originalFileName: payload.fileName,
+        uploadSource: 'cloudflare-direct-upload',
+      },
+    }));
+    setNotice(
+      'Cloudflare video attached. Save a draft or submit for review to persist it to the post record.',
+    );
+    setError(null);
   }
 
   function renderPostCard(post: FeedPost, compact = false) {
@@ -414,7 +498,7 @@ export function CreatorPostManager({
             </label>
             <label>
               <span className="helper">Media type</span>
-              <select className="input" value={form.mediaType} onChange={(event) => updateForm('mediaType', event.target.value as FeedMediaType)}>
+              <select className="input" value={form.mediaType} onChange={(event) => updateMediaType(event.target.value as FeedMediaType)}>
                 <option value="IMAGE">Image</option>
                 <option value="VIDEO">Direct video</option>
                 <option value="YOUTUBE">YouTube</option>
@@ -432,6 +516,31 @@ export function CreatorPostManager({
               onChange={(value) => updateForm('mediaUrl', value)}
               helper="Upload a square or vertical image, or paste an existing image URL. Videos can be added by changing the media type above."
             />
+          ) : form.mediaType === 'VIDEO' ? (
+            <div className="creator-post-video-stack">
+              <label>
+                <span className="helper">Media URL</span>
+                <input
+                  className="input"
+                  value={form.mediaUrl}
+                  onChange={(event) => updateForm('mediaUrl', event.target.value)}
+                  placeholder="Paste a direct video URL or attach a Cloudflare Stream upload below"
+                />
+              </label>
+              <CloudflareDirectUploadForm
+                creatorId={creatorId}
+                className="mt-2"
+                description="Upload straight to Cloudflare Stream, then keep the video linked to this creator post using the existing Prisma-backed feed flow."
+                onUploadComplete={handleCloudflareUploadComplete}
+                title="Cloudflare Stream upload"
+              />
+              {form.storageProvider === CLOUDFLARE_STREAM_STORAGE_PROVIDER ? (
+                <div className="notice success">
+                  Cloudflare Stream is attached to this post using video ID{' '}
+                  <strong>{form.storageKey || 'pending'}</strong>.
+                </div>
+              ) : null}
+            </div>
           ) : (
             <label>
               <span className="helper">Media URL</span>

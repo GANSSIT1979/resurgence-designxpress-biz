@@ -14,6 +14,12 @@ function sortItems<T extends { sortOrder?: number | null; createdAt?: Date | str
   });
 }
 
+function asRecord(value: unknown) {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
 export function serializeContentPost(item: any, viewerId?: string | null): FeedPost {
   const likes = item.likes || [];
   const saves = item.saves || [];
@@ -51,6 +57,12 @@ export function serializeContentPost(item: any, viewerId?: string | null): FeedP
       mediaType: asset.mediaType,
       url: asset.url,
       thumbnailUrl: asset.thumbnailUrl,
+      storageProvider: asset.storageProvider,
+      storageKey: asset.storageKey,
+      contentType: asset.contentType,
+      size: asset.size,
+      durationSeconds: asset.durationSeconds,
+      metadata: asRecord(asset.metadataJson),
       altText: asset.altText,
       caption: asset.caption,
       sortOrder: asset.sortOrder,
@@ -124,6 +136,12 @@ export function serializeGalleryEventAsFeedPost(event: any): FeedPost {
       mediaType: item.mediaType,
       url: item.url,
       thumbnailUrl: item.thumbnailUrl,
+      storageProvider: null,
+      storageKey: null,
+      contentType: null,
+      size: null,
+      durationSeconds: null,
+      metadata: null,
       altText: item.caption,
       caption: item.caption,
       sortOrder: item.sortOrder,

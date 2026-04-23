@@ -2,6 +2,10 @@
 
 import Link from 'next/link';
 import { Fragment, startTransition, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  getCloudflareStreamEmbedUrl,
+  isCloudflareStreamAsset,
+} from '@/lib/cloudflare-stream';
 import { FeedPost } from '@/lib/feed/types';
 import { addProductToCart, CART_UPDATED_EVENT, getCartItemCount, readCart } from '@/lib/shop/cart-storage';
 
@@ -917,12 +921,19 @@ function FeedMedia({
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || media.mediaType !== 'VIDEO' || !shouldLoad) return;
+    if (
+      !video ||
+      media.mediaType !== 'VIDEO' ||
+      isCloudflareStreamAsset(media) ||
+      !shouldLoad
+    ) {
+      return;
+    }
     video.muted = true;
     video.playsInline = true;
     if (active) video.play().catch(() => null);
     else video.pause();
-  }, [active, media.mediaType, shouldLoad]);
+  }, [active, media, shouldLoad]);
 
   if (!shouldLoad) {
     return <FeedMediaPlaceholder caption={caption} media={media} />;
@@ -933,6 +944,28 @@ function FeedMedia({
   }
 
   if (media.mediaType === 'VIDEO') {
+    if (isCloudflareStreamAsset(media)) {
+      const embedUrl = getCloudflareStreamEmbedUrl(media, {
+        autoplay: active,
+        muted: true,
+      });
+
+      if (!embedUrl) {
+        return <FeedMediaPlaceholder caption={caption} media={media} />;
+      }
+
+      return (
+        <iframe
+          allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          className="feed-media feed-embed"
+          loading={active ? 'eager' : 'lazy'}
+          src={embedUrl}
+          title={media.caption || caption}
+        />
+      );
+    }
+
     return <video className="feed-media" loop muted playsInline poster={media.thumbnailUrl || undefined} preload={active ? 'auto' : 'metadata'} ref={videoRef} src={media.url} />;
   }
 
@@ -956,7 +989,14 @@ function FeedMedia({
 
 function FeedMediaPlaceholder({ media, caption }: { media: FeedPost['mediaAssets'][number]; caption: string }) {
   const previewUrl = media.thumbnailUrl || (media.mediaType === 'IMAGE' ? media.url : '');
-  const label = media.mediaType === 'VIDEO' ? 'Video queued' : media.mediaType === 'YOUTUBE' || media.mediaType === 'VIMEO' ? 'Embed queued' : 'Media queued';
+  const label =
+    media.mediaType === 'VIDEO'
+      ? isCloudflareStreamAsset(media)
+        ? 'Cloudflare video queued'
+        : 'Video queued'
+      : media.mediaType === 'YOUTUBE' || media.mediaType === 'VIMEO'
+        ? 'Embed queued'
+        : 'Media queued';
 
   return (
     <div className="feed-media-placeholder" aria-label={`${label}: ${media.altText || media.caption || caption}`}>
