@@ -131,6 +131,7 @@ export function CreatorDashboardOverview({
 
           <div className="creator-dashboard-action-list">
             <Link className="button-link" href="/creator/posts">Create or edit posts</Link>
+            <Link className="button-link btn-secondary" href="/creator/analytics">View analytics</Link>
             <Link className="button-link btn-secondary" href="/feed">Open live feed</Link>
             <Link className="button-link btn-secondary" href="/creators">View public directory</Link>
           </div>

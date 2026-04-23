@@ -179,6 +179,7 @@ export default async function CreatorDashboardPage() {
       >
         <div className="btn-row" style={{ marginBottom: 18 }}>
           <Link className="button-link" href="/creator/posts/new">Create New Post</Link>
+          <Link className="button-link btn-secondary" href="/creator/analytics">View Analytics</Link>
           <Link className="button-link btn-secondary" href="/creator/posts">Manage Posts</Link>
           <Link className="button-link" href={`/creators/${creator.slug}`}>Open Public Profile</Link>
           <Link className="button-link btn-secondary" href="/contact">Request Profile Update</Link>

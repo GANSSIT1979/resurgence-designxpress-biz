@@ -55,6 +55,7 @@ Protected dashboard entry points include:
 - `/cashier`
 - `/member`
 - `/creator/dashboard`
+- `/creator/analytics`
 - `/creator/posts`
 - `/creator/posts/new`
 - `/creator/posts/[postId]`
@@ -93,7 +94,7 @@ The public community layer now includes:
 - lightweight view and watch-time tracking
 - product tags and sponsor placements inside feed cards
 - creator profile channel sections on `/creators/[slug]`
-- creator dashboard, post index, composer, and edit workspace
+- creator dashboard, analytics workspace, post index, composer, and edit workspace
 
 Important implementation notes:
 

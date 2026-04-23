@@ -65,6 +65,7 @@ The member dashboard can show:
 Creator users can access:
 
 - `/creator/dashboard`
+- `/creator/analytics`
 - `/creator/posts`
 - `/creator/posts/new`
 - `/creator/posts/[postId]`
@@ -72,6 +73,7 @@ Creator users can access:
 What to expect:
 
 - creator dashboards work best when the signed-in account is linked to a `CreatorProfile`
+- creator analytics shows live rollup data when the analytics migration is active and clearly labels preview/demo fallback when it is not
 - creators can upload video through the Cloudflare-backed composer flow
 - creators can draft, submit for review, edit, duplicate, archive, and delete their own posts
 - creator self-publish still respects the moderation model
