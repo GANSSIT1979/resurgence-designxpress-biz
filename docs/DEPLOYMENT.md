@@ -4,6 +4,8 @@ Updated: 2026-04-21
 
 For schema-first Preview and Production rollout of the current creator-feed migration, also use [PRISMA_MIGRATION_ROLLOUT_CHECKLIST.md](./PRISMA_MIGRATION_ROLLOUT_CHECKLIST.md).
 
+For the narrow Preview release gate covering auth, upload, save, and feed playback on the current branch, also use [PREVIEW_RELEASE_SMOKE_TEST.md](./PREVIEW_RELEASE_SMOKE_TEST.md).
+
 ## Site Type
 
 - This is a `React/Node` deployment target built on `Next.js`.

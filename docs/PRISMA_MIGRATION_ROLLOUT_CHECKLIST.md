@@ -6,6 +6,8 @@ Updated: 2026-04-23
 
 This checklist is for rolling out the current Prisma content-post schema safely on **Vercel Preview** and **Vercel Production** for the existing Resurgence DX app.
 
+For the route-by-route Preview validation pass after the migration lands, also use [PREVIEW_RELEASE_SMOKE_TEST.md](./PREVIEW_RELEASE_SMOKE_TEST.md).
+
 It is written for the live architecture in this repo:
 
 - Next.js 15 App Router

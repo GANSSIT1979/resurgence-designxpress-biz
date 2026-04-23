@@ -6,6 +6,8 @@ For the route-by-route release gate and production rollout checks, also use [VER
 
 For the Cloudflare Stream creator-upload merge, also use [VERCEL_CLOUDFLARE_STREAM_MERGE.md](./VERCEL_CLOUDFLARE_STREAM_MERGE.md).
 
+For the Preview promotion gate for the current Prisma plus Cloudflare release track, also use [PREVIEW_RELEASE_SMOKE_TEST.md](./PREVIEW_RELEASE_SMOKE_TEST.md).
+
 ## Repository Files
 
 This Vercel setup applies because the repository is a `React/Node` app built with `Next.js`, not a PHP or static-site project.
