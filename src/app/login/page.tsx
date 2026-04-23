@@ -96,7 +96,8 @@ function LoginGatewayShell({
   const activeRole = publicSignupRoleCards.find((item) => item.role === selectedRole) || publicSignupRoleCards[0];
 
   useEffect(() => {
-    if (mode !== "signup" || signupMethod !== "google" || !googleClientId || !googleButtonRef.current) return;
+    const shouldRenderGoogleButton = mode === "login" || signupMethod === "google";
+    if (!shouldRenderGoogleButton || !googleClientId || !googleButtonRef.current) return;
 
     let cancelled = false;
 
@@ -110,7 +111,7 @@ function LoginGatewayShell({
             setError("Google did not return a credential. Please try again.");
             return;
           }
-          await continueWithGoogle(response.credential);
+          await continueWithGoogle(response.credential, mode === "login" ? "login" : "signup");
         },
       });
       window.google.accounts.id.renderButton(googleButtonRef.current, {
@@ -192,8 +193,8 @@ function LoginGatewayShell({
     }
   }
 
-  async function continueWithGoogle(credential: string) {
-    if (!termsAccepted) {
+  async function continueWithGoogle(credential: string, intent: "login" | "signup") {
+    if (intent === "signup" && !termsAccepted) {
       setError("Please accept the terms and privacy notice before continuing.");
       return;
     }
@@ -207,21 +208,31 @@ function LoginGatewayShell({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           credential,
-          role: selectedRole,
-          referralCode,
-          termsAccepted,
+          intent,
+          ...(intent === "signup"
+            ? {
+                role: selectedRole,
+                referralCode,
+                termsAccepted,
+              }
+            : {}),
         }),
       });
       const json = await res.json().catch(() => null);
 
       if (!res.ok || !json?.ok) {
-        setError(json?.error || "Unable to continue with Google.");
+        setError(json?.error || (intent === "login" ? "Unable to sign in with Google." : "Unable to continue with Google."));
+        return;
+      }
+
+      if (intent === "login") {
+        onRedirect?.(json.redirectTo || nextTarget || "/");
         return;
       }
 
       showSuccess("Account ready", `Welcome to Resurgence as ${activeRole.title}. Redirecting now.`, json.redirectTo || "/");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to continue with Google.");
+      setError(err instanceof Error ? err.message : intent === "login" ? "Unable to sign in with Google." : "Unable to continue with Google.");
     } finally {
       setLoading(false);
     }
@@ -366,7 +377,7 @@ function LoginGatewayShell({
                     <div className="login-card-header">
                       <div className="section-kicker">Secure Log-in</div>
                       <h2>Open your workspace</h2>
-                      <p>Use your email or verified mobile number. Your role determines the dashboard you enter.</p>
+                      <p>Use your email or verified mobile number with password, or continue with Gmail if your account was created through Google.</p>
                     </div>
 
                     <div className="login-redirect-note">
@@ -412,6 +423,28 @@ function LoginGatewayShell({
                         {loading ? "Signing in..." : "Login"}
                       </button>
                     </form>
+
+                    <div className="auth-provider-card" style={{ marginTop: 20 }}>
+                      <div>
+                        <div className="section-kicker">Gmail Login</div>
+                        <h3>Continue with Google</h3>
+                        <p className="helper">Use this for accounts created with Gmail. Existing Google members will be signed in directly.</p>
+                      </div>
+                      {!googleClientId ? (
+                        <button className="btn login-submit" type="button" disabled>
+                          Continue with Gmail
+                        </button>
+                      ) : (
+                        <div className="auth-google-wrap">
+                          <div ref={googleButtonRef} />
+                        </div>
+                      )}
+                      {!googleClientId ? (
+                        <div className="notice error">Google sign-in needs NEXT_PUBLIC_GOOGLE_CLIENT_ID in Vercel.</div>
+                      ) : (
+                        <div className="helper">Password login remains available for email and mobile-number accounts with saved credentials.</div>
+                      )}
+                    </div>
 
                     {canUseDemoAccounts ? (
                       <div className="login-demo-card">

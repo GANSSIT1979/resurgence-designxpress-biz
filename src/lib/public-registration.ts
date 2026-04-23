@@ -28,6 +28,13 @@ export function normalizePhoneNumber(value: unknown) {
   return '';
 }
 
+export function normalizeReferralCode(value: unknown) {
+  if (typeof value !== 'string') return undefined;
+
+  const normalized = value.trim().toUpperCase();
+  return normalized || undefined;
+}
+
 export function phoneNumberToSyntheticEmail(phoneNumber: string) {
   const digits = phoneNumber.replace(/\D/g, '');
   return `mobile-${digits}@mobile.resurgence.local`;
@@ -47,12 +54,14 @@ export const passwordSchema = z
   .regex(/[A-Za-z]/, 'Password must include at least one letter.')
   .regex(/[0-9]/, 'Password must include at least one number.');
 
+const optionalReferralCodeSchema = z.preprocess(normalizeReferralCode, z.string().max(80).optional());
+
 export const mobileSignupRequestSchema = z.object({
   phoneNumber: z.preprocess(normalizePhoneNumber, z.string().regex(/^\+[1-9]\d{6,14}$/, 'Use a valid mobile number.')),
   displayName: z.string().trim().min(2, 'Enter your full name.'),
   password: passwordSchema,
   role: publicRoleSchema,
-  referralCode: z.string().trim().max(80).optional().or(z.literal('')),
+  referralCode: optionalReferralCodeSchema,
   termsAccepted: z.literal(true, {
     errorMap: () => ({ message: 'You must accept the terms and privacy notice.' }),
   }),
@@ -66,8 +75,13 @@ export const mobileOtpVerifySchema = z.object({
 export const googleSignupSchema = z.object({
   credential: z.string().min(20),
   role: publicRoleSchema,
-  referralCode: z.string().trim().max(80).optional().or(z.literal('')),
+  referralCode: optionalReferralCodeSchema,
   termsAccepted: z.literal(true, {
     errorMap: () => ({ message: 'You must accept the terms and privacy notice.' }),
   }),
+});
+
+export const googleLoginSchema = z.object({
+  credential: z.string().min(20),
+  intent: z.literal('login'),
 });

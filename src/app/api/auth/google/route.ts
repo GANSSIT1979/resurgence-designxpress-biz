@@ -1,9 +1,10 @@
 import { randomUUID } from 'crypto';
 import { NextResponse } from 'next/server';
 import { setSessionCookie, signSession } from '@/lib/auth';
+import { createDashboardWelcomeNotification } from '@/lib/notifications';
 import { hashPassword } from '@/lib/passwords';
 import { prisma } from '@/lib/prisma';
-import { googleSignupSchema, normalizeEmail } from '@/lib/public-registration';
+import { googleLoginSchema, googleSignupSchema, normalizeEmail } from '@/lib/public-registration';
 import { AppRole, roleMeta } from '@/lib/resurgence';
 
 type GoogleTokenInfo = {
@@ -45,7 +46,8 @@ async function verifyGoogleCredential(credential: string) {
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
-  const parsed = googleSignupSchema.safeParse(body);
+  const isLoginIntent = body?.intent === 'login';
+  const parsed = isLoginIntent ? googleLoginSchema.safeParse(body) : googleSignupSchema.safeParse(body);
 
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message || 'Invalid Google signup details.' }, { status: 400 });
@@ -59,11 +61,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'This account is inactive. Please contact support.' }, { status: 403 });
     }
 
+    if (!existing && isLoginIntent) {
+      return NextResponse.json(
+        { error: 'No Google account exists for this email yet. Create a new account first.' },
+        { status: 404 },
+      );
+    }
+
+    const signupData = parsed.data as { role: AppRole; referralCode?: string };
+
     const user = existing
       ? await prisma.user.update({
           where: { id: existing.id },
           data: {
             lastLoginAt: new Date(),
+            authProvider: 'GOOGLE',
             isEmailVerified: true,
             profileImageUrl: existing.profileImageUrl || profile.picture || null,
           },
@@ -73,16 +85,26 @@ export async function POST(request: Request) {
             email: profile.email,
             password: hashPassword(randomUUID()),
             displayName: profile.displayName,
-            title: roleMeta[parsed.data.role].label,
-            role: parsed.data.role,
+            title: roleMeta[signupData.role].label,
+            role: signupData.role,
             authProvider: 'GOOGLE',
             isEmailVerified: true,
             profileImageUrl: profile.picture || null,
-            referralCode: parsed.data.referralCode || null,
+            referralCode: signupData.referralCode || null,
             termsAcceptedAt: new Date(),
             lastLoginAt: new Date(),
           },
         });
+
+    if (!existing) {
+      await createDashboardWelcomeNotification({
+        id: user.id,
+        role: user.role,
+        displayName: user.displayName,
+      }).catch((error) => {
+        console.error('[google-signup] welcome notification failed', error);
+      });
+    }
 
     const token = await signSession({
       email: user.email,

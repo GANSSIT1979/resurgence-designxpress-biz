@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { setSessionCookie, signSession } from '@/lib/auth';
+import { createDashboardWelcomeNotification } from '@/lib/notifications';
 import { prisma } from '@/lib/prisma';
 import { verifyPassword } from '@/lib/passwords';
 import { AppRole, roleMeta } from '@/lib/resurgence';
@@ -79,6 +80,14 @@ export async function POST(request: Request) {
       termsAcceptedAt: payload.termsAcceptedAt ? new Date(payload.termsAcceptedAt) : new Date(),
       lastLoginAt: new Date(),
     },
+  });
+
+  await createDashboardWelcomeNotification({
+    id: user.id,
+    role: user.role,
+    displayName: user.displayName,
+  }).catch((error) => {
+    console.error('[mobile-signup] welcome notification failed', error);
   });
 
   await prisma.verificationCode.update({

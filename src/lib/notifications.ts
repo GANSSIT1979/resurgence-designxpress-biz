@@ -1,6 +1,7 @@
 import { AnnouncementLevel, Prisma, UserRole } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { isPrismaSchemaDriftError } from '@/lib/prisma-schema-health';
+import { roleMeta } from '@/lib/resurgence';
 
 type NotificationInput = {
   recipientRole?: UserRole | null;
@@ -78,6 +79,27 @@ export async function createPlatformNotification(input: NotificationInput) {
       href: input.href ?? null,
       metadataJson: serializeMetadata(input.metadata),
     },
+  });
+}
+
+export async function createDashboardWelcomeNotification(user: {
+  id: string;
+  role: UserRole;
+  displayName: string;
+}) {
+  const role = user.role as keyof typeof roleMeta;
+  const meta = roleMeta[role];
+  const isMember = user.role === 'MEMBER';
+
+  return createPlatformNotification({
+    recipientRole: user.role,
+    recipientUserId: user.id,
+    title: isMember ? 'Welcome to your member dashboard' : `Welcome to your ${meta.label.toLowerCase()} dashboard`,
+    message: isMember
+      ? 'Complete your profile, follow creators, and keep your community, merch, and alerts in one place.'
+      : `Your ${meta.label} account is active. Open the dashboard to review your current workspace and next actions.`,
+    href: meta.defaultRoute,
+    level: 'INFO',
   });
 }
 
