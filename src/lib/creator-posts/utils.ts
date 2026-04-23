@@ -2,6 +2,7 @@ import {
   getCloudflareStreamVideoId,
   isCloudflareStreamAsset,
 } from '@/lib/cloudflare-stream';
+import type { CreatorPostEditableRecord } from '@/lib/creator-posts/edit-types';
 import type { FeedPost } from '@/lib/feed/types';
 import type {
   CreatorPostStatus,
@@ -13,6 +14,12 @@ function asRecord(value: unknown) {
   return value && typeof value === 'object' && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : null;
+}
+
+function getRecordString(record: Record<string, unknown> | null, key: string) {
+  if (!record) return null;
+  const value = record[key];
+  return typeof value === 'string' && value.trim() ? value.trim() : null;
 }
 
 export function formatCompactNumber(value?: number | null) {
@@ -98,6 +105,78 @@ export function mapFeedPostToCreatorPostsManagerItem(post: FeedPost): CreatorPos
     mediaAssets: post.mediaAssets,
     productIds: post.productTags.map((tag) => tag.productId).filter(Boolean) as string[],
     meta: post.meta ?? null,
+  };
+}
+
+export function mapFeedPostToEditableRecord(post: FeedPost): CreatorPostEditableRecord {
+  const primaryMedia = post.mediaAssets[0] ?? null;
+  const mediaMetadata = asRecord(primaryMedia?.metadata);
+  const postMetadata = asRecord(post.meta);
+  const isCloudflare =
+    primaryMedia &&
+    isCloudflareStreamAsset({
+      url: primaryMedia.url,
+      storageProvider: primaryMedia.storageProvider,
+      storageKey: primaryMedia.storageKey,
+      metadata: mediaMetadata,
+    });
+
+  return {
+    id: post.id,
+    creatorId: post.creator?.id ?? 'creator',
+    creatorName: post.creator?.name ?? null,
+    creatorSlug: post.creator?.slug ?? null,
+    creatorRoleLabel: post.creator?.roleLabel ?? null,
+    slug: post.slug ?? null,
+    title: post.title ?? null,
+    caption: post.caption ?? null,
+    hashtags: post.hashtags.map((tag) => tag.label.replace(/^#/, '')),
+    visibility: (post.visibility as CreatorPostEditableRecord['visibility']) || 'PUBLIC',
+    mediaType: isCloudflare
+      ? 'cloudflare-stream'
+      : primaryMedia?.mediaType === 'IMAGE'
+        ? 'image'
+        : primaryMedia?.mediaType === 'VIDEO'
+          ? 'video'
+          : primaryMedia
+            ? 'external'
+            : 'none',
+    mediaUrl: primaryMedia?.url ?? null,
+    cloudflareVideoId:
+      primaryMedia && isCloudflare
+        ? getCloudflareStreamVideoId({
+            url: primaryMedia.url,
+            storageProvider: primaryMedia.storageProvider,
+            storageKey: primaryMedia.storageKey,
+            metadata: mediaMetadata,
+          }) || null
+        : null,
+    posterUrl:
+      getRecordString(mediaMetadata, 'posterUrl') ||
+      getRecordString(postMetadata, 'posterUrl') ||
+      primaryMedia?.thumbnailUrl ||
+      null,
+    thumbnailUrl: primaryMedia?.thumbnailUrl ?? null,
+    originalFileName:
+      primaryMedia?.originalFileName || getRecordString(mediaMetadata, 'originalFileName') || null,
+    durationSeconds: primaryMedia?.durationSeconds ?? null,
+    aspectRatio:
+      getRecordString(mediaMetadata, 'aspectRatio') ||
+      getRecordString(postMetadata, 'aspectRatio') ||
+      null,
+    altText: primaryMedia?.altText ?? null,
+    locationLabel:
+      getRecordString(mediaMetadata, 'locationLabel') ||
+      getRecordString(postMetadata, 'locationLabel') ||
+      null,
+    languageCode:
+      getRecordString(mediaMetadata, 'languageCode') ||
+      getRecordString(postMetadata, 'languageCode') ||
+      null,
+    status: post.status,
+    meta: postMetadata ?? null,
+    updatedAt: post.updatedAt,
+    publishedAt: post.publishedAt,
   };
 }
 

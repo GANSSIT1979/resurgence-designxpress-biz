@@ -45,7 +45,7 @@ export default function RecentPostsWidget({
                 </div>
               </div>
               <Link
-                href={`/creator/posts/new?edit=${encodeURIComponent(post.id)}`}
+                href={`/creator/posts/${encodeURIComponent(post.id)}`}
                 className="rounded-full border border-white/10 px-3 py-1.5 text-xs text-white/80 transition hover:border-white/20 hover:text-white"
               >
                 Open

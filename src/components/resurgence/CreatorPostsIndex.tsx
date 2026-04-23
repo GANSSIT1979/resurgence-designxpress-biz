@@ -158,7 +158,7 @@ export default function CreatorPostsIndex({
   function openEditor(post: CreatorPostsManagerItem) {
     setPendingPostId(post.id);
     setPendingAction('edit');
-    router.push(`/creator/posts/new?edit=${encodeURIComponent(post.id)}`);
+    router.push(`/creator/posts/${encodeURIComponent(post.id)}`);
   }
 
   return (
