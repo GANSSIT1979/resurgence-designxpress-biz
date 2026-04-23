@@ -12,8 +12,8 @@ import {
   filterPostsByStatus,
   formatCompactNumber,
   mapFeedPostToCreatorPostsManagerItem,
-  sortPostsByRecency,
   summarizePosts,
+  sortPostsByRecency,
 } from '@/lib/creator-posts/utils';
 import type { FeedPost } from '@/lib/feed/types';
 
@@ -30,34 +30,6 @@ async function requestJson(url: string, init: RequestInit) {
     throw new Error(data.error || 'Unable to complete the request.');
   }
   return data;
-}
-
-function buildDuplicatePayload(post: CreatorPostsManagerItem) {
-  return {
-    title: post.title || undefined,
-    caption: (post.caption || post.title || 'Creator post copy').trim(),
-    summary: post.summary || undefined,
-    visibility: post.visibility,
-    status: 'DRAFT',
-    mediaAssets: post.mediaAssets.map((asset) => ({
-      mediaType: asset.mediaType,
-      url: asset.url,
-      thumbnailUrl: asset.thumbnailUrl || '',
-      originalFileName: asset.originalFileName || '',
-      storageProvider: asset.storageProvider || '',
-      storageKey: asset.storageKey || '',
-      contentType: asset.contentType || '',
-      size: asset.size ?? null,
-      durationSeconds: asset.durationSeconds ?? null,
-      metadata: asset.metadata || undefined,
-      altText: asset.altText || '',
-      caption: asset.caption || '',
-      sortOrder: asset.sortOrder,
-    })),
-    hashtags: post.hashtags,
-    productIds: post.productIds,
-    meta: post.meta || undefined,
-  };
 }
 
 export default function CreatorPostsIndex({
@@ -93,29 +65,42 @@ export default function CreatorPostsIndex({
     ARCHIVED: summary.archived,
   };
 
-  async function runStatusAction(post: CreatorPostsManagerItem, nextStatus: 'PUBLISHED' | 'DRAFT') {
+  async function runPostMutation(
+    post: CreatorPostsManagerItem,
+    action: 'publish' | 'unpublish' | 'archive' | 'duplicate',
+    options?: {
+      method?: 'POST' | 'DELETE';
+      pendingAction?: 'status' | 'archive' | 'duplicate';
+      notice?: (item: FeedPost) => string;
+      insertNewItem?: boolean;
+    },
+  ) {
     setPendingPostId(post.id);
-    setPendingAction('status');
+    setPendingAction(options?.pendingAction ?? 'status');
     setNotice(null);
     setError(null);
 
     try {
-      const data = await requestJson(`/api/feed/${post.id}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ status: nextStatus }),
+      const data = await requestJson(`/api/creator/posts/${post.id}/${action}`, {
+        method: options?.method ?? 'POST',
       });
       const item = data.item as FeedPost | null;
       if (!item) throw new Error('The post updated, but the server did not return the refreshed record.');
 
-      setPosts((current) =>
-        current.map((entry) => (entry.id === post.id ? mapFeedPostToCreatorPostsManagerItem(item) : entry)),
-      );
+      setPosts((current) => {
+        const nextItem = mapFeedPostToCreatorPostsManagerItem(item);
+        if (options?.insertNewItem) return [nextItem, ...current];
+        return current.map((entry) => (entry.id === post.id ? nextItem : entry));
+      });
       setNotice(
-        item.status === 'PUBLISHED'
-          ? 'Post published.'
-          : item.status === 'PENDING_REVIEW'
-            ? 'Post submitted for review.'
-            : 'Post moved back to draft.',
+        options?.notice?.(item) ??
+          (item.status === 'PUBLISHED'
+            ? 'Post published.'
+            : item.status === 'PENDING_REVIEW'
+              ? 'Post submitted for review.'
+              : item.status === 'ARCHIVED'
+                ? 'Post archived.'
+                : 'Post moved back to draft.'),
       );
       router.refresh();
     } catch (actionError) {
@@ -126,29 +111,25 @@ export default function CreatorPostsIndex({
     }
   }
 
+  async function runStatusAction(post: CreatorPostsManagerItem, nextStatus: 'PUBLISHED' | 'DRAFT') {
+    await runPostMutation(post, nextStatus === 'PUBLISHED' ? 'publish' : 'unpublish', {
+      pendingAction: 'status',
+    });
+  }
+
+  async function archivePost(post: CreatorPostsManagerItem) {
+    await runPostMutation(post, 'archive', {
+      pendingAction: 'archive',
+      notice: () => 'Post archived.',
+    });
+  }
+
   async function duplicatePost(post: CreatorPostsManagerItem) {
-    setPendingPostId(post.id);
-    setPendingAction('duplicate');
-    setNotice(null);
-    setError(null);
-
-    try {
-      const data = await requestJson('/api/feed', {
-        method: 'POST',
-        body: JSON.stringify(buildDuplicatePayload(post)),
-      });
-      const item = data.item as FeedPost | null;
-      if (!item) throw new Error('The duplicate saved, but the server did not return the new post.');
-
-      setPosts((current) => [mapFeedPostToCreatorPostsManagerItem(item), ...current]);
-      setNotice('Draft duplicated successfully.');
-      router.refresh();
-    } catch (actionError) {
-      setError(actionError instanceof Error ? actionError.message : 'Unable to duplicate the post.');
-    } finally {
-      setPendingPostId(null);
-      setPendingAction(null);
-    }
+    await runPostMutation(post, 'duplicate', {
+      pendingAction: 'duplicate',
+      insertNewItem: true,
+      notice: () => 'Draft duplicated successfully.',
+    });
   }
 
   async function deletePost(post: CreatorPostsManagerItem) {
@@ -162,7 +143,7 @@ export default function CreatorPostsIndex({
     setError(null);
 
     try {
-      await requestJson(`/api/feed/${post.id}`, { method: 'DELETE' });
+      await requestJson(`/api/creator/posts/${post.id}/delete`, { method: 'DELETE' });
       setPosts((current) => current.filter((entry) => entry.id !== post.id));
       setNotice('Post deleted.');
       router.refresh();
@@ -276,6 +257,7 @@ export default function CreatorPostsIndex({
                 onDelete={deletePost}
                 onPublish={(item) => runStatusAction(item, 'PUBLISHED')}
                 onUnpublish={(item) => runStatusAction(item, 'DRAFT')}
+                onArchive={archivePost}
                 onDuplicate={duplicatePost}
               />
             );

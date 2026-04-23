@@ -20,6 +20,7 @@ export default function CreatorPostCard({
   onDelete,
   onPublish,
   onUnpublish,
+  onArchive,
   onDuplicate,
 }: {
   post: CreatorPostsManagerItem;
@@ -28,6 +29,7 @@ export default function CreatorPostCard({
   onDelete?: (post: CreatorPostsManagerItem) => void;
   onPublish?: (post: CreatorPostsManagerItem) => void;
   onUnpublish?: (post: CreatorPostsManagerItem) => void;
+  onArchive?: (post: CreatorPostsManagerItem) => void;
   onDuplicate?: (post: CreatorPostsManagerItem) => void;
 }) {
   const caption = post.caption || post.title || 'No caption added yet.';
@@ -99,6 +101,7 @@ export default function CreatorPostCard({
             onDelete={onDelete}
             onPublish={onPublish}
             onUnpublish={onUnpublish}
+            onArchive={onArchive}
             onDuplicate={onDuplicate}
           />
         </div>

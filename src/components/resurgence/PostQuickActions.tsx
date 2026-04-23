@@ -5,6 +5,7 @@ import type { CreatorPostsManagerItem } from '@/lib/creator-posts/types';
 function getPrimaryLabel(post: CreatorPostsManagerItem) {
   if (post.status === 'PUBLISHED') return 'Unpublish';
   if (post.status === 'PENDING_REVIEW') return 'Move to draft';
+  if (post.status === 'ARCHIVED') return 'Return to draft';
   return 'Submit review';
 }
 
@@ -15,6 +16,7 @@ export default function PostQuickActions({
   onDelete,
   onPublish,
   onUnpublish,
+  onArchive,
   onDuplicate,
 }: {
   post: CreatorPostsManagerItem;
@@ -23,10 +25,13 @@ export default function PostQuickActions({
   onDelete?: (post: CreatorPostsManagerItem) => void;
   onPublish?: (post: CreatorPostsManagerItem) => void;
   onUnpublish?: (post: CreatorPostsManagerItem) => void;
+  onArchive?: (post: CreatorPostsManagerItem) => void;
   onDuplicate?: (post: CreatorPostsManagerItem) => void;
 }) {
-  const isPublished = post.status === 'PUBLISHED';
-  const primaryAction = isPublished ? onUnpublish : onPublish;
+  const primaryAction =
+    post.status === 'DRAFT'
+      ? onPublish
+      : onUnpublish;
   const busy = Boolean(pendingAction);
 
   return (
@@ -47,11 +52,22 @@ export default function PostQuickActions({
         className="inline-flex min-h-10 items-center rounded-full border border-fuchsia-400/25 bg-fuchsia-400/10 px-4 py-2 text-sm text-fuchsia-50 transition hover:border-fuchsia-300/30 hover:bg-fuchsia-400/15 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {pendingAction === 'status'
-          ? isPublished
+          ? post.status === 'PUBLISHED'
             ? 'Updating...'
             : 'Submitting...'
           : getPrimaryLabel(post)}
       </button>
+
+      {post.status !== 'ARCHIVED' ? (
+        <button
+          type="button"
+          onClick={() => onArchive?.(post)}
+          disabled={busy}
+          className="inline-flex min-h-10 items-center rounded-full border border-amber-400/20 bg-amber-400/10 px-4 py-2 text-sm text-amber-50 transition hover:border-amber-300/30 hover:bg-amber-400/15 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {pendingAction === 'archive' ? 'Archiving...' : 'Archive'}
+        </button>
+      ) : null}
 
       <button
         type="button"
