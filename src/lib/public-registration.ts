@@ -35,6 +35,18 @@ export function normalizeReferralCode(value: unknown) {
   return normalized || undefined;
 }
 
+function normalizeOptionalText(value: unknown) {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim();
+  return normalized || undefined;
+}
+
+function normalizeOptionalUrl(value: unknown) {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim();
+  return normalized || undefined;
+}
+
 export function phoneNumberToSyntheticEmail(phoneNumber: string) {
   const digits = phoneNumber.replace(/\D/g, '');
   return `mobile-${digits}@mobile.resurgence.local`;
@@ -55,6 +67,11 @@ export const passwordSchema = z
   .regex(/[0-9]/, 'Password must include at least one number.');
 
 const optionalReferralCodeSchema = z.preprocess(normalizeReferralCode, z.string().max(80).optional());
+const optionalDisplayNameSchema = z.preprocess(normalizeOptionalText, z.string().min(2, 'Enter your display name.').max(120).optional());
+const optionalProfileImageUrlSchema = z.preprocess(
+  normalizeOptionalUrl,
+  z.string().url('Enter a valid image URL.').max(500).optional(),
+);
 
 export const mobileSignupRequestSchema = z.object({
   phoneNumber: z.preprocess(normalizePhoneNumber, z.string().regex(/^\+[1-9]\d{6,14}$/, 'Use a valid mobile number.')),
@@ -62,9 +79,14 @@ export const mobileSignupRequestSchema = z.object({
   password: passwordSchema,
   role: publicRoleSchema,
   referralCode: optionalReferralCodeSchema,
+  profileImageUrl: optionalProfileImageUrlSchema,
   termsAccepted: z.literal(true, {
     errorMap: () => ({ message: 'You must accept the terms and privacy notice.' }),
   }),
+});
+
+export const mobileLoginRequestSchema = z.object({
+  phoneNumber: z.preprocess(normalizePhoneNumber, z.string().regex(/^\+[1-9]\d{6,14}$/, 'Use a valid mobile number.')),
 });
 
 export const mobileOtpVerifySchema = z.object({
@@ -76,6 +98,8 @@ export const googleSignupSchema = z.object({
   credential: z.string().min(20),
   role: publicRoleSchema,
   referralCode: optionalReferralCodeSchema,
+  displayName: optionalDisplayNameSchema,
+  profileImageUrl: optionalProfileImageUrlSchema,
   termsAccepted: z.literal(true, {
     errorMap: () => ({ message: 'You must accept the terms and privacy notice.' }),
   }),

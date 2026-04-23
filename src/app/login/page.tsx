@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
+import { FilterChipRow } from "@/components/filter-chip-row";
+import { ProfileCompletionMeter } from "@/components/profile-completion-meter";
 import { publicSignupRoleCards } from "@/lib/signup-roles";
 import type { PublicSignupRole } from "@/lib/signup-roles";
 
@@ -39,9 +41,19 @@ const accessHighlights = [
   "Sports community access",
 ] as const;
 
+const onboardingInterestOptions = [
+  { value: "game-highlights", label: "Game Highlights" },
+  { value: "creator-stories", label: "Creator Stories" },
+  { value: "merch-drops", label: "Merch Drops" },
+  { value: "community-updates", label: "Community Updates" },
+  { value: "events", label: "Events" },
+  { value: "training", label: "Training Tips" },
+] as const;
+
 type DemoAccount = (typeof demoAccounts)[number];
 type AuthMode = "login" | "signup";
 type SignupMethod = "google" | "mobile";
+type LoginMethod = "password" | "google" | "otp";
 
 export default function LoginPage() {
   return (
@@ -74,17 +86,24 @@ function LoginGatewayShell({
   const googleButtonRef = useRef<HTMLDivElement | null>(null);
 
   const [mode, setMode] = useState<AuthMode>("login");
+  const [loginMethod, setLoginMethod] = useState<LoginMethod>("password");
   const [signupMethod, setSignupMethod] = useState<SignupMethod>("google");
   const [selectedRole, setSelectedRole] = useState<PublicSignupRole>("MEMBER");
   const [identifier, setIdentifier] = useState(showDemoAccess ? defaultDemo.email : "");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [displayName, setDisplayName] = useState("");
+  const [profileImageUrl, setProfileImageUrl] = useState("");
+  const [interests, setInterests] = useState<string[]>(["game-highlights", "merch-drops"]);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [mobilePassword, setMobilePassword] = useState("");
   const [otpCode, setOtpCode] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [demoOtp, setDemoOtp] = useState("");
+  const [loginPhoneNumber, setLoginPhoneNumber] = useState("");
+  const [loginOtpCode, setLoginOtpCode] = useState("");
+  const [loginOtpSent, setLoginOtpSent] = useState(false);
+  const [loginDemoOtp, setLoginDemoOtp] = useState("");
   const [referralCode, setReferralCode] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -94,9 +113,18 @@ function LoginGatewayShell({
   const canEdit = Boolean(onRedirect);
   const canUseDemoAccounts = showDemoAccess && canEdit;
   const activeRole = publicSignupRoleCards.find((item) => item.role === selectedRole) || publicSignupRoleCards[0];
+  const signupMissingItems = [
+    termsAccepted ? null : "Accept terms",
+    displayName.trim() ? null : "Add display name",
+    profileImageUrl.trim() ? null : "Add profile photo",
+    interests.length ? null : "Choose interests",
+  ].filter(Boolean) as string[];
+  const signupCompletion = Math.round(((4 - signupMissingItems.length) / 4) * 100);
 
   useEffect(() => {
-    const shouldRenderGoogleButton = mode === "login" || signupMethod === "google";
+    const shouldRenderGoogleButton =
+      (mode === "login" && loginMethod === "google") ||
+      (mode === "signup" && signupMethod === "google");
     if (!shouldRenderGoogleButton || !googleClientId || !googleButtonRef.current) return;
 
     let cancelled = false;
@@ -151,10 +179,22 @@ function LoginGatewayShell({
       cancelled = true;
       script.removeEventListener("load", renderGoogleButton);
     };
-  }, [mode, signupMethod, selectedRole, termsAccepted, referralCode]);
+  }, [mode, loginMethod, signupMethod]);
 
   function useDemoAccount(account: DemoAccount) {
     setIdentifier(account.email);
+  }
+
+  function persistOnboardingPreview() {
+    if (typeof window === "undefined") return;
+
+    window.localStorage.setItem("resurgence-onboarding-preview", JSON.stringify({
+      role: selectedRole,
+      displayName: displayName.trim(),
+      profileImageUrl: profileImageUrl.trim(),
+      interests,
+      updatedAt: Date.now(),
+    }));
   }
 
   function showSuccess(title: string, message: string, redirectTo: string) {
@@ -213,6 +253,8 @@ function LoginGatewayShell({
             ? {
                 role: selectedRole,
                 referralCode,
+                displayName: displayName.trim() || undefined,
+                profileImageUrl: profileImageUrl.trim() || undefined,
                 termsAccepted,
               }
             : {}),
@@ -230,6 +272,7 @@ function LoginGatewayShell({
         return;
       }
 
+      persistOnboardingPreview();
       showSuccess("Account ready", `Welcome to Resurgence as ${activeRole.title}. Redirecting now.`, json.redirectTo || "/");
     } catch (err) {
       setError(err instanceof Error ? err.message : intent === "login" ? "Unable to sign in with Google." : "Unable to continue with Google.");
@@ -254,6 +297,7 @@ function LoginGatewayShell({
           password: mobilePassword,
           role: selectedRole,
           referralCode,
+          profileImageUrl: profileImageUrl.trim() || undefined,
           termsAccepted,
         }),
       });
@@ -294,9 +338,69 @@ function LoginGatewayShell({
         return;
       }
 
+      persistOnboardingPreview();
       showSuccess("Mobile verified", `Your free ${activeRole.title} account is active. Redirecting now.`, json.redirectTo || "/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to verify OTP.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function requestLoginOtp(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setLoading(true);
+    setError("");
+    setLoginDemoOtp("");
+
+    try {
+      const res = await fetch("/api/auth/mobile/login/request-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phoneNumber: loginPhoneNumber,
+        }),
+      });
+      const json = await res.json().catch(() => null);
+
+      if (!res.ok || !json?.ok) {
+        setError(json?.error || "Unable to send login OTP.");
+        return;
+      }
+
+      setLoginOtpSent(true);
+      setLoginDemoOtp(json.demoCode || "");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to send login OTP.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function verifyLoginOtp(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      const res = await fetch("/api/auth/mobile/login/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phoneNumber: loginPhoneNumber,
+          code: loginOtpCode,
+        }),
+      });
+      const json = await res.json().catch(() => null);
+
+      if (!res.ok || !json?.ok) {
+        setError(json?.error || "Unable to verify login OTP.");
+        return;
+      }
+
+      onRedirect?.(json.redirectTo || nextTarget || "/");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to verify login OTP.");
     } finally {
       setLoading(false);
     }
@@ -355,10 +459,33 @@ function LoginGatewayShell({
           <section className="login-card auth-card" aria-label="Authentication panel">
             {success ? (
               <div className="auth-success-panel">
-                <div className="auth-success-mark">OK</div>
-                <div className="section-kicker">Registration Complete</div>
+                <div className="auth-success-mark">GO</div>
+                {profileImageUrl ? (
+                  <div className="auth-success-avatar">
+                    <img src={profileImageUrl} alt={displayName || "New member"} />
+                  </div>
+                ) : null}
+                <div className="section-kicker">Welcome State</div>
                 <h2>{success.title}</h2>
                 <p>{success.message}</p>
+                <div className="auth-success-summary">
+                  <span>{activeRole.title}</span>
+                  <span>{displayName || "Community member"}</span>
+                  <span>{interests.length} selected interests</span>
+                </div>
+                {interests.length ? (
+                  <div className="feed-topic-inline auth-success-topics">
+                    {interests.map((item) => {
+                      const label = onboardingInterestOptions.find((option) => option.value === item)?.label || item;
+                      return <span key={item}>{label}</span>;
+                    })}
+                  </div>
+                ) : null}
+                <div className="auth-step-list">
+                  <span>1. Open your dashboard</span>
+                  <span>2. Follow creators and save content</span>
+                  <span>3. Complete profile prompts and merch discovery</span>
+                </div>
                 <Link className="button-link" href={success.redirectTo}>Open dashboard now</Link>
               </div>
             ) : (
@@ -377,7 +504,7 @@ function LoginGatewayShell({
                     <div className="login-card-header">
                       <div className="section-kicker">Secure Log-in</div>
                       <h2>Open your workspace</h2>
-                      <p>Use your email or verified mobile number with password, or continue with Gmail if your account was created through Google.</p>
+                      <p>Use password, Gmail, or a fresh mobile OTP to get back into your feed, dashboard, orders, and creator workspace.</p>
                     </div>
 
                     <div className="login-redirect-note">
@@ -385,68 +512,155 @@ function LoginGatewayShell({
                       <span>{nextTarget || "Your assigned dashboard after login"}</span>
                     </div>
 
-                    <form className="login-form" onSubmit={submitLogin}>
-                      <div className="login-field">
-                        <label className="label" htmlFor="identifier">Email or mobile number</label>
-                        <input
-                          className="input"
-                          id="identifier"
-                          autoComplete="username"
-                          value={identifier}
-                          onChange={(e) => setIdentifier(e.target.value)}
-                          placeholder="name@gmail.com or 09XXXXXXXXX"
-                          required
-                        />
-                      </div>
-
-                      <div className="login-field">
-                        <label className="label" htmlFor="password">Password</label>
-                        <div className="login-password-wrap">
-                          <input
-                            className="input"
-                            id="password"
-                            type={showPassword ? "text" : "password"}
-                            autoComplete="current-password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                          />
-                          <button className="login-password-toggle" type="button" onClick={() => setShowPassword((current) => !current)}>
-                            {showPassword ? "Hide" : "Show"}
-                          </button>
-                        </div>
-                      </div>
-
-                      {error ? <div className="notice error">{error}</div> : null}
-
-                      <button className="btn login-submit" type="submit" disabled={loading}>
-                        {loading ? "Signing in..." : "Login"}
+                    <div className="auth-method-tabs" aria-label="Choose login method">
+                      <button className={loginMethod === "password" ? "active" : ""} type="button" onClick={() => setLoginMethod("password")}>
+                        Password
                       </button>
-                    </form>
-
-                    <div className="auth-provider-card" style={{ marginTop: 20 }}>
-                      <div>
-                        <div className="section-kicker">Gmail Login</div>
-                        <h3>Continue with Google</h3>
-                        <p className="helper">Use this for accounts created with Gmail. Existing Google members will be signed in directly.</p>
-                      </div>
-                      {!googleClientId ? (
-                        <button className="btn login-submit" type="button" disabled>
-                          Continue with Gmail
-                        </button>
-                      ) : (
-                        <div className="auth-google-wrap">
-                          <div ref={googleButtonRef} />
-                        </div>
-                      )}
-                      {!googleClientId ? (
-                        <div className="notice error">Google sign-in needs NEXT_PUBLIC_GOOGLE_CLIENT_ID in Vercel.</div>
-                      ) : (
-                        <div className="helper">Password login remains available for email and mobile-number accounts with saved credentials.</div>
-                      )}
+                      <button className={loginMethod === "google" ? "active" : ""} type="button" onClick={() => setLoginMethod("google")}>
+                        Gmail
+                      </button>
+                      <button className={loginMethod === "otp" ? "active" : ""} type="button" onClick={() => setLoginMethod("otp")}>
+                        Mobile OTP
+                      </button>
                     </div>
 
-                    {canUseDemoAccounts ? (
+                    {loginMethod === "password" ? (
+                      <form className="login-form" onSubmit={submitLogin}>
+                        <div className="login-field">
+                          <label className="label" htmlFor="identifier">Email or mobile number</label>
+                          <input
+                            className="input"
+                            id="identifier"
+                            autoComplete="username"
+                            value={identifier}
+                            onChange={(e) => setIdentifier(e.target.value)}
+                            placeholder="name@gmail.com or 09XXXXXXXXX"
+                            required
+                          />
+                        </div>
+
+                        <div className="login-field">
+                          <label className="label" htmlFor="password">Password</label>
+                          <div className="login-password-wrap">
+                            <input
+                              className="input"
+                              id="password"
+                              type={showPassword ? "text" : "password"}
+                              autoComplete="current-password"
+                              value={password}
+                              onChange={(e) => setPassword(e.target.value)}
+                              required
+                            />
+                            <button className="login-password-toggle" type="button" onClick={() => setShowPassword((current) => !current)}>
+                              {showPassword ? "Hide" : "Show"}
+                            </button>
+                          </div>
+                        </div>
+
+                        {error ? <div className="notice error">{error}</div> : null}
+
+                        <button className="btn login-submit" type="submit" disabled={loading}>
+                          {loading ? "Signing in..." : "Login"}
+                        </button>
+                      </form>
+                    ) : null}
+
+                    {loginMethod === "google" ? (
+                      <div className="auth-provider-card" style={{ marginTop: 20 }}>
+                        <div>
+                          <div className="section-kicker">Gmail Login</div>
+                          <h3>Continue with Google</h3>
+                          <p className="helper">Use this for accounts created with Gmail. Existing Google members will be signed in directly.</p>
+                        </div>
+                        {!googleClientId ? (
+                          <button className="btn login-submit" type="button" disabled>
+                            Continue with Gmail
+                          </button>
+                        ) : (
+                          <div className="auth-google-wrap">
+                            <div ref={googleButtonRef} />
+                          </div>
+                        )}
+                        {!googleClientId ? (
+                          <div className="notice error">Google sign-in needs NEXT_PUBLIC_GOOGLE_CLIENT_ID in Vercel.</div>
+                        ) : (
+                          <div className="helper">Use Gmail when the account was created through Google signup.</div>
+                        )}
+                        {error ? <div className="notice error">{error}</div> : null}
+                      </div>
+                    ) : null}
+
+                    {loginMethod === "otp" ? (
+                      <div className="auth-provider-card" style={{ marginTop: 20 }}>
+                        {!loginOtpSent ? (
+                          <form className="login-form" onSubmit={requestLoginOtp}>
+                            <div>
+                              <div className="section-kicker">Mobile OTP Login</div>
+                              <h3>Get a fresh code</h3>
+                              <p className="helper">Use this when your account was created with a verified mobile number and you want a faster sign-in path.</p>
+                            </div>
+                            <div className="login-field">
+                              <label className="label" htmlFor="loginPhoneNumber">Mobile number</label>
+                              <input
+                                className="input"
+                                id="loginPhoneNumber"
+                                inputMode="tel"
+                                autoComplete="tel"
+                                value={loginPhoneNumber}
+                                onChange={(e) => setLoginPhoneNumber(e.target.value)}
+                                placeholder="09XXXXXXXXX or +639XXXXXXXXX"
+                                required
+                              />
+                            </div>
+                            {error ? <div className="notice error">{error}</div> : null}
+                            <button className="btn login-submit" type="submit" disabled={loading}>
+                              {loading ? "Sending OTP..." : "Send Login OTP"}
+                            </button>
+                          </form>
+                        ) : (
+                          <form className="login-form" onSubmit={verifyLoginOtp}>
+                            <div>
+                              <div className="section-kicker">Verification Step</div>
+                              <h3>Enter your login code</h3>
+                              <p className="helper">We sent a one-time code to {loginPhoneNumber}. Codes expire after 10 minutes.</p>
+                            </div>
+                            {loginDemoOtp ? (
+                              <div className="notice success">
+                                Demo OTP for current setup: <strong>{loginDemoOtp}</strong>
+                              </div>
+                            ) : null}
+                            <div className="login-field">
+                              <label className="label" htmlFor="loginOtpCode">OTP or verification code</label>
+                              <input
+                                className="input auth-otp-input"
+                                id="loginOtpCode"
+                                inputMode="numeric"
+                                maxLength={6}
+                                value={loginOtpCode}
+                                onChange={(e) => setLoginOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                                placeholder="123456"
+                                required
+                              />
+                            </div>
+                            {error ? <div className="notice error">{error}</div> : null}
+                            <div className="btn-row">
+                              <button className="btn" type="submit" disabled={loading || loginOtpCode.length !== 6}>
+                                {loading ? "Verifying..." : "Verify and Login"}
+                              </button>
+                              <button className="btn btn-secondary" type="button" onClick={() => {
+                                setLoginOtpSent(false);
+                                setLoginOtpCode("");
+                                setLoginDemoOtp("");
+                              }}>
+                                Change number
+                              </button>
+                            </div>
+                          </form>
+                        )}
+                      </div>
+                    ) : null}
+
+                    {canUseDemoAccounts && loginMethod === "password" ? (
                       <div className="login-demo-card">
                         <div>
                           <div className="section-kicker">Development Demo Access</div>
@@ -500,6 +714,53 @@ function LoginGatewayShell({
                       <span>{activeRole.description}</span>
                     </div>
 
+                    <div className="auth-onboarding-grid">
+                      <ProfileCompletionMeter
+                        title="Signup readiness"
+                        percent={signupCompletion}
+                        missingItems={signupMissingItems}
+                      />
+
+                      <div className="auth-onboarding-card">
+                        <div className="section-kicker">Profile Setup</div>
+                        <h3>Shape your welcome experience</h3>
+                        <p className="helper">Add the basics now so your first dashboard load feels more personal and creator-first.</p>
+
+                        <div className="login-field">
+                          <label className="label" htmlFor="displayName">Display name</label>
+                          <input
+                            className="input"
+                            id="displayName"
+                            value={displayName}
+                            onChange={(event) => setDisplayName(event.target.value)}
+                            placeholder="How your name should appear inside Resurgence"
+                          />
+                        </div>
+
+                        <div className="login-field">
+                          <label className="label" htmlFor="profileImageUrl">Profile photo URL</label>
+                          <input
+                            className="input"
+                            id="profileImageUrl"
+                            value={profileImageUrl}
+                            onChange={(event) => setProfileImageUrl(event.target.value)}
+                            placeholder="https://..."
+                          />
+                        </div>
+
+                        <div className="login-field">
+                          <label className="label">Interests</label>
+                          <FilterChipRow
+                            items={onboardingInterestOptions.map((item) => ({ value: item.value, label: item.label }))}
+                            multiple
+                            selected={interests}
+                            onChange={(value) => setInterests(value as string[])}
+                          />
+                          <div className="helper">Pick the lanes you want surfaced first when you land in the app.</div>
+                        </div>
+                      </div>
+                    </div>
+
                     <div className="auth-consent-card">
                       <input
                         id="terms"
@@ -543,6 +804,7 @@ function LoginGatewayShell({
                           <div className="notice error">Google sign-in needs NEXT_PUBLIC_GOOGLE_CLIENT_ID in Vercel.</div>
                         ) : null}
                         {!termsAccepted ? <div className="helper">Accept the terms first to activate Gmail signup.</div> : null}
+                        {termsAccepted ? <div className="helper">Your display name and optional profile image will be saved with the new account.</div> : null}
                       </div>
                     ) : (
                       <div className="auth-provider-card">
@@ -552,10 +814,6 @@ function LoginGatewayShell({
                               <div className="section-kicker">Mobile Signup</div>
                               <h3>Verify by OTP</h3>
                               <p className="helper">We will verify your mobile number before creating the account.</p>
-                            </div>
-                            <div className="login-field">
-                              <label className="label" htmlFor="displayName">Full name</label>
-                              <input className="input" id="displayName" value={displayName} onChange={(e) => setDisplayName(e.target.value)} required />
                             </div>
                             <div className="login-field">
                               <label className="label" htmlFor="phoneNumber">Mobile number</label>
@@ -583,8 +841,9 @@ function LoginGatewayShell({
                                 required
                               />
                             </div>
+                            {!displayName.trim() ? <div className="helper">Add your display name in the profile setup block before sending OTP.</div> : null}
                             {error ? <div className="notice error">{error}</div> : null}
-                            <button className="btn login-submit" type="submit" disabled={loading || !termsAccepted}>
+                            <button className="btn login-submit" type="submit" disabled={loading || !termsAccepted || !displayName.trim()}>
                               {loading ? "Sending OTP..." : "Send OTP Verification"}
                             </button>
                           </form>

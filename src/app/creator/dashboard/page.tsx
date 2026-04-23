@@ -1,9 +1,11 @@
 import Link from 'next/link';
 import { CreatorAnalyticsPanel } from '@/components/creator-analytics-panel';
+import { CreatorDashboardOverview } from '@/components/creator/creator-dashboard-overview';
 import { CreatorProfileDashboard } from '@/components/creator/creator-profile-dashboard';
 import { NotificationCenter } from '@/components/notification-center';
 import { RoleShell } from '@/components/role-shell';
 import { creatorNavItems } from '@/lib/creators';
+import { getCreatorStats } from '@/lib/creators';
 import { serializeCreatorProfile } from '@/lib/creators';
 import { getAutomationInbox } from '@/lib/notifications';
 import { prisma } from '@/lib/prisma';
@@ -37,7 +39,6 @@ export default async function CreatorDashboardPage() {
       },
     },
   });
-  const inbox = await getAutomationInbox(context.user.role, context.user.id, 6);
 
   if (!creator) {
     return (
@@ -65,6 +66,62 @@ export default async function CreatorDashboardPage() {
     );
   }
 
+  const creatorProfile = serializeCreatorProfile(creator);
+  const creatorStats = getCreatorStats(creatorProfile);
+  const [inbox, creatorPosts] = await Promise.all([
+    getAutomationInbox(context.user.role, context.user.id, 6),
+    prisma.contentPost.findMany({
+      where: {
+        creatorProfileId: creator.id,
+        status: { not: 'DELETED' },
+      },
+      select: {
+        id: true,
+        caption: true,
+        status: true,
+        publishedAt: true,
+        updatedAt: true,
+        likeCount: true,
+        commentCount: true,
+        saveCount: true,
+        shareCount: true,
+        viewCount: true,
+        productTags: {
+          select: {
+            product: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+                imageUrl: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }],
+    }),
+  ]);
+  const publishedCount = creatorPosts.filter((post) => post.status === 'PUBLISHED').length;
+  const draftCount = creatorPosts.filter((post) => post.status === 'DRAFT').length;
+  const unreadAlerts = inbox.notifications.filter((item) => !item.isRead).length;
+  const taggedProductsMap = new Map<string, { id: string; name: string; slug: string; imageUrl: string | null; tagCount: number }>();
+
+  creatorPosts.forEach((post) => {
+    post.productTags.forEach((tag) => {
+      if (!tag.product) return;
+
+      const existing = taggedProductsMap.get(tag.product.id);
+      taggedProductsMap.set(tag.product.id, {
+        id: tag.product.id,
+        name: tag.product.name,
+        slug: tag.product.slug,
+        imageUrl: tag.product.imageUrl,
+        tagCount: (existing?.tagCount || 0) + 1,
+      });
+    });
+  });
+
   return (
     <main>
       <RoleShell
@@ -78,7 +135,33 @@ export default async function CreatorDashboardPage() {
           <Link className="button-link" href={`/creators/${creator.slug}`}>Open Public Profile</Link>
           <Link className="button-link btn-secondary" href="/contact">Request Profile Update</Link>
         </div>
-        <CreatorProfileDashboard creator={serializeCreatorProfile(creator)} />
+        <CreatorDashboardOverview
+          profileCompleteness={creatorStats.completeness}
+          totalFollowersLabel={creatorStats.totalFollowersLabel}
+          linkedPlatformCount={creatorStats.linkedPlatformCount}
+          totalPosts={creatorPosts.length}
+          publishedCount={publishedCount}
+          draftCount={draftCount}
+          taggedProductsCount={Array.from(taggedProductsMap.values()).reduce((sum, item) => sum + item.tagCount, 0)}
+          unreadAlerts={unreadAlerts}
+          recentPosts={creatorPosts.slice(0, 4).map((post) => ({
+            id: post.id,
+            caption: post.caption,
+            status: post.status,
+            publishedAt: post.publishedAt?.toISOString() ?? null,
+            updatedAt: post.updatedAt.toISOString(),
+            metrics: {
+              views: post.viewCount,
+              likes: post.likeCount,
+              comments: post.commentCount,
+              saves: post.saveCount,
+              shares: post.shareCount,
+            },
+            productTagCount: post.productTags.length,
+          }))}
+          taggedProducts={Array.from(taggedProductsMap.values()).sort((left, right) => right.tagCount - left.tagCount).slice(0, 4)}
+        />
+        <CreatorProfileDashboard creator={creatorProfile} />
         <CreatorAnalyticsPanel creator={creator} events={creator.mediaEvents.map((event) => ({
           id: event.id,
           title: event.title,

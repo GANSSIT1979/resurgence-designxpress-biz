@@ -1,18 +1,12 @@
 import { NextResponse } from 'next/server';
 import { setSessionCookie, signSession } from '@/lib/auth';
-import { createDashboardWelcomeNotification } from '@/lib/notifications';
-import { prisma } from '@/lib/prisma';
 import { verifyPassword } from '@/lib/passwords';
+import { prisma } from '@/lib/prisma';
 import { AppRole, roleMeta } from '@/lib/resurgence';
-import { mobileOtpVerifySchema, phoneNumberToSyntheticEmail } from '@/lib/public-registration';
+import { mobileOtpVerifySchema } from '@/lib/public-registration';
 
-type MobileSignupPayload = {
-  displayName?: string;
-  passwordHash?: string;
-  role?: AppRole;
-  referralCode?: string;
-  profileImageUrl?: string;
-  termsAcceptedAt?: string;
+type MobileLoginPayload = {
+  userId?: string;
 };
 
 export async function POST(request: Request) {
@@ -26,7 +20,7 @@ export async function POST(request: Request) {
   const verification = await prisma.verificationCode.findFirst({
     where: {
       identifier: parsed.data.phoneNumber,
-      purpose: 'SIGNUP',
+      purpose: 'LOGIN',
       consumedAt: null,
       expiresAt: { gt: new Date() },
     },
@@ -49,47 +43,26 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Incorrect verification code.' }, { status: 400 });
   }
 
-  const payload = (verification.payload || {}) as MobileSignupPayload;
-  const role = payload.role && roleMeta[payload.role] ? payload.role : 'MEMBER';
-  const email = phoneNumberToSyntheticEmail(parsed.data.phoneNumber);
-
-  const existing = await prisma.user.findFirst({
+  const payload = (verification.payload || {}) as MobileLoginPayload;
+  const user = await prisma.user.findFirst({
     where: {
       OR: [
-        { email },
+        { id: payload.userId || '' },
         { phoneNumber: parsed.data.phoneNumber },
       ],
     },
   });
 
-  if (existing) {
-    return NextResponse.json({ error: 'An account already exists for this mobile number. Please log in instead.' }, { status: 409 });
+  if (!user || !user.isActive) {
+    return NextResponse.json({ error: 'This mobile account is unavailable. Please contact support.' }, { status: 404 });
   }
 
-  const user = await prisma.user.create({
+  await prisma.user.update({
+    where: { id: user.id },
     data: {
-      email,
-      phoneNumber: parsed.data.phoneNumber,
-      password: payload.passwordHash || '',
-      displayName: payload.displayName || 'Resurgence Member',
-      title: roleMeta[role].label,
-      role,
-      authProvider: 'MOBILE',
-      isPhoneVerified: true,
-      isEmailVerified: false,
-      referralCode: payload.referralCode || null,
-      profileImageUrl: payload.profileImageUrl || null,
-      termsAcceptedAt: payload.termsAcceptedAt ? new Date(payload.termsAcceptedAt) : new Date(),
       lastLoginAt: new Date(),
+      isPhoneVerified: true,
     },
-  });
-
-  await createDashboardWelcomeNotification({
-    id: user.id,
-    role: user.role,
-    displayName: user.displayName,
-  }).catch((error) => {
-    console.error('[mobile-signup] welcome notification failed', error);
   });
 
   await prisma.verificationCode.update({

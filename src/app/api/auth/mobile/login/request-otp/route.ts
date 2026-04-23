@@ -2,19 +2,24 @@ import { NextResponse } from 'next/server';
 import { deliverMobileOtp, getOtpExpiry } from '@/lib/mobile-otp';
 import { prisma } from '@/lib/prisma';
 import { hashPassword } from '@/lib/passwords';
-import { generateOtpCode, mobileSignupRequestSchema } from '@/lib/public-registration';
+import { generateOtpCode, mobileLoginRequestSchema } from '@/lib/public-registration';
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
-  const parsed = mobileSignupRequestSchema.safeParse(body);
+  const parsed = mobileLoginRequestSchema.safeParse(body);
 
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues[0]?.message || 'Invalid mobile signup details.' }, { status: 400 });
+    return NextResponse.json({ error: parsed.error.issues[0]?.message || 'Invalid mobile login details.' }, { status: 400 });
   }
 
-  const existing = await prisma.user.findUnique({ where: { phoneNumber: parsed.data.phoneNumber } });
-  if (existing) {
-    return NextResponse.json({ error: 'An account already exists for this mobile number. Please log in instead.' }, { status: 409 });
+  const user = await prisma.user.findUnique({ where: { phoneNumber: parsed.data.phoneNumber } });
+
+  if (!user) {
+    return NextResponse.json({ error: 'No account exists for this mobile number yet.' }, { status: 404 });
+  }
+
+  if (!user.isActive) {
+    return NextResponse.json({ error: 'This account is inactive. Please contact support.' }, { status: 403 });
   }
 
   const code = generateOtpCode();
@@ -25,16 +30,11 @@ export async function POST(request: Request) {
     data: {
       identifier: parsed.data.phoneNumber,
       channel: 'SMS',
-      purpose: 'SIGNUP',
+      purpose: 'LOGIN',
       codeHash: hashPassword(code),
       expiresAt,
       payload: {
-        displayName: parsed.data.displayName,
-        passwordHash: hashPassword(parsed.data.password),
-        role: parsed.data.role,
-        referralCode: parsed.data.referralCode || '',
-        profileImageUrl: parsed.data.profileImageUrl || '',
-        termsAcceptedAt: new Date().toISOString(),
+        userId: user.id,
       },
     },
   });

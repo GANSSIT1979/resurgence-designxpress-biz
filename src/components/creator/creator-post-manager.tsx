@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useDeferredValue, useMemo, useState } from 'react';
+import { FilterChipRow } from '@/components/filter-chip-row';
 import { ImageUploadField } from '@/components/image-upload-field';
 import type { FeedMediaType, FeedPost } from '@/lib/feed/types';
 
@@ -124,12 +125,32 @@ export function CreatorPostManager({
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [libraryFilter, setLibraryFilter] = useState('ALL');
+  const [search, setSearch] = useState('');
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
   const selectedPost = posts.find((post) => post.id === selectedId) ?? null;
   const publishedCount = posts.filter((post) => post.status === 'PUBLISHED').length;
   const pendingCount = posts.filter((post) => post.status === 'PENDING_REVIEW').length;
   const draftCount = posts.filter((post) => post.status === 'DRAFT').length;
   const totalEngagement = posts.reduce((sum, post) => sum + post.metrics.likes + post.metrics.comments + post.metrics.saves + post.metrics.shares, 0);
+  const deferredSearch = useDeferredValue(search);
+  const filteredPosts = useMemo(() => {
+    const query = deferredSearch.trim().toLowerCase();
+
+    return posts.filter((post) => {
+      const matchesFilter = libraryFilter === 'ALL' || post.status === libraryFilter;
+      const matchesSearch = !query || [
+        post.caption,
+        post.summary || '',
+        ...post.hashtags.map((tag) => tag.label),
+        ...post.productTags.map((tag) => tag.name),
+      ].join(' ').toLowerCase().includes(query);
+
+      return matchesFilter && matchesSearch;
+    });
+  }, [deferredSearch, libraryFilter, posts]);
+  const previewProducts = products.filter((product) => form.productIds.includes(product.id));
 
   function updateForm<K extends keyof PostFormState>(key: K, value: PostFormState[K]) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -227,6 +248,53 @@ export function CreatorPostManager({
     }
   }
 
+  function renderPostCard(post: FeedPost, compact = false) {
+    const media = post.mediaAssets[0];
+
+    return (
+      <article
+        key={post.id}
+        className={[
+          'creator-post-row',
+          compact ? 'compact' : '',
+          selectedId === post.id ? 'active' : '',
+        ].filter(Boolean).join(' ')}
+      >
+        <div className="creator-post-thumb">
+          {media?.thumbnailUrl || media?.url ? <img src={media.thumbnailUrl || media.url} alt={media.altText || post.caption} /> : <span>No media</span>}
+        </div>
+        <div className="creator-post-row-body">
+          <div className="creator-post-row-top">
+            <span className={`creator-post-status status-${post.status.toLowerCase().replace(/_/g, '-')}`}>{statusLabel(post.status)}</span>
+            <span>{formatDate(post.publishedAt || post.updatedAt)}</span>
+          </div>
+          <h4>{post.caption}</h4>
+          <div className="creator-post-tags">
+            {post.hashtags.slice(0, 4).map((tag) => (
+              <span key={tag.id}>{tag.label}</span>
+            ))}
+            {post.productTags.length ? <span>{post.productTags.length} merch tag{post.productTags.length === 1 ? '' : 's'}</span> : null}
+          </div>
+          <div className="creator-post-metrics">
+            <span>{post.metrics.views} views</span>
+            <span>{post.metrics.likes} likes</span>
+            <span>{post.metrics.comments} comments</span>
+            <span>{post.metrics.saves} saves</span>
+            <span>{post.metrics.shares} shares</span>
+          </div>
+          <div className="btn-row">
+            <button className="btn btn-secondary" type="button" onClick={() => editPost(post)}>
+              Edit
+            </button>
+            <button className="btn btn-secondary" type="button" disabled={deletingId === post.id} onClick={() => deletePost(post)}>
+              {deletingId === post.id ? 'Deleting...' : 'Delete'}
+            </button>
+          </div>
+        </div>
+      </article>
+    );
+  }
+
   return (
     <div className="creator-post-manager">
       <section className="creator-post-hero card">
@@ -263,6 +331,37 @@ export function CreatorPostManager({
         <div className="creator-post-kpi">
           <span>Engagement</span>
           <strong>{totalEngagement}</strong>
+        </div>
+      </section>
+
+      <section className="card creator-post-toolbar">
+        <div>
+          <div className="section-kicker">Content Studio Tools</div>
+          <h3>Filter the library and switch your view</h3>
+        </div>
+        <input
+          className="input"
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="Search captions, hashtags, or tagged merch"
+        />
+        <FilterChipRow
+          items={[
+            { value: 'ALL', label: 'All posts' },
+            { value: 'PUBLISHED', label: 'Published' },
+            { value: 'PENDING_REVIEW', label: 'In review' },
+            { value: 'DRAFT', label: 'Drafts' },
+          ]}
+          selected={libraryFilter}
+          onChange={(value) => setLibraryFilter(String(value))}
+        />
+        <div className="creator-post-view-toggle">
+          <button className={viewMode === 'list' ? 'active' : ''} type="button" onClick={() => setViewMode('list')}>
+            List View
+          </button>
+          <button className={viewMode === 'grid' ? 'active' : ''} type="button" onClick={() => setViewMode('grid')}>
+            Grid View
+          </button>
         </div>
       </section>
 
@@ -383,6 +482,39 @@ export function CreatorPostManager({
           </label>
           <p className="helper">Hold Ctrl or Cmd to select multiple merch products. Product CTAs reuse the existing shop and checkout flow.</p>
 
+          {previewProducts.length ? (
+            <div className="creator-post-selected-products">
+              {previewProducts.map((product) => (
+                <span key={product.id}>
+                  {product.name} - {formatPeso(product.price)}
+                </span>
+              ))}
+            </div>
+          ) : null}
+
+          <section className="creator-post-preview">
+            <div className="section-kicker">Draft Preview</div>
+            <h4>{form.caption.trim() || 'Your next story headline appears here.'}</h4>
+            <p className="helper">{form.summary.trim() || 'Add a short summary so cards and creator surfaces stay readable.'}</p>
+            <div className="creator-post-preview-media">
+              {form.thumbnailUrl || form.mediaUrl ? (
+                <img src={form.thumbnailUrl || form.mediaUrl} alt={form.altText || form.caption || 'Draft preview'} />
+              ) : (
+                <div className="creator-post-preview-empty">Preview updates after you add media.</div>
+              )}
+            </div>
+            <div className="creator-post-tags">
+              {form.hashtags
+                .split(',')
+                .map((tag) => tag.trim())
+                .filter(Boolean)
+                .slice(0, 4)
+                .map((tag) => (
+                  <span key={tag}>#{tag.replace(/^#/, '')}</span>
+                ))}
+            </div>
+          </section>
+
           <div className="creator-post-actions">
             <button className="btn btn-secondary" type="button" disabled={isSaving} onClick={() => savePost('DRAFT')}>
               {isSaving ? 'Saving...' : 'Save Draft'}
@@ -396,6 +528,9 @@ export function CreatorPostManager({
               {isSaving ? 'Submitting...' : 'Submit for Review'}
             </button>
           </div>
+          <div className="notice success">
+            Scheduling-ready pattern: save drafts first, then submit for review when the post, merch links, and caption are ready for the live feed.
+          </div>
         </section>
 
         <section className="creator-post-list card">
@@ -406,52 +541,21 @@ export function CreatorPostManager({
             </div>
           </div>
 
-          {posts.length ? (
-            <div className="creator-post-stack">
-              {posts.map((post) => {
-                const media = post.mediaAssets[0];
-
-                return (
-                  <article key={post.id} className={selectedId === post.id ? 'creator-post-row active' : 'creator-post-row'}>
-                    <div className="creator-post-thumb">
-                      {media?.thumbnailUrl || media?.url ? <img src={media.thumbnailUrl || media.url} alt={media.altText || post.caption} /> : <span>No media</span>}
-                    </div>
-                    <div className="creator-post-row-body">
-                      <div className="creator-post-row-top">
-                        <span className={`creator-post-status status-${post.status.toLowerCase().replace(/_/g, '-')}`}>{statusLabel(post.status)}</span>
-                        <span>{formatDate(post.publishedAt || post.updatedAt)}</span>
-                      </div>
-                      <h4>{post.caption}</h4>
-                      <div className="creator-post-tags">
-                        {post.hashtags.slice(0, 4).map((tag) => (
-                          <span key={tag.id}>{tag.label}</span>
-                        ))}
-                        {post.productTags.length ? <span>{post.productTags.length} merch tag{post.productTags.length === 1 ? '' : 's'}</span> : null}
-                      </div>
-                      <div className="creator-post-metrics">
-                        <span>{post.metrics.views} views</span>
-                        <span>{post.metrics.likes} likes</span>
-                        <span>{post.metrics.comments} comments</span>
-                        <span>{post.metrics.saves} saves</span>
-                      </div>
-                      <div className="btn-row">
-                        <button className="btn btn-secondary" type="button" onClick={() => editPost(post)}>
-                          Edit
-                        </button>
-                        <button className="btn btn-secondary" type="button" disabled={deletingId === post.id} onClick={() => deletePost(post)}>
-                          {deletingId === post.id ? 'Deleting...' : 'Delete'}
-                        </button>
-                      </div>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
+          {filteredPosts.length ? (
+            viewMode === 'grid' ? (
+              <div className="creator-post-card-grid">
+                {filteredPosts.map((post) => renderPostCard(post, true))}
+              </div>
+            ) : (
+              <div className="creator-post-stack">
+                {filteredPosts.map((post) => renderPostCard(post))}
+              </div>
+            )
           ) : (
             <div className="creator-post-empty">
               <div className="section-kicker">Empty State</div>
-              <h4>No feed posts yet.</h4>
-              <p className="section-copy">Start with a game highlight, training story, or merch announcement. Your first post can stay as a draft until it is ready for review.</p>
+              <h4>No posts match the current view.</h4>
+              <p className="section-copy">Try a different filter or start with a game highlight, training story, or merch announcement. Your first post can stay as a draft until it is ready for review.</p>
             </div>
           )}
         </section>

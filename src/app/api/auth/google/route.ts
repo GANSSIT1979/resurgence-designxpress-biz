@@ -68,7 +68,14 @@ export async function POST(request: Request) {
       );
     }
 
-    const signupData = parsed.data as { role: AppRole; referralCode?: string };
+    const signupData = parsed.data as {
+      role: AppRole;
+      referralCode?: string;
+      displayName?: string;
+      profileImageUrl?: string;
+    };
+    const displayName = signupData.displayName?.trim() || profile.displayName;
+    const profileImageUrl = signupData.profileImageUrl?.trim() || profile.picture || null;
 
     const user = existing
       ? await prisma.user.update({
@@ -77,19 +84,20 @@ export async function POST(request: Request) {
             lastLoginAt: new Date(),
             authProvider: 'GOOGLE',
             isEmailVerified: true,
-            profileImageUrl: existing.profileImageUrl || profile.picture || null,
+            displayName: isLoginIntent ? existing.displayName : displayName,
+            profileImageUrl: existing.profileImageUrl || profileImageUrl,
           },
         })
       : await prisma.user.create({
           data: {
             email: profile.email,
             password: hashPassword(randomUUID()),
-            displayName: profile.displayName,
+            displayName,
             title: roleMeta[signupData.role].label,
             role: signupData.role,
             authProvider: 'GOOGLE',
             isEmailVerified: true,
-            profileImageUrl: profile.picture || null,
+            profileImageUrl,
             referralCode: signupData.referralCode || null,
             termsAcceptedAt: new Date(),
             lastLoginAt: new Date(),

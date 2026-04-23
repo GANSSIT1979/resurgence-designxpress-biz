@@ -1,7 +1,18 @@
+import Link from 'next/link';
+import { StickyMobileActionBar } from '@/components/sticky-mobile-action-bar';
 import { prisma } from '@/lib/prisma';
 import { formatPaymentMethod, formatPeso } from '@/lib/shop';
 
 export const dynamic = 'force-dynamic';
+
+function buildOrderTimeline(status: string, paymentStatus: string) {
+  return [
+    { label: 'Placed', active: true },
+    { label: paymentStatus === 'PAID' ? 'Paid' : 'Payment review', active: paymentStatus !== 'PENDING' },
+    { label: 'Fulfillment', active: ['PROCESSING', 'SHIPPED', 'DELIVERED'].includes(status) },
+    { label: 'Delivered', active: status === 'DELIVERED' },
+  ];
+}
 
 export default async function AccountOrdersPage({ searchParams }: { searchParams: Promise<{ email?: string; placed?: string }> }) {
   const { email, placed } = await searchParams;
@@ -22,6 +33,11 @@ export default async function AccountOrdersPage({ searchParams }: { searchParams
             <button className="btn" type="submit">View Orders</button>
           </form>
           {placed ? <div className="notice success" style={{ marginTop: 16 }}>Order {placed} placed successfully.</div> : null}
+          {normalizedEmail ? <div className="helper" style={{ marginTop: 12 }}>Order lookup is currently filtered to <strong>{normalizedEmail}</strong>.</div> : null}
+          <div className="btn-row" style={{ marginTop: 16 }}>
+            <Link className="button-link btn-secondary" href="/support">Need order help</Link>
+            <Link className="button-link btn-secondary" href="/shop">Shop more drops</Link>
+          </div>
         </section>
 
         {normalizedEmail && !items.length ? <section className="card"><div className="empty-state">No orders found for {normalizedEmail}.</div></section> : null}
@@ -38,6 +54,14 @@ export default async function AccountOrdersPage({ searchParams }: { searchParams
               </div>
               <div className="helper">Payment: {formatPaymentMethod(order.paymentMethod)} - {order.paymentStatus}</div>
               <div className="helper">{order.addressLine1}, {order.city}{order.province ? `, ${order.province}` : ''}</div>
+              <div className="order-status-timeline">
+                {buildOrderTimeline(order.status, order.paymentStatus).map((step) => (
+                  <div className={step.active ? 'active' : ''} key={`${order.id}-${step.label}`}>
+                    <span />
+                    <strong>{step.label}</strong>
+                  </div>
+                ))}
+              </div>
               <div className="table-wrap" style={{ marginTop: 16 }}>
                 <table>
                   <thead><tr><th>Item</th><th>Qty</th><th>Total</th></tr></thead>
@@ -55,10 +79,20 @@ export default async function AccountOrdersPage({ searchParams }: { searchParams
               <div className="shop-summary-line"><span>Subtotal</span><strong>{formatPeso(order.subtotal)}</strong></div>
               <div className="shop-summary-line"><span>Shipping</span><strong>{formatPeso(order.shippingFee)}</strong></div>
               <div className="shop-summary-line shop-summary-total"><span>Total</span><strong>{formatPeso(order.totalAmount)}</strong></div>
+              <div className="btn-row" style={{ marginTop: 16 }}>
+                <Link className="button-link btn-secondary" href="/support">Support this order</Link>
+              </div>
             </article>
           ))}
         </div>
       </div>
+      <StickyMobileActionBar
+        primaryHref="/shop"
+        primaryLabel="Shop new drops"
+        secondaryHref="/support"
+        secondaryLabel="Need help?"
+        note="Track current orders, then jump back into merch or support."
+      />
     </main>
   );
 }
