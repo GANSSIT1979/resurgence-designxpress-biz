@@ -1,6 +1,8 @@
 import Link from 'next/link';
-import { CreatorPostManager } from '@/components/creator/creator-post-manager';
+import CreatorPostsIndex from '@/components/resurgence/CreatorPostsIndex';
+import RecentPostsWidget from '@/components/resurgence/RecentPostsWidget';
 import { RoleShell } from '@/components/role-shell';
+import { mapFeedPostsToCreatorPostsManagerItems } from '@/lib/creator-posts/utils';
 import { creatorNavItems } from '@/lib/creators';
 import { serializeContentPost } from '@/lib/feed/serializers';
 import type { FeedPost } from '@/lib/feed/types';
@@ -63,32 +65,6 @@ async function getCreatorPosts(userId: string, creatorProfileId: string) {
   return posts.map((post) => serializeContentPost(post, userId));
 }
 
-async function getProductOptions() {
-  const products = await prisma.shopProduct.findMany({
-    where: { isActive: true },
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-      imageUrl: true,
-      price: true,
-      stock: true,
-      isFeatured: true,
-      sortOrder: true,
-    },
-    orderBy: [{ isFeatured: 'desc' }, { sortOrder: 'asc' }, { name: 'asc' }],
-  });
-
-  return products.map((product) => ({
-    id: product.id,
-    name: product.name,
-    slug: product.slug,
-    imageUrl: product.imageUrl,
-    price: product.price,
-    stock: product.stock,
-  }));
-}
-
 export default async function CreatorPostsPage() {
   const context = await getCurrentSessionUser();
 
@@ -143,25 +119,23 @@ export default async function CreatorPostsPage() {
   }
 
   let posts: FeedPost[] = [];
-  let products: Awaited<ReturnType<typeof getProductOptions>> = [];
   let dataError: string | null = null;
 
   try {
-    [posts, products] = await Promise.all([
-      getCreatorPosts(context.user.id, creator.id),
-      getProductOptions(),
-    ]);
+    posts = await getCreatorPosts(context.user.id, creator.id);
   } catch (error) {
     console.error('Unable to load creator feed studio data.', error);
     dataError = 'Creator feed tables are not ready yet. Run the feed schema migration before using the post studio.';
   }
 
+  const postItems = mapFeedPostsToCreatorPostsManagerItems(posts);
+
   return (
     <main>
       <RoleShell
         roleLabel="Creator"
-        title="Creator Feed Posts"
-        description="Create, update, and review your TikTok-style creator-commerce feed content for Resurgence Powered by DesignXpress."
+        title="Creator Feed Manager"
+        description="Review drafts, submit videos into the current creator workflow, and manage published creator-commerce posts from one place."
         navItems={[...creatorNavItems]}
         currentPath="/creator/posts"
       >
@@ -175,13 +149,10 @@ export default async function CreatorPostsPage() {
             <p className="section-copy">No existing creator, sponsor, shop, or auth workflow was changed. Apply the migration from the schema PR, then reload this page.</p>
           </section>
         ) : (
-          <CreatorPostManager
-            creatorId={creator.id}
-            creatorName={creator.name}
-            initialPosts={posts}
-            products={products}
-            publicProfileHref={`/creators/${creator.slug}`}
-          />
+          <div className="space-y-6">
+            <CreatorPostsIndex initialPosts={posts} />
+            <RecentPostsWidget posts={postItems} />
+          </div>
         )}
       </RoleShell>
     </main>

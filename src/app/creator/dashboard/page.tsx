@@ -3,7 +3,9 @@ import { CreatorAnalyticsPanel } from '@/components/creator-analytics-panel';
 import { CreatorDashboardOverview } from '@/components/creator/creator-dashboard-overview';
 import { CreatorProfileDashboard } from '@/components/creator/creator-profile-dashboard';
 import { NotificationCenter } from '@/components/notification-center';
+import RecentPostsWidget from '@/components/resurgence/RecentPostsWidget';
 import { RoleShell } from '@/components/role-shell';
+import type { CreatorPostsManagerItem } from '@/lib/creator-posts/types';
 import { creatorNavItems } from '@/lib/creators';
 import { getCreatorStats } from '@/lib/creators';
 import { serializeCreatorProfile } from '@/lib/creators';
@@ -77,9 +79,12 @@ export default async function CreatorDashboardPage() {
       },
       select: {
         id: true,
+        title: true,
         caption: true,
         status: true,
+        visibility: true,
         publishedAt: true,
+        createdAt: true,
         updatedAt: true,
         likeCount: true,
         commentCount: true,
@@ -105,6 +110,33 @@ export default async function CreatorDashboardPage() {
   const publishedCount = creatorPosts.filter((post) => post.status === 'PUBLISHED').length;
   const draftCount = creatorPosts.filter((post) => post.status === 'DRAFT').length;
   const unreadAlerts = inbox.notifications.filter((item) => !item.isRead).length;
+  const recentPostItems: CreatorPostsManagerItem[] = creatorPosts.map((post) => ({
+    id: post.id,
+    creatorId: creator.id,
+    title: post.title ?? null,
+    caption: post.caption,
+    status:
+      post.status === 'PUBLISHED'
+        ? 'PUBLISHED'
+        : post.status === 'PENDING_REVIEW'
+          ? 'PENDING_REVIEW'
+          : post.status === 'ARCHIVED' || post.status === 'HIDDEN'
+            ? 'ARCHIVED'
+            : 'DRAFT',
+    visibility: post.visibility as CreatorPostsManagerItem['visibility'],
+    hashtags: [],
+    viewsCount: post.viewCount,
+    likesCount: post.likeCount,
+    commentsCount: post.commentCount,
+    sharesCount: post.shareCount,
+    savesCount: post.saveCount,
+    createdAt: post.createdAt.toISOString(),
+    updatedAt: post.updatedAt.toISOString(),
+    publishedAt: post.publishedAt?.toISOString() ?? null,
+    mediaAssets: [],
+    productIds: post.productTags.map((tag) => tag.product?.id).filter(Boolean) as string[],
+    meta: null,
+  }));
   const taggedProductsMap = new Map<string, { id: string; name: string; slug: string; imageUrl: string | null; tagCount: number }>();
 
   creatorPosts.forEach((post) => {
@@ -132,6 +164,8 @@ export default async function CreatorDashboardPage() {
         currentPath="/creator/dashboard"
       >
         <div className="btn-row" style={{ marginBottom: 18 }}>
+          <Link className="button-link" href="/creator/posts/new">Create New Post</Link>
+          <Link className="button-link btn-secondary" href="/creator/posts">Manage Posts</Link>
           <Link className="button-link" href={`/creators/${creator.slug}`}>Open Public Profile</Link>
           <Link className="button-link btn-secondary" href="/contact">Request Profile Update</Link>
         </div>
@@ -161,6 +195,9 @@ export default async function CreatorDashboardPage() {
           }))}
           taggedProducts={Array.from(taggedProductsMap.values()).sort((left, right) => right.tagCount - left.tagCount).slice(0, 4)}
         />
+        <div style={{ marginTop: 20 }}>
+          <RecentPostsWidget posts={recentPostItems} title="Recent post activity" />
+        </div>
         <CreatorProfileDashboard creator={creatorProfile} />
         <CreatorAnalyticsPanel creator={creator} events={creator.mediaEvents.map((event) => ({
           id: event.id,
