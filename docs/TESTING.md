@@ -1,12 +1,13 @@
 # TESTING
 
-Updated: 2026-04-23
+Updated: 2026-04-24
 ## Recommended Command Checks
 
 ### Bootstrap
 
 ```bash
 npm install
+npm run local:preflight
 npm run db:push
 npm run db:seed
 ```
@@ -14,6 +15,7 @@ npm run db:seed
 ### Static Validation
 
 ```bash
+npm run docs:check
 npx tsc --noEmit --pretty false
 npm run build
 ```
@@ -80,9 +82,13 @@ Verify these pages load:
 - ask one partnership question
 - submit support lead details
 
-## Current Verification Status
+## Latest Documented Branch Verification
 
-As of 2026-04-23:
+As of 2026-04-24:
 
+- `npm run local:preflight` passes
+- `npm run docs:check` passes
 - `npx tsc --noEmit --pretty false` passes
 - `npm run build` passes
+
+Rerun static, runtime, and support checks on the branch and environment you actually plan to ship.

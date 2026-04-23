@@ -1,6 +1,11 @@
 # RESURGENCE TikTok-Style Upgrade Plan
 
-Updated: 2026-04-23
+Updated: 2026-04-24
+
+## Status
+
+Historical planning note. Use [README.md](./README.md), [ROADMAP.md](./ROADMAP.md), [DEPLOYMENT.md](./DEPLOYMENT.md), and the rollout checklists in this folder for the current system state.
+
 ## Goal
 
 Modernize the current RESURGENCE Next.js 15 + Prisma platform into a more immersive, mobile-first creator-commerce product without replacing the stack, route surface, or role-safe workflows.

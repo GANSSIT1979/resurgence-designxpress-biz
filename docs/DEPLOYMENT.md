@@ -1,6 +1,6 @@
 # DEPLOYMENT
 
-Updated: 2026-04-23
+Updated: 2026-04-24
 For schema-first Preview and Production rollout of the current creator-feed migration, also use [PRISMA_MIGRATION_ROLLOUT_CHECKLIST.md](./PRISMA_MIGRATION_ROLLOUT_CHECKLIST.md).
 
 For the narrow Preview release gate covering auth, upload, save, feed playback, and creator surfaces, also use [PREVIEW_RELEASE_SMOKE_TEST.md](./PREVIEW_RELEASE_SMOKE_TEST.md).
@@ -160,17 +160,17 @@ For HTTPS on a VPS, terminate TLS at Caddy or Nginx and forward requests to the 
 
 ## Release Checklist
 
-- `npm run prisma:prepare` passes
-- `npm run prisma:generate` passes
+- `npm run prisma:prepare` should pass
+- `npm run prisma:generate` should pass
 - the intended schema deployment path has been applied to the target database
-- `npm run build` passes
+- `npm run build` should pass
 - `GET /api/health` reflects a healthy or intentionally understood state
-- login works
-- `/feed` loads
-- `/creators/[slug]` loads
-- `/creator/dashboard` loads or degrades safely
-- merch routes load
-- support routes load
+- login should work
+- `/feed` should load
+- `/creators/[slug]` should load
+- `/creator/dashboard` should load or degrade safely
+- merch routes should load
+- support routes should load
 
 ## Production Storage Guidance
 

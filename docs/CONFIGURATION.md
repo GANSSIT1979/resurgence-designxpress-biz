@@ -1,9 +1,9 @@
 # CONFIGURATION
 
-Updated: 2026-04-23
+Updated: 2026-04-24
 ## Environment Variable Source Of Truth
 
-This repo currently treats:
+This repo treats:
 
 - `DATABASE_URL` as the Prisma and runtime database source of truth
 - `PRISMA_DB_PROVIDER` as the optional provider override for generated-schema prep

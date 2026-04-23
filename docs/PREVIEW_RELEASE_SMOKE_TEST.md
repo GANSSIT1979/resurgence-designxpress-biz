@@ -1,6 +1,6 @@
 # Preview Release Smoke Test
 
-Updated: 2026-04-23
+Updated: 2026-04-24
 ## Purpose
 
 Use this checklist to validate the current Phase 1 upgrade in **Vercel Preview** before any Production promotion.

@@ -1,6 +1,6 @@
 # QUICKSTART
 
-Updated: 2026-04-23
+Updated: 2026-04-24
 ## Site Type
 
 - Exact category: `React/Node`
@@ -13,6 +13,7 @@ Updated: 2026-04-23
 ```bash
 cp .env.example .env
 npm install
+npm run local:preflight
 npm run db:push
 npm run db:seed
 npm run dev
@@ -29,6 +30,7 @@ Windows PowerShell:
 ```powershell
 Copy-Item .env.example .env
 npm install
+npm run local:preflight
 npm run db:push
 npm run db:seed
 npm run dev
@@ -39,6 +41,7 @@ Provider note:
 - if you changed `PRISMA_DB_PROVIDER` or `DATABASE_URL`, run `npm run prisma:generate` before `npm run build`
 - if neither is set, the Prisma prep step falls back to SQLite for local development
 - `DATABASE_URL` is the current database source of truth for Prisma in this repo
+- `npm run local:preflight` is the optional bootstrap check for `.env`, Prisma source files, Node version, upload directory creation, and Markdown integrity
 
 ## Key URLs
 
@@ -87,6 +90,8 @@ Production-style verification:
 npm run support:verify -- --base-url=https://your-domain.example --webhook-secret=whsec_...
 ```
 
+These are repeatable checks for the branch and environment you are validating. Rerun them before treating a setup as ready.
+
 ## What Success Looks Like
 
 - the public site loads
@@ -94,6 +99,6 @@ npm run support:verify -- --base-url=https://your-domain.example --webhook-secre
 - `/member`, `/feed`, `/shop`, and `/support` all load
 - seeded role accounts can enter their protected workspaces
 - `/api/health` returns `200`
-- `npx tsc --noEmit --pretty false` passes
-- `npm run build` passes
-- support verification completes without failures
+- `npx tsc --noEmit --pretty false` should pass
+- `npm run build` should pass
+- support verification should complete without failures

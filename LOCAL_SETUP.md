@@ -1,6 +1,6 @@
 # Local Setup Guide
 
-Updated: 2026-04-23
+Updated: 2026-04-24
 This root guide is the short local bootstrap companion to `docs/INSTALL.md` and `docs/QUICKSTART.md`.
 
 ## Commands
@@ -8,6 +8,7 @@ This root guide is the short local bootstrap companion to `docs/INSTALL.md` and 
 ```bash
 cp .env.example .env
 npm install
+npm run local:preflight
 npm run db:push
 npm run db:seed
 npm run dev
@@ -24,6 +25,7 @@ Windows PowerShell:
 ```powershell
 Copy-Item .env.example .env
 npm install
+npm run local:preflight
 npm run db:push
 npm run db:seed
 npm run dev
@@ -35,6 +37,7 @@ Accuracy notes:
 
 - `DATABASE_URL` is the Prisma/runtime source of truth in this repo
 - local setup does not require `POSTGRES_URL*` or `SUPABASE_*` variables
+- `npm run local:preflight` is the optional bootstrap check for local setup
 
 ## Verify Locally
 
@@ -47,6 +50,9 @@ Accuracy notes:
 - `http://localhost:3000/api/health`
 
 ## Demo Accounts
+
+- These are the default credentials created by the current local seed flow.
+- Rerun `npm run db:seed` against a fresh local database before relying on them for a clean local test pass.
 
 - System Admin: `admin@resurgence.local` / `Admin123!`
 - Cashier: `cashier@resurgence.local` / `Cashier123!`

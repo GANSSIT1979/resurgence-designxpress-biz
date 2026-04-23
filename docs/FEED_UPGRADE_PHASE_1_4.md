@@ -1,10 +1,10 @@
 # Creator-Commerce Feed Upgrade: Phases 1-4
 
-Updated: 2026-04-23
+Updated: 2026-04-24
 
 ## Status
 
-Historical planning or handoff note. Use README.md, docs/README.md, docs/ROADMAP.md, and the rollout checklists for the current system state.
+Historical planning or handoff note. Use [README.md](./README.md), [ROADMAP.md](./ROADMAP.md), [DEPLOYMENT.md](./DEPLOYMENT.md), and the rollout checklists in this folder for the current system state.
 
 
 This document records the first reversible implementation slice for evolving Resurgence Powered by DesignXpress into a TikTok-inspired creator-commerce platform.
@@ -103,7 +103,7 @@ Before production deploy:
 
 ## Known Risk
 
-`prisma/schema.template.prisma` is a legacy template that does not match the active production schema. The current package scripts use `scripts/prepare-prisma-schema.mjs`, which mutates `prisma/schema.prisma` directly. Do not run the older `scripts/prepare-prisma.mjs` workflow against this branch unless the template is first reconciled with the active schema.
+`prisma/schema.template.prisma` is a legacy template that does not match the active production schema. The current package scripts use `scripts/prepare-prisma-schema.mjs`, which writes `prisma/schema.generated.prisma` from `prisma/schema.prisma`. `scripts/prepare-prisma.mjs` is retained only as a compatibility shim that forwards to the current prep script.
 
 ## Done Criteria For This Slice
 

@@ -1,20 +1,22 @@
 # RESURGENCE Documentation
 
-Updated: 2026-04-23
+Updated: 2026-04-24
 ## Snapshot
 
 RESURGENCE Powered by DesignXpress is a Next.js 15 + Prisma platform for basketball community access, creator-commerce feed experiences, Official Resurgence Merch commerce, sponsor and partner workflows, and role-based operations.
 
-## Current Repository State
+## Repository State
 
 - The active app lives in `src/`.
-- `npx tsc --noEmit --pretty false` passes.
-- `npm run build` passes.
-- `npm run support:verify` passes against a running local server.
+- The latest documented branch verification includes a successful `npx tsc --noEmit --pretty false`.
+- The latest documented branch verification includes a successful `npm run build`.
+- `npm run local:preflight` is available for local bootstrap validation.
+- `npm run docs:check` is available for Markdown link and file-reference validation.
+- `npm run support:verify` remains part of the recommended release checks and should be rerun against a running local or preview server before promotion.
 - The Prisma provider workflow is `scripts/prepare-prisma-schema.mjs` plus `prisma/schema.prisma` -> `prisma/schema.generated.prisma`.
 - Environment variable source of truth is `docs/CONFIGURATION.md`; Prisma/runtime database access is keyed off `DATABASE_URL`.
-- Public signup now covers free member, creator, coach, referee, sponsor, and partner registration through `/login`.
-- The member experience now includes a dedicated `/member` dashboard alongside the public `/feed` and merch flows.
+- Public signup covers free member, creator, coach, referee, sponsor, and partner registration through `/login`.
+- The member experience includes a dedicated `/member` dashboard alongside the public `/feed` and merch flows.
 
 ## Documentation Map
 
@@ -50,6 +52,7 @@ Deployment and operations:
 - [PRISMA_CONTENTPOST_COMMENT_SCHEMA_INTEGRATION.md](./PRISMA_CONTENTPOST_COMMENT_SCHEMA_INTEGRATION.md)
 - [PRISMA_CONTENTPOST_ANALYTICS_SCHEMA_INTEGRATION.md](./PRISMA_CONTENTPOST_ANALYTICS_SCHEMA_INTEGRATION.md)
 - [contentpost-analytics-migration-checks.sql](./contentpost-analytics-migration-checks.sql)
+- [contentpost-comment-migration-checks.sql](./contentpost-comment-migration-checks.sql)
 - [PREVIEW_RELEASE_SMOKE_TEST.md](./PREVIEW_RELEASE_SMOKE_TEST.md)
 - [PHASE1_ROUTE_INTEGRATION_PLAN.md](./PHASE1_ROUTE_INTEGRATION_PLAN.md)
 - [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)
@@ -67,6 +70,7 @@ Historical implementation handoff and phase notes:
 - [FEED_UPGRADE_PHASE_10.md](./FEED_UPGRADE_PHASE_10.md)
 - [FEED_UPGRADE_PHASE_11.md](./FEED_UPGRADE_PHASE_11.md)
 - [FEED_UPGRADE_PHASE_12.md](./FEED_UPGRADE_PHASE_12.md)
+- [TIKTOK_STYLE_UPGRADE_PLAN.md](./TIKTOK_STYLE_UPGRADE_PLAN.md)
 - [CODEBASE_TASK_PROPOSALS.md](./CODEBASE_TASK_PROPOSALS.md)
 
 ## Recommended Read Order

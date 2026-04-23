@@ -1,6 +1,11 @@
 # Feed Upgrade Phase 9: Admin Moderation
 
-Updated: 2026-04-23
+Updated: 2026-04-24
+
+## Status
+
+Historical phase note. Use [README.md](./README.md), [ROADMAP.md](./ROADMAP.md), [DEPLOYMENT.md](./DEPLOYMENT.md), and the rollout checklists in this folder for the current system state.
+
 ## Objective
 
 Add admin-facing moderation controls for the TikTok-inspired creator-commerce feed so the team can review creator posts and sponsor placement requests before they become public or promoted.

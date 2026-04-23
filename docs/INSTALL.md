@@ -1,6 +1,6 @@
 # INSTALL
 
-Updated: 2026-04-23
+Updated: 2026-04-24
 ## Site Type
 
 - this repository is a `React/Node` application built with `Next.js`
@@ -20,6 +20,7 @@ Updated: 2026-04-23
 ```bash
 cp .env.example .env
 npm install
+npm run local:preflight
 npm run db:push
 npm run db:seed
 npm run dev
@@ -36,12 +37,19 @@ Windows PowerShell:
 ```powershell
 Copy-Item .env.example .env
 npm install
+npm run local:preflight
 npm run db:push
 npm run db:seed
 npm run dev
 ```
 
 If you change `PRISMA_DB_PROVIDER` or `DATABASE_URL`, rerun `npm run prisma:generate`.
+
+Optional local bootstrap check:
+
+```bash
+npm run local:preflight
+```
 
 Accuracy notes:
 
@@ -58,6 +66,9 @@ Accuracy notes:
 - open `http://localhost:3000/api/health`
 
 ## Seeded Local Accounts
+
+- These are the default credentials created by the current local seed flow.
+- Rerun `npm run db:seed` against a fresh local database before relying on them for a clean test pass.
 
 - System Admin: `admin@resurgence.local` / `Admin123!`
 - Cashier: `cashier@resurgence.local` / `Cashier123!`

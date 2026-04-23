@@ -14,6 +14,8 @@
     "db:migrate": "npm run prisma:prepare && prisma migrate dev --schema prisma/schema.generated.prisma",
     "db:deploy": "node scripts/push-prisma-schema.mjs",
     "db:migrate:deploy": "npm run prisma:prepare && prisma migrate deploy --schema prisma/schema.generated.prisma",
+    "docs:check": "node scripts/check-markdown-links.mjs",
+    "local:preflight": "node scripts/local-preflight.mjs",
     "runtime:verify": "node scripts/verify-runtime-routes.mjs",
     "support:verify": "node scripts/verify-support-routes.mjs",
     "phase12:verify": "node scripts/verify-phase-12.mjs",

@@ -1,6 +1,11 @@
 # Feed Upgrade Phase 8: Sponsor Placements
 
-Updated: 2026-04-23
+Updated: 2026-04-24
+
+## Status
+
+Historical phase note. Use [README.md](./README.md), [ROADMAP.md](./ROADMAP.md), [DEPLOYMENT.md](./DEPLOYMENT.md), and the rollout checklists in this folder for the current system state.
+
 ## Objective
 
 Add sponsor-facing feed placement requests so sponsors can plan promoted creator-commerce visibility without changing the existing sponsor application, deliverable, billing, profile, shop, or public feed workflows.

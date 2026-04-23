@@ -1,6 +1,11 @@
 # Feed Upgrade Phase 11: Performance Hardening
 
-Updated: 2026-04-23
+Updated: 2026-04-24
+
+## Status
+
+Historical phase note. Use [README.md](./README.md), [ROADMAP.md](./ROADMAP.md), [DEPLOYMENT.md](./DEPLOYMENT.md), and the rollout checklists in this folder for the current system state.
+
 ## Objective
 
 Harden the creator-commerce feed for production use by reducing unnecessary media work, improving recovery states, and making lightweight interactions feel responsive without changing existing data models or commerce flows.

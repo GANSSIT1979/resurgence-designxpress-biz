@@ -1,6 +1,6 @@
 # Prisma Migration Rollout Checklist
 
-Updated: 2026-04-23
+Updated: 2026-04-24
 ## Purpose
 
 This checklist is for rolling out the current Prisma content-post schema safely on **Vercel Preview** and **Vercel Production** for the existing Resurgence DX app.

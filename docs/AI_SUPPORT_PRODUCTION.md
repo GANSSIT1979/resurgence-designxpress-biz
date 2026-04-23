@@ -1,9 +1,9 @@
 # AI Customer Service Production Checklist
 
-Updated: 2026-04-23
+Updated: 2026-04-24
 ## Current Support Reality
 
-The support desk already works locally without a published OpenAI workflow.
+The latest documented local verification shows that the support desk can run locally without a published OpenAI workflow.
 
 Today the stack includes:
 
@@ -66,9 +66,9 @@ The verifier auto-loads `.env` locally, but the target app must already be runni
 
 - the `/support` page responds
 - `/api/chatkit/session` readiness data responds
-- conversation bootstrap works
-- local ChatKit-style session creation works
-- route classification works for all support categories
+- conversation bootstrap should succeed
+- local ChatKit-style session creation should succeed
+- route classification should succeed for all support categories
 - `/api/openai/webhook` accepts a correctly signed payload when the secret is available
 
 ## Operational Notes

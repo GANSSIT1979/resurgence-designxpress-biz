@@ -1,6 +1,6 @@
 # API
 
-Updated: 2026-04-23
+Updated: 2026-04-24
 ## Overview
 
 Route handlers live under `src/app/api`. Middleware and the permission matrix in `src/lib/permissions.ts` protect sensitive routes, while public routes are intentionally readable without exposing admin data.
@@ -103,7 +103,7 @@ Community behavior notes:
 - public feed reads work without authentication
 - follow, like, save, share, and comment mutations are session-aware
 - `/api/creators/[creatorId]/follow` is a compatibility alias that re-exports the feed follow behavior
-- view and watch-time registration now write direct `ContentPost` analytics fields and `ContentPostViewSession`, while keeping a compatibility sync in `metadataJson.analytics` during rollout
+- view and watch-time registration write direct `ContentPost` analytics fields and `ContentPostViewSession`, while keeping a compatibility sync in `metadataJson.analytics` during rollout
 
 ## Creator Media And Post Studio Routes
 
@@ -121,7 +121,7 @@ Community behavior notes:
 
 Creator workflow notes:
 
-- creator analytics routes now use the repo's real session lookup, not bridge headers
+- creator analytics routes use the repo's real session lookup, not bridge headers
 - `GET /api/creator/analytics` and `/export` are limited to creator, staff, and system-admin reads
 - `GET /api/creator/analytics/sponsor-summary` is the sponsor-safe surface for creator, sponsor, partner, staff, and system-admin reads
 - creator analytics payloads reuse the live dashboard helper, including `live`, `demo`, and `empty` data modes during rollout

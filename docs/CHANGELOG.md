@@ -1,6 +1,18 @@
 # CHANGELOG
 
-Updated: 2026-04-23
+Updated: 2026-04-24
+## 2026-04-24
+
+### Documentation Accuracy Pass
+
+- normalized canonical docs so verification language reads as repeatable branch and environment checks instead of standing guarantees
+- aligned README, install, quickstart, testing, runtime, deployment, API, database, security, Vercel, architecture, shop, and user-facing docs to the same source-of-truth wording style
+- replaced the remaining real-looking Supabase host and project-ref examples in tracked docs with neutral placeholders and added explicit secret-hygiene guidance for markdown and env examples
+- completed a docs integrity sweep: relative markdown links are clean, stale repo-path references were corrected, and the canonical docs index now includes the remaining migration SQL and historical planning artifacts
+- added `npm run docs:check` to make Markdown link and local file-reference validation repeatable
+- refreshed `scripts/local-preflight.mjs` to match the current `JWT_SECRET` and generated-schema workflow, and exposed it as `npm run local:preflight`
+- converted `scripts/prepare-prisma.mjs` into a compatibility shim for `scripts/prepare-prisma-schema.mjs` and updated `scripts/check-resurgence-stack.ps1` to the current `src/` App Router architecture
+
 ## 2026-04-23
 
 ### Repo-Wide Markdown Refresh

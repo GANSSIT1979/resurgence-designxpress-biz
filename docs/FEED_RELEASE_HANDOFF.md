@@ -1,6 +1,11 @@
 # Feed Release Handoff
 
-Updated: 2026-04-23
+Updated: 2026-04-24
+
+## Status
+
+Historical rollout or merge-handoff note. Use [README.md](./README.md), [ROADMAP.md](./ROADMAP.md), [DEPLOYMENT.md](./DEPLOYMENT.md), and the rollout checklists in this folder for the current system state.
+
 ## Purpose
 
 This document is the merge and deployment handoff for the TikTok-inspired creator-commerce upgrade.

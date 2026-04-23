@@ -1,6 +1,6 @@
 # SECURITY
 
-Updated: 2026-04-23
+Updated: 2026-04-24
 ## Current Security Baseline
 
 - signed JWT session cookie authentication
@@ -49,9 +49,10 @@ Updated: 2026-04-23
 - move durable uploads away from local disk
 - add monitoring around auth, feed mutations, support, finance, and webhook delivery
 - treat schema drift as a security and correctness risk because missing columns can bypass expected route behavior and health signals
+- keep tracked docs and env examples placeholder-only; never commit real database hosts, project refs, password fragments, or provider secrets
 
 ## Support Guidance
 
 - keep `OPENAI_WEBHOOK_SECRET` private
 - reject unsigned or invalid webhook payloads
-- only treat workflow publishing as complete after the verifier passes against the target environment
+- only treat workflow publishing as complete after the verifier succeeds against the target environment

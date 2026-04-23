@@ -1,6 +1,6 @@
 # Deployment Guide
 
-Updated: 2026-04-23
+Updated: 2026-04-24
 This root guide is the short deployment companion to `docs/DEPLOYMENT.md`, `docs/VERCEL.md`, and the migration rollout checklists.
 
 ## Current Accurate Summary

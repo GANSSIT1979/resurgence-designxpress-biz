@@ -1,6 +1,11 @@
 # Phase 1 Route Integration Plan
 
-Updated: 2026-04-23
+Updated: 2026-04-24
+
+## Status
+
+Historical planning or integration note. Use [README.md](./README.md), [ROADMAP.md](./ROADMAP.md), [DEPLOYMENT.md](./DEPLOYMENT.md), and the rollout checklists in this folder for the current system state.
+
 ## Purpose
 
 This document maps the Phase 1 TikTok-style component layer into the actual RESURGENCE route files, components, and data loaders already active in this repository.
@@ -13,7 +18,7 @@ This plan is grounded in:
 
 - the live route structure in `src/app`
 - the current feed, auth, member, creator, and commerce implementation
-- the uploaded Phase 1 starter pack `resurgence-phase1-components.zip`
+- the uploaded Phase 1 starter pack shared outside the repo as `resurgence-phase1-components.zip`
 
 ## Integration Rule
 

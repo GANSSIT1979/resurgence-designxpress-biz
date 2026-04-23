@@ -1,6 +1,11 @@
 # Feed Upgrade Phase 7: Creator Experience
 
-Updated: 2026-04-23
+Updated: 2026-04-24
+
+## Status
+
+Historical phase note. Use [README.md](./README.md), [ROADMAP.md](./ROADMAP.md), [DEPLOYMENT.md](./DEPLOYMENT.md), and the rollout checklists in this folder for the current system state.
+
 ## Objective
 
 Add a reversible creator-facing feed studio that lets linked creator users create and manage their own TikTok-inspired creator-commerce posts without changing existing auth, admin, sponsor, or checkout workflows.

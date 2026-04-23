@@ -1,6 +1,10 @@
 # PRISMA CONTENTPOST ANALYTICS SCHEMA INTEGRATION
 
-Updated: 2026-04-23
+Updated: 2026-04-24
+
+## Status
+
+Historical schema-integration note. Use [DATABASE.md](./DATABASE.md), [PRISMA_MIGRATION_ROLLOUT_CHECKLIST.md](./PRISMA_MIGRATION_ROLLOUT_CHECKLIST.md), and [PREVIEW_RELEASE_SMOKE_TEST.md](./PREVIEW_RELEASE_SMOKE_TEST.md) for the current rollout source of truth.
 
 ## Purpose
 

@@ -1,6 +1,6 @@
 # ADMIN GUIDE
 
-Updated: 2026-04-23
+Updated: 2026-04-24
 ## Admin Scope
 
 System Admin users oversee:

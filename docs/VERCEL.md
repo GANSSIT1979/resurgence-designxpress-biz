@@ -1,6 +1,6 @@
 # VERCEL CONFIGURATION
 
-Updated: 2026-04-23
+Updated: 2026-04-24
 For the route-by-route release gate and production rollout checks, also use [VERCEL_DEPLOYMENT_CHECKLIST.md](./VERCEL_DEPLOYMENT_CHECKLIST.md).
 
 For the Cloudflare Stream creator-upload merge, also use [VERCEL_CLOUDFLARE_STREAM_MERGE.md](./VERCEL_CLOUDFLARE_STREAM_MERGE.md).
@@ -27,7 +27,7 @@ This repository includes Vercel-specific deployment files:
 
 `.vercelignore` excludes local-only files such as `.env`, `.next`, local SQLite databases, self-signed certificates, logs, and uploaded runtime files.
 
-`vercel.production.env.example` is the copy-ready production environment checklist for Vercel.
+`vercel.production.env.example` is the checked-in production environment checklist for Vercel.
 
 ## Vercel Project Settings
 
@@ -64,7 +64,7 @@ Set these in Vercel under Project Settings > Environment Variables > Production:
 
 ```env
 PRISMA_DB_PROVIDER=postgresql
-DATABASE_URL=postgresql://postgres.dkipwveehizhmdiceabm:[YOUR-PASSWORD]@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres?sslmode=require&pgbouncer=true
+DATABASE_URL=postgresql://POOLER_USER:POOLER_PASSWORD@POOLER_HOST:6543/postgres?sslmode=require&pgbouncer=true
 JWT_SECRET=replace-with-a-long-random-production-secret
 FORCE_HTTPS=true
 NEXT_PUBLIC_SITE_URL=https://resurgence-dx.biz
@@ -158,25 +158,26 @@ Cloudflare Stream note:
 ## Important Database Rule
 
 - do not use `localhost`, `127.0.0.1`, or the local PostGIS connection for Vercel
-- keep the runtime `DATABASE_URL` on the Supabase session pooler for this project
-- the working runtime host is `aws-1-ap-southeast-1.pooler.supabase.com:6543`
-- do not replace the runtime `DATABASE_URL` with the direct `db.dkipwveehizhmdiceabm.supabase.co:5432` host in Vercel
+- keep the runtime `DATABASE_URL` on your managed PostgreSQL pooler host when your provider offers one
+- for Supabase-style setups, that usually means the pooler host on port `6543` for runtime traffic
+- do not replace the runtime `DATABASE_URL` with the direct primary host in Vercel unless you are intentionally doing admin or maintenance work outside the normal app runtime
 - URL-encode special password characters before saving the URL, for example `@` becomes `%40`, `[` becomes `%5B`, and `]` becomes `%5D`
+- tracked docs and examples must use placeholders only; never commit a real project ref, pooler hostname, password fragment, or direct database hostname
 
 Supabase/Vercel mapping for this app:
 
 ```env
 PRISMA_DB_PROVIDER=postgresql
-DATABASE_URL=postgresql://postgres.dkipwveehizhmdiceabm:[YOUR-PASSWORD]@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres?sslmode=require&pgbouncer=true
+DATABASE_URL=postgresql://POOLER_USER:POOLER_PASSWORD@POOLER_HOST:6543/postgres?sslmode=require&pgbouncer=true
 ```
 
 Admin-only direct connection string:
 
 ```env
-postgresql://postgres:[YOUR-PASSWORD]@db.dkipwveehizhmdiceabm.supabase.co:5432/postgres
+postgresql://DIRECT_USER:DIRECT_PASSWORD@DIRECT_DB_HOST:5432/postgres
 ```
 
-Use the direct host only for admin or maintenance work from a network that can reach it. Supabase flags that host as not IPv4-compatible, so it is not the default runtime choice for this project.
+Use the direct host only for admin or maintenance work from a network that can reach it. On Supabase-style setups, the direct host is often more restrictive than the runtime pooler, so it is not the default runtime choice for this app.
 
 If Vercel or Supabase inject helper variables such as `POSTGRES_URL*`, keep them only for manual ops convenience unless you intentionally map one of them into `DATABASE_URL`.
 
@@ -203,7 +204,7 @@ For Vercel Development environment, use the same values only if you are intentio
 
 ## Database Deployment
 
-This app currently uses a provider-switched Prisma schema plus repo-managed PostgreSQL hardening SQL. For a fresh Vercel PostgreSQL database, use the schema sync command below to create the tables and apply the checked-in security scripts.
+This app uses a provider-switched Prisma schema plus repo-managed PostgreSQL hardening SQL. For a fresh Vercel PostgreSQL database, use the schema sync command below to create the tables and apply the checked-in security scripts.
 
 Before the first production deployment, run schema deployment against the production database:
 
@@ -215,13 +216,13 @@ For Windows PowerShell:
 
 ```powershell
 $env:PRISMA_DB_PROVIDER="postgresql"
-$env:DATABASE_URL="postgresql://postgres.dkipwveehizhmdiceabm:[YOUR-PASSWORD]@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres?sslmode=require&pgbouncer=true"
+$env:DATABASE_URL="postgresql://POOLER_USER:POOLER_PASSWORD@POOLER_HOST:6543/postgres?sslmode=require&pgbouncer=true"
 npm run db:deploy
 ```
 
 `npm run db:deploy` prepares the Prisma provider, runs `prisma db push`, and then executes the checked-in `prisma/postgres-hardening.sql` and `prisma/postgres-public-read-policies.sql` files when `PRISMA_DB_PROVIDER=postgresql`. If you later add a fully migration-driven Postgres release flow, use `npm run db:migrate:deploy` intentionally instead of mixing both approaches.
 
-After schema deployment passes, deploy normally through Vercel. The Vercel build command runs Prisma Client generation through `npm run build`.
+After schema deployment succeeds, deploy normally through Vercel. The Vercel build command runs Prisma Client generation through `npm run build`.
 
 ## Post-Deployment Checks
 

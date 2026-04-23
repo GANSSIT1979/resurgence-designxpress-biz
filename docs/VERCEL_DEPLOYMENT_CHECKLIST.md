@@ -1,6 +1,6 @@
 # Vercel Deployment Checklist
 
-Updated: 2026-04-23
+Updated: 2026-04-24
 ## Purpose
 
 This checklist is tailored to the current RESURGENCE Powered by DesignXpress application and its active upgrade path:
@@ -132,7 +132,7 @@ Before promoting a new commit to production:
 
 ### Important Repo Reality
 
-This repository currently exposes two database release paths:
+This repository exposes two database release paths:
 
 - `npm run db:deploy`
   - runs `scripts/push-prisma-schema.mjs`
@@ -144,7 +144,7 @@ Do not mix these casually in one release. Pick the intended path and run it deli
 
 ### Historical Drift Symptoms To Treat As Release Blockers
 
-Examples already seen during real rollout checks and April 23, 2026 production log exports include:
+Examples recorded during real rollout checks and the April 23, 2026 production log exports include:
 
 - `The column ContentPost.title does not exist in the current database`
 - homepage `/` falling back to the gallery feed after a `prisma.contentPost.findMany()` failure
@@ -190,7 +190,7 @@ The practical repo-aligned sequence is:
 5. run `npm run build`
 6. deploy to Vercel
 
-`npm run build` already runs `npm run prisma:generate`, but that does not replace actual database deployment.
+`npm run build` runs `npm run prisma:generate`, but that does not replace actual database deployment.
 
 ## 5. Storage And Media Checklist
 
@@ -387,4 +387,4 @@ The next rollout-planning document after this checklist is:
 
 - `docs/PHASE1_ROUTE_INTEGRATION_PLAN.md`
 
-Use that document to map the Phase 1 component layer into the actual route files and data loaders already active in this repository.
+Use that document to map the Phase 1 component layer into the actual route files and data loaders active in this repository.

@@ -1,6 +1,6 @@
 # DATABASE
 
-Updated: 2026-04-23
+Updated: 2026-04-24
 For migration-first rollout of the current content-post schema, also use [PRISMA_MIGRATION_ROLLOUT_CHECKLIST.md](./PRISMA_MIGRATION_ROLLOUT_CHECKLIST.md).
 
 For the additive comment-schema rollout on the existing comment path, also use [PRISMA_CONTENTPOST_COMMENT_SCHEMA_INTEGRATION.md](./PRISMA_CONTENTPOST_COMMENT_SCHEMA_INTEGRATION.md) and [contentpost-comment-migration-checks.sql](./contentpost-comment-migration-checks.sql).
@@ -94,7 +94,7 @@ Environment accuracy note:
 
 The active feed stack is normalized, not a flat one-table content model.
 
-Important fields and relationships now include:
+Important fields and relationships include:
 
 - `ContentPost.title`
 - `ContentPost.slug`
@@ -120,7 +120,7 @@ Important accuracy note:
 - Cloudflare video identity is stored through `MediaAsset.storageProvider`, `MediaAsset.storageKey`, and media metadata
 - hashtags remain normalized through `Hashtag` and `PostHashtag`
 - likes, saves, comments, and follows use real relational tables
-- analytics now prefer direct `ContentPost` fields plus `ContentPostViewSession`, with `metadataJson.analytics` retained as a rollout bridge
+- analytics prefer direct `ContentPost` fields plus `ContentPostViewSession`, with `metadataJson.analytics` retained as a rollout bridge
 
 ## Seed Data
 

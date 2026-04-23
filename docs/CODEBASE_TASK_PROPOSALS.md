@@ -1,10 +1,10 @@
 # Codebase Task Proposals (2026-04-20)
 
-Updated: 2026-04-23
+Updated: 2026-04-24
 
 ## Status
 
-Historical planning or handoff note. Use README.md, docs/README.md, docs/ROADMAP.md, and the rollout checklists for the current system state.
+Historical planning or handoff note. Use [README.md](./README.md), [ROADMAP.md](./ROADMAP.md), [DEPLOYMENT.md](./DEPLOYMENT.md), and the rollout checklists in this folder for the current system state.
 
 
 This pass proposes one focused task in each requested category: typo, bug, documentation discrepancy, and test improvement.
@@ -15,7 +15,7 @@ This pass proposes one focused task in each requested category: typo, bug, docum
 - The admin settings form filename is spelled `setings-form.tsx` (missing a `t`), which is inconsistent with project naming patterns and reduces discoverability.
 
 **Task**
-- Rename `src/app/admin/settings/setings-form.tsx` to `src/app/admin/settings/settings-form.tsx` and update all imports.
+- Rename `src/app/admin/settings/setings-form.tsx` to `settings-form.tsx` in the same folder and update all imports.
 
 **Why this matters**
 - Improves maintainability and searchability (new contributors will look for `settings-form`).

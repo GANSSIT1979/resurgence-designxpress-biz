@@ -1,6 +1,6 @@
 # RESURGENCE Powered by DesignXpress
 
-Updated: 2026-04-23
+Updated: 2026-04-24
 RESURGENCE Powered by DesignXpress is a Next.js 15 + Prisma platform for basketball community access, creator visibility, Official Resurgence Merch commerce, sponsorship and partnership workflows, support intake, and role-based business operations.
 
 ## Platform Snapshot
@@ -91,6 +91,7 @@ Windows PowerShell:
 ```powershell
 Copy-Item .env.example .env
 npm install
+npm run local:preflight
 npm run db:push
 npm run db:seed
 npm run dev
@@ -98,7 +99,16 @@ npm run dev
 
 If you changed `PRISMA_DB_PROVIDER` or `DATABASE_URL`, rerun `npm run prisma:generate` before building or deploying.
 
-## Verified Seeded Local Accounts
+Optional local bootstrap check:
+
+```bash
+npm run local:preflight
+```
+
+## Seeded Local Accounts
+
+- These are the default credentials created by the current local seed flow.
+- Rerun `npm run db:seed` against a fresh local database before relying on them for a clean test pass.
 
 - System Admin: `admin@resurgence.local` / `Admin123!`
 - Cashier: `cashier@resurgence.local` / `Cashier123!`
@@ -119,6 +129,8 @@ Support verification against a running local server:
 ```bash
 npm run support:verify -- --base-url=http://localhost:3000
 ```
+
+These commands are the recommended repeatable checks for the active branch. Rerun them before relying on local verification status.
 
 ## Core Local URLs
 

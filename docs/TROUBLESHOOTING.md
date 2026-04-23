@@ -1,6 +1,6 @@
 # TROUBLESHOOTING
 
-Updated: 2026-04-23
+Updated: 2026-04-24
 ## Prisma Client Or Provider Looks Wrong
 
 Run:
@@ -56,7 +56,7 @@ npm run support:verify -- --base-url=http://localhost:3000
 
 Check `GET /api/health`.
 
-The health probe now checks:
+The health probe checks:
 
 - additive `ContentPost` columns
 - additive `MediaAsset` columns

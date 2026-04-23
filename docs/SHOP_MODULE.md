@@ -1,9 +1,9 @@
 # OFFICIAL RESURGENCE MERCH MODULE
 
-Updated: 2026-04-23
+Updated: 2026-04-24
 ## Overview
 
-The Resurgence shop is the Official Resurgence Merch module already integrated into this repository. It powers public merch browsing, checkout, order lookup, and admin product/order operations from the same application that serves the community feed and role dashboards.
+The Resurgence shop is the Official Resurgence Merch module integrated into this repository. It powers public merch browsing, checkout, order lookup, and admin product/order operations from the same application that serves the community feed and role dashboards.
 
 The live commerce flow covers:
 
@@ -64,7 +64,7 @@ Important implementation notes:
 
 ## Access Model
 
-Commerce access currently works like this:
+Commerce access works like this:
 
 - `/shop`, `/shop/product/[slug]`, `/cart`, and `/checkout` are public
 - `/account/orders` is a public order lookup page filtered by checkout email
@@ -77,7 +77,7 @@ Important accuracy note:
 
 ## Checkout And Payment Behavior
 
-The checkout module currently supports:
+The checkout module supports:
 
 - `COD`
 - `GCASH_MANUAL`
@@ -131,7 +131,7 @@ System Admin users can upload merch images through the product manager. Uploads 
 
 ## Prisma Models
 
-The active shop schema is already merged into `prisma/schema.prisma`.
+The active shop schema is merged into `prisma/schema.prisma`.
 
 Commerce models and enums include:
 

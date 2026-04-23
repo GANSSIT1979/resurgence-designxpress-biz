@@ -1,6 +1,6 @@
 # ARCHITECTURE
 
-Updated: 2026-04-23
+Updated: 2026-04-24
 ## Site Type
 
 - application class: `React/Node`
@@ -86,7 +86,7 @@ Auth flows include:
 
 ## Feed, Community, And Creator Layer
 
-The public community layer now includes:
+The public community layer includes:
 
 - creator-commerce feed cards on `/` and `/feed`
 - likes, saves, follows, comments, and share tracking
@@ -99,8 +99,8 @@ The public community layer now includes:
 Important implementation notes:
 
 - the feed is powered by the normalized `ContentPost` plus `MediaAsset` model
-- the analytics layer is still additive and lightweight, but it now prefers direct `ContentPost` analytics fields plus `ContentPostViewSession` and keeps `metadataJson.analytics` as a rollout bridge
-- public creator pages and feed reads now degrade more safely when production schema drift is detected
+- the analytics layer is still additive and lightweight, but it prefers direct `ContentPost` analytics fields plus `ContentPostViewSession` and keeps `metadataJson.analytics` as a rollout bridge
+- public creator pages and feed reads degrade more safely when production schema drift is detected
 
 ## Commerce Layer
 
@@ -163,5 +163,5 @@ Current support routing categories:
 ## Deployment Safety Notes
 
 - use migration-first rollout on Preview and Production when additive Prisma fields are introduced
-- verify `/api/health` after deploy because it now probes content-post, media-asset, and notification drift
+- verify `/api/health` after deploy because it probes content-post, media-asset, and notification drift
 - do not rely on Vercel filesystem persistence for creator media

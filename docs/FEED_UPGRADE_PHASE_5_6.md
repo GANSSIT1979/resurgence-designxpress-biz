@@ -1,10 +1,10 @@
 # Creator-Commerce Feed Upgrade: Phases 5-6
 
-Updated: 2026-04-23
+Updated: 2026-04-24
 
 ## Status
 
-Historical planning or handoff note. Use README.md, docs/README.md, docs/ROADMAP.md, and the rollout checklists for the current system state.
+Historical planning or handoff note. Use [README.md](./README.md), [ROADMAP.md](./ROADMAP.md), [DEPLOYMENT.md](./DEPLOYMENT.md), and the rollout checklists in this folder for the current system state.
 
 
 This document records the public feed MVP slice built on top of the Phase 1-4 schema foundation.

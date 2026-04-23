@@ -1,6 +1,6 @@
 # USER GUIDE
 
-Updated: 2026-04-23
+Updated: 2026-04-24
 ## What This Platform Is
 
 RESURGENCE Powered by DesignXpress is a basketball-focused platform that combines:
@@ -80,7 +80,7 @@ What to expect:
 
 ### Coach And Referee
 
-Coach and referee accounts currently provide lighter dashboard shells at:
+Coach and referee accounts provide lighter dashboard shells at:
 
 - `/coach`
 - `/referee`

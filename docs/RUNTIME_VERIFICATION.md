@@ -1,6 +1,6 @@
 # Runtime Verification
 
-Updated: 2026-04-23
+Updated: 2026-04-24
 ## Purpose
 
 Use this checklist after the current creator-commerce feed, creator studio, and media rollout changes build successfully.
@@ -13,6 +13,8 @@ This runtime pass confirms that the live app still serves:
 - official merch routes
 - feed reads, feed analytics, and unauthenticated feed write guards
 - support and health route visibility
+
+This is a repeatable release procedure, not a standing guarantee for every branch or environment.
 
 ## Commands
 
