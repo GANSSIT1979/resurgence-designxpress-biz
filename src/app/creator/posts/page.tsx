@@ -165,6 +165,10 @@ export default async function CreatorPostsPage() {
         navItems={[...creatorNavItems]}
         currentPath="/creator/posts"
       >
+        <div className="btn-row" style={{ marginBottom: 18 }}>
+          <Link className="button-link" href="/creator/posts/new">Open New Post Composer</Link>
+          <Link className="button-link btn-secondary" href={`/creators/${creator.slug}`}>Open Public Profile</Link>
+        </div>
         {dataError ? (
           <section className="card">
             <div className="notice error">{dataError}</div>
