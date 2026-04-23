@@ -5,6 +5,8 @@ For migration-first rollout of the current content-post schema, also use [PRISMA
 
 For the additive comment-schema rollout on the existing comment path, also use [PRISMA_CONTENTPOST_COMMENT_SCHEMA_INTEGRATION.md](./PRISMA_CONTENTPOST_COMMENT_SCHEMA_INTEGRATION.md) and [contentpost-comment-migration-checks.sql](./contentpost-comment-migration-checks.sql).
 
+For the additive analytics-schema rollout on the existing feed path, also use [PRISMA_CONTENTPOST_ANALYTICS_SCHEMA_INTEGRATION.md](./PRISMA_CONTENTPOST_ANALYTICS_SCHEMA_INTEGRATION.md) and [contentpost-analytics-migration-checks.sql](./contentpost-analytics-migration-checks.sql).
+
 ## Provider Strategy
 
 - local development: SQLite
@@ -70,6 +72,9 @@ The source schema remains `prisma/schema.prisma`, but generate, push, and migrat
 - `PostComment`
 - `PostSave`
 - `PostProductTag`
+- `ContentPostAnalyticsDay`
+- `CreatorAnalyticsDay`
+- `ContentPostViewSession`
 - `SponsoredPlacement`
 
 ### Commerce
@@ -88,18 +93,28 @@ Important fields and relationships now include:
 - `ContentPost.title`
 - `ContentPost.slug`
 - `ContentPost.viewCount`
+- `ContentPost.uniqueViewCount`
+- `ContentPost.watchTimeSeconds`
+- `ContentPost.completedViewCount`
+- `ContentPost.avgWatchTimeSeconds`
+- `ContentPost.completionRate`
+- `ContentPost.firstViewedAt`
+- `ContentPost.lastViewedAt`
 - `ContentPost.lastCommentedAt`
 - `ContentPost.metadataJson`
 - `MediaAsset.originalFileName`
 - `MediaAsset.storageProvider`
 - `MediaAsset.storageKey`
 - `PostComment` moderation, reply threading, and metadata fields
+- `ContentPostViewSession` for lightweight session-level analytics persistence
+- additive `ContentPostAnalyticsDay` and `CreatorAnalyticsDay` tables for future rollups
 
 Important accuracy note:
 
 - Cloudflare video identity is stored through `MediaAsset.storageProvider`, `MediaAsset.storageKey`, and media metadata
 - hashtags remain normalized through `Hashtag` and `PostHashtag`
 - likes, saves, comments, and follows use real relational tables
+- analytics now prefer direct `ContentPost` fields plus `ContentPostViewSession`, with `metadataJson.analytics` retained as a rollout bridge
 
 ## Seed Data
 
@@ -125,3 +140,4 @@ npm run db:seed
 - generate and review migrations in development
 - deploy migrations to Preview before trusting Preview behavior
 - promote Production only after the matching database and app revision are both verified
+- do not assume the daily analytics tables are populated until the rollup writer or backfill step ships

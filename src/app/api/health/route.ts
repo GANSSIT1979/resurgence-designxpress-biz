@@ -7,14 +7,55 @@ import { NextResponse } from "next/server";
 async function runSchemaChecks() {
   const probes = [
     {
-      scope: "content-post column probe failed",
+      scope: "content-post analytics column probe failed",
       query: db.contentPost.findFirst({
         select: {
           id: true,
           title: true,
           slug: true,
           viewCount: true,
+          uniqueViewCount: true,
+          watchTimeSeconds: true,
+          completedViewCount: true,
+          avgWatchTimeSeconds: true,
+          completionRate: true,
+          firstViewedAt: true,
+          lastViewedAt: true,
           metadataJson: true,
+        },
+      }),
+    },
+    {
+      scope: "content-post analytics-day table probe failed",
+      query: db.contentPostAnalyticsDay.findFirst({
+        select: {
+          id: true,
+          contentPostId: true,
+          creatorProfileId: true,
+          date: true,
+          viewCount: true,
+        },
+      }),
+    },
+    {
+      scope: "creator analytics-day table probe failed",
+      query: db.creatorAnalyticsDay.findFirst({
+        select: {
+          id: true,
+          creatorProfileId: true,
+          date: true,
+          viewCount: true,
+        },
+      }),
+    },
+    {
+      scope: "content-post view-session table probe failed",
+      query: db.contentPostViewSession.findFirst({
+        select: {
+          id: true,
+          contentPostId: true,
+          viewerSessionKey: true,
+          watchTimeSeconds: true,
         },
       }),
     },

@@ -159,6 +159,15 @@ enum ContentPostCommentVisibility {
   PRIVATE
 }
 
+enum ContentViewSource {
+  FEED
+  PROFILE
+  PRODUCT
+  DIRECT_LINK
+  EMBED
+  UNKNOWN
+}
+
 enum SponsoredPlacementStatus {
   DRAFT
   PENDING
@@ -193,14 +202,16 @@ model User {
   notifications         PlatformNotification[] @relation("NotificationRecipient")
   actorNotifications    PlatformNotification[] @relation("NotificationActor")
   emails                AutomatedEmail[]       @relation("EmailRecipient")
-  contentPosts          ContentPost[]          @relation("PostAuthor")
-  postLikes             PostLike[]             @relation("PostLikeUser")
-  postComments          PostComment[]          @relation("PostCommentAuthor")
-  moderatedPostComments PostComment[]          @relation("PostCommentModerator")
-  postSaves             PostSave[]             @relation("PostSaveUser")
-  following             Follow[]               @relation("CreatorFollowUser")
-  createdAt             DateTime               @default(now())
-  updatedAt             DateTime               @updatedAt
+  contentPosts             ContentPost[]            @relation("PostAuthor")
+  contentPostAnalyticsDays ContentPostAnalyticsDay[] @relation("ContentPostAnalyticsAuthor")
+  postLikes                PostLike[]               @relation("PostLikeUser")
+  postComments             PostComment[]            @relation("PostCommentAuthor")
+  moderatedPostComments    PostComment[]            @relation("PostCommentModerator")
+  postSaves                PostSave[]               @relation("PostSaveUser")
+  contentPostViewSessions  ContentPostViewSession[] @relation("ContentPostAnalyticsViewer")
+  following                Follow[]                 @relation("CreatorFollowUser")
+  createdAt                DateTime                 @default(now())
+  updatedAt                DateTime                 @updatedAt
 }
 
 model VerificationCode {
@@ -614,12 +625,15 @@ model CreatorProfile {
   reboundsPerGame    Float?
   imageUrl           String?
   mediaEvents        MediaEvent[]
-  contentPosts       ContentPost[] @relation("CreatorContentPosts")
-  followers          Follow[]      @relation("CreatorFollowers")
-  sortOrder          Int           @default(0)
-  isActive           Boolean       @default(true)
-  createdAt          DateTime      @default(now())
-  updatedAt          DateTime      @updatedAt
+  contentPosts       ContentPost[]             @relation("CreatorContentPosts")
+  analyticsDays      ContentPostAnalyticsDay[] @relation("ContentPostAnalyticsCreatorProfile")
+  analyticsRollups   CreatorAnalyticsDay[]     @relation("CreatorAnalyticsCreatorProfile")
+  viewSessions       ContentPostViewSession[]  @relation("CreatorAnalyticsViewSessions")
+  followers          Follow[]                  @relation("CreatorFollowers")
+  sortOrder          Int                       @default(0)
+  isActive           Boolean                   @default(true)
+  createdAt          DateTime                  @default(now())
+  updatedAt          DateTime                  @updatedAt
 
   @@index([userId])
   @@index([isActive, sortOrder])
@@ -681,7 +695,17 @@ model ContentPost {
   saveCount           Int                    @default(0)
   shareCount          Int                    @default(0)
   viewCount           Int                    @default(0)
+  uniqueViewCount     Int                    @default(0)
+  watchTimeSeconds    Int                    @default(0)
+  completedViewCount  Int                    @default(0)
+  avgWatchTimeSeconds Float                  @default(0)
+  completionRate      Float                  @default(0)
+  firstViewedAt       DateTime?
+  lastViewedAt        DateTime?
+  lastAnalyticsRollupAt DateTime?
   metadataJson        Json?
+  analyticsDays       ContentPostAnalyticsDay[]
+  viewSessions        ContentPostViewSession[]
   mediaAssets         MediaAsset[]
   hashtags            PostHashtag[]
   likes               PostLike[]
@@ -699,7 +723,99 @@ model ContentPost {
   @@index([isFeatured, publishedAt])
   @@index([commentCount])
   @@index([lastCommentedAt])
+  @@index([lastViewedAt])
   @@index([publishedAt])
+  @@index([viewCount])
+  @@index([uniqueViewCount])
+  @@index([completedViewCount])
+}
+
+model ContentPostAnalyticsDay {
+  id                  String         @id @default(cuid())
+  contentPostId       String
+  creatorProfileId    String?
+  authorUserId        String?
+  date                DateTime
+  viewCount           Int            @default(0)
+  uniqueViewCount     Int            @default(0)
+  watchTimeSeconds    Int            @default(0)
+  completedViewCount  Int            @default(0)
+  avgWatchTimeSeconds Float          @default(0)
+  completionRate      Float          @default(0)
+  shareCount          Int            @default(0)
+  likeCount           Int            @default(0)
+  saveCount           Int            @default(0)
+  commentCount        Int            @default(0)
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  contentPost         ContentPost     @relation(fields: [contentPostId], references: [id], onDelete: Cascade)
+  creatorProfile      CreatorProfile? @relation("ContentPostAnalyticsCreatorProfile", fields: [creatorProfileId], references: [id], onDelete: SetNull)
+  authorUser          User?           @relation("ContentPostAnalyticsAuthor", fields: [authorUserId], references: [id], onDelete: SetNull)
+
+  @@unique([contentPostId, date])
+  @@index([creatorProfileId, date])
+  @@index([authorUserId, date])
+  @@index([date])
+  @@index([creatorProfileId, date, viewCount])
+}
+
+model CreatorAnalyticsDay {
+  id                  String         @id @default(cuid())
+  creatorProfileId    String
+  date                DateTime
+  postCount           Int            @default(0)
+  publishedPostCount  Int            @default(0)
+  viewCount           Int            @default(0)
+  uniqueViewCount     Int            @default(0)
+  watchTimeSeconds    Int            @default(0)
+  completedViewCount  Int            @default(0)
+  avgWatchTimeSeconds Float          @default(0)
+  completionRate      Float          @default(0)
+  shareCount          Int            @default(0)
+  likeCount           Int            @default(0)
+  saveCount           Int            @default(0)
+  commentCount        Int            @default(0)
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  creatorProfile      CreatorProfile @relation("CreatorAnalyticsCreatorProfile", fields: [creatorProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([creatorProfileId, date])
+  @@index([date])
+  @@index([creatorProfileId, date])
+  @@index([creatorProfileId, viewCount])
+}
+
+model ContentPostViewSession {
+  id                 String           @id @default(cuid())
+  contentPostId      String
+  creatorProfileId   String?
+  authorUserId       String?
+  viewerUserId       String?
+  viewerSessionKey   String?
+  deviceHash         String?
+  source             ContentViewSource @default(FEED)
+  countryCode        String?
+  locale             String?
+  firstViewedAt      DateTime         @default(now())
+  lastViewedAt       DateTime         @default(now())
+  watchTimeSeconds   Int              @default(0)
+  viewCount          Int              @default(1)
+  completedViewCount Int              @default(0)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  contentPost        ContentPost      @relation(fields: [contentPostId], references: [id], onDelete: Cascade)
+  creatorProfile     CreatorProfile?  @relation("CreatorAnalyticsViewSessions", fields: [creatorProfileId], references: [id], onDelete: SetNull)
+  viewerUser         User?            @relation("ContentPostAnalyticsViewer", fields: [viewerUserId], references: [id], onDelete: SetNull)
+
+  @@index([contentPostId, lastViewedAt])
+  @@index([creatorProfileId, lastViewedAt])
+  @@index([authorUserId, lastViewedAt])
+  @@index([viewerUserId])
+  @@index([viewerSessionKey])
+  @@index([deviceHash])
+  @@index([contentPostId, viewerUserId])
+  @@index([contentPostId, viewerSessionKey])
+  @@index([contentPostId, deviceHash])
 }
 
 model MediaAsset {

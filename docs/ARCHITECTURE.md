@@ -98,7 +98,7 @@ The public community layer now includes:
 Important implementation notes:
 
 - the feed is powered by the normalized `ContentPost` plus `MediaAsset` model
-- the analytics layer is additive and lightweight, using `ContentPost.viewCount` plus `metadataJson.analytics`
+- the analytics layer is still additive and lightweight, but it now prefers direct `ContentPost` analytics fields plus `ContentPostViewSession` and keeps `metadataJson.analytics` as a rollout bridge
 - public creator pages and feed reads now degrade more safely when production schema drift is detected
 
 ## Commerce Layer

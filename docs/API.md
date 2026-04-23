@@ -103,7 +103,7 @@ Community behavior notes:
 - public feed reads work without authentication
 - follow, like, save, share, and comment mutations are session-aware
 - `/api/creators/[creatorId]/follow` is a compatibility alias that re-exports the feed follow behavior
-- view and watch-time registration use the current lightweight `ContentPost.viewCount` plus `metadataJson.analytics` bridge
+- view and watch-time registration now write direct `ContentPost` analytics fields and `ContentPostViewSession`, while keeping a compatibility sync in `metadataJson.analytics` during rollout
 
 ## Creator Media And Post Studio Routes
 
