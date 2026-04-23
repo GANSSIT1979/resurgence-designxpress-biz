@@ -68,6 +68,8 @@ Before build or migration commands, confirm:
 
 See [VERCEL.md](./VERCEL.md) for the exact Vercel project settings and environment variable checklist.
 
+Use [VERCEL_DEPLOYMENT_CHECKLIST.md](./VERCEL_DEPLOYMENT_CHECKLIST.md) as the route-aware go/no-go document before promoting a Preview deployment to Production.
+
 Typical flow:
 
 1. push the repository to GitHub

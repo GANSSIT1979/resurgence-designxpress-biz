@@ -2,6 +2,8 @@
 
 Updated: 2026-04-21
 
+For the route-by-route release gate and production rollout checks, also use [VERCEL_DEPLOYMENT_CHECKLIST.md](./VERCEL_DEPLOYMENT_CHECKLIST.md).
+
 ## Repository Files
 
 This Vercel setup applies because the repository is a `React/Node` app built with `Next.js`, not a PHP or static-site project.

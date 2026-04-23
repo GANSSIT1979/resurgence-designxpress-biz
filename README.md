@@ -145,6 +145,8 @@ Recommended references:
 - [docs/USER_GUIDE.md](./docs/USER_GUIDE.md)
 - [docs/ADMIN_GUIDE.md](./docs/ADMIN_GUIDE.md)
 - [docs/VERCEL.md](./docs/VERCEL.md)
+- [docs/VERCEL_DEPLOYMENT_CHECKLIST.md](./docs/VERCEL_DEPLOYMENT_CHECKLIST.md)
+- [docs/PHASE1_ROUTE_INTEGRATION_PLAN.md](./docs/PHASE1_ROUTE_INTEGRATION_PLAN.md)
 - [docs/TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md)
 
 ## Notes

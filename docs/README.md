@@ -44,6 +44,8 @@ Deployment and operations:
 
 - [DEPLOYMENT.md](./DEPLOYMENT.md)
 - [VERCEL.md](./VERCEL.md)
+- [VERCEL_DEPLOYMENT_CHECKLIST.md](./VERCEL_DEPLOYMENT_CHECKLIST.md)
+- [PHASE1_ROUTE_INTEGRATION_PLAN.md](./PHASE1_ROUTE_INTEGRATION_PLAN.md)
 - [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)
 - [CHANGELOG.md](./CHANGELOG.md)
 - [ROADMAP.md](./ROADMAP.md)
@@ -75,7 +77,9 @@ If you are onboarding to the codebase:
 8. `USER_GUIDE.md`
 9. `ADMIN_GUIDE.md`
 10. `VERCEL.md`
-11. `TROUBLESHOOTING.md`
+11. `VERCEL_DEPLOYMENT_CHECKLIST.md`
+12. `PHASE1_ROUTE_INTEGRATION_PLAN.md`
+13. `TROUBLESHOOTING.md`
 
 If you are validating the live product surface:
 
