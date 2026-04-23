@@ -95,10 +95,11 @@ Before production deploy:
 
 1. Back up the production PostgreSQL database.
 2. Confirm `PRISMA_DB_PROVIDER=postgresql`.
-3. Run `npm run prisma:prepare`.
-4. Run `npx prisma validate`.
-5. Apply the migration first to a preview database.
-6. Run `npx prisma migrate deploy` only after the preview migration succeeds.
+3. Confirm the active connection string is set in `DATABASE_URL`, not only in `POSTGRES_URL*` helper variables.
+4. Run `npm run prisma:prepare`.
+5. Run `npx prisma validate`.
+6. Apply the migration first to a preview database.
+7. Run `npx prisma migrate deploy` only after the preview migration succeeds.
 
 ## Known Risk
 

@@ -168,3 +168,4 @@ Accuracy notes:
 - the current repository uses `JWT_SECRET`, not `AUTH_SECRET`
 - business payment/contact details are resolved through app settings and environment-backed defaults
 - the provider-selection step is handled before Prisma commands by `scripts/prepare-prisma-schema.mjs`
+- Prisma still connects through `DATABASE_URL`; platform `POSTGRES_URL*` helper variables are optional and not read directly by the shop code

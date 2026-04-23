@@ -131,6 +131,7 @@ Provider behavior:
 - local development can fall back to SQLite
 - hosted builds should use PostgreSQL
 - the provider is inferred from `PRISMA_DB_PROVIDER` or `DATABASE_URL`
+- Prisma and runtime queries still connect through `DATABASE_URL`; helper variables such as `POSTGRES_URL*` are not read automatically by app code
 - build and migration commands run against `schema.generated.prisma`, not directly against the source schema file
 
 ## Media And Storage

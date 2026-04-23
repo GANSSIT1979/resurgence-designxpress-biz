@@ -56,9 +56,11 @@ NEXT_PUBLIC_SITE_URL=https://resurgence-dx.biz
 FORCE_HTTPS=true
 ```
 
-## Required Production Environment Variables
+## Environment Model For This Repo
 
-Set these in Vercel under Project Settings > Environment Variables > Production.
+### Required Runtime Variables
+
+Set these in Vercel under Project Settings > Environment Variables > Production:
 
 ```env
 PRISMA_DB_PROVIDER=postgresql
@@ -68,12 +70,6 @@ FORCE_HTTPS=true
 NEXT_PUBLIC_SITE_URL=https://resurgence-dx.biz
 NEXT_PUBLIC_SITE_NAME=Resurgence Powered by DesignXpress
 COMPANY_NAME=DesignXpress Merchandising OPC
-CLOUDFLARE_ACCOUNT_ID=
-CLOUDFLARE_STREAM_TOKEN=
-CLOUDFLARE_STREAM_CUSTOMER_CODE=
-CLOUDFLARE_STREAM_ALLOWED_ORIGINS=https://www.resurgence-dx.biz,https://resurgence-dx.biz
-CLOUDFLARE_STREAM_MAX_DURATION_SECONDS=180
-CLOUDFLARE_REQUIRE_SIGNED_URLS=false
 NEXT_PUBLIC_CONTACT_NAME=Jake Anilao
 NEXT_PUBLIC_CONTACT_ROLE=Sponsorship / Partnerships
 NEXT_PUBLIC_CONTACT_EMAIL=partnerships@resurgence-dx.biz
@@ -91,11 +87,60 @@ MAYA_NUMBER=
 BANK_ACCOUNT_NAME=replace-with-bank-account-name
 BANK_ACCOUNT_NUMBER=replace-with-bank-account-number
 BANK_NAME=replace-with-bank-name
-NEXT_PUBLIC_GOOGLE_CLIENT_ID=
-GOOGLE_CLIENT_ID=
 NEXT_TELEMETRY_DISABLED=1
 PRISMA_HIDE_UPDATE_MESSAGE=1
 ```
+
+### Required When The Related Feature Is Enabled
+
+```env
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_ID=
+OTP_DELIVERY_MODE=demo
+SMS_WEBHOOK_URL=
+SMS_WEBHOOK_SECRET=
+EMAIL_WEBHOOK_URL=
+EMAIL_WEBHOOK_SECRET=
+OPENAI_API_KEY=
+OPENAI_WORKFLOW_ID=
+OPENAI_WORKFLOW_VERSION=1
+OPENAI_WEBHOOK_SECRET=
+OPENAI_DEFAULT_MODEL=gpt-4.1-mini
+CLOUDFLARE_ACCOUNT_ID=
+CLOUDFLARE_STREAM_TOKEN=
+CLOUDFLARE_STREAM_CUSTOMER_CODE=
+CLOUDFLARE_STREAM_ALLOWED_ORIGINS=https://www.resurgence-dx.biz,https://resurgence-dx.biz
+CLOUDFLARE_STREAM_MAX_DURATION_SECONDS=180
+CLOUDFLARE_REQUIRE_SIGNED_URLS=false
+UPLOAD_STORAGE=r2
+R2_ACCOUNT_ID=
+R2_ACCESS_KEY_ID=
+R2_SECRET_ACCESS_KEY=
+R2_BUCKET=
+R2_PUBLIC_BASE_URL=
+```
+
+### Optional Platform Helper Variables
+
+These may be created by Vercel or Supabase, but the current app does not read them directly:
+
+- `POSTGRES_URL`
+- `POSTGRES_PRISMA_URL`
+- `POSTGRES_URL_NON_POOLING`
+- `POSTGRES_PASSWORD`
+
+### Unused In The Current Codebase
+
+- `SUPABASE_SECRET_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_JWT_SECRET`
+
+Environment accuracy rules:
+
+- `DATABASE_URL` is the Prisma/runtime source of truth in this repo
+- `PRISMA_DB_PROVIDER=postgresql` is recommended for every hosted build
+- platform helper variables such as `POSTGRES_URL`, `POSTGRES_PRISMA_URL`, `POSTGRES_URL_NON_POOLING`, and `POSTGRES_PASSWORD` are optional and are not read directly by app code
+- `SUPABASE_SECRET_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_JWT_SECRET` are unused in the current codebase
 
 You can copy the same list from [`../vercel.production.env.example`](../vercel.production.env.example).
 
@@ -106,11 +151,11 @@ Google sign-in note:
 
 Cloudflare Stream note:
 
-- `/api/media/cloudflare/direct-upload` now expects `CLOUDFLARE_STREAM_CUSTOMER_CODE` so the app can build playback and thumbnail URLs without hardcoding your account-specific Stream host
+- `/api/media/cloudflare/direct-upload` expects `CLOUDFLARE_STREAM_CUSTOMER_CODE` so the app can build playback and thumbnail URLs without hardcoding your account-specific Stream host
 - keep `CLOUDFLARE_REQUIRE_SIGNED_URLS=false` for the current rollout, because signed playback tokens are not wired into `/feed` yet
 - the upload route is role-gated to the same creator/staff/admin boundary used by feed post creation
 
-Important database rule:
+## Important Database Rule
 
 - do not use `localhost`, `127.0.0.1`, or the local PostGIS connection for Vercel
 - keep the runtime `DATABASE_URL` on the Supabase session pooler for this project
@@ -133,54 +178,13 @@ postgresql://postgres:[YOUR-PASSWORD]@db.dkipwveehizhmdiceabm.supabase.co:5432/p
 
 Use the direct host only for admin or maintenance work from a network that can reach it. Supabase flags that host as not IPv4-compatible, so it is not the default runtime choice for this project.
 
-For schema deployment or seeding from your local machine, keep the pooler as the default `DATABASE_URL`. If you are on a compatible network and intentionally want the direct admin connection for a one-off task, temporarily swap it in:
-
-```powershell
-$env:PRISMA_DB_PROVIDER="postgresql"
-$env:DATABASE_URL="postgresql://postgres.dkipwveehizhmdiceabm:[YOUR-PASSWORD]@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres?sslmode=require&pgbouncer=true"
-npm run db:deploy
-npm run db:seed
-```
-
-Optional direct admin override:
-
-```powershell
-$env:PRISMA_DB_PROVIDER="postgresql"
-$env:DATABASE_URL="postgresql://postgres:[YOUR-PASSWORD]@db.dkipwveehizhmdiceabm.supabase.co:5432/postgres"
-npm run db:deploy
-npm run db:seed
-```
-
-Keep generated helper variables if Vercel created them, but this app's runtime `DATABASE_URL` should stay aligned with the Supabase session pooler string above. Do not duplicate repeated variables such as `NEXT_PUBLIC_SUPABASE_ANON_KEY` or `SUPABASE_URL`; keep one value per variable name.
+If Vercel or Supabase inject helper variables such as `POSTGRES_URL*`, keep them only for manual ops convenience unless you intentionally map one of them into `DATABASE_URL`.
 
 Generate a production `JWT_SECRET` locally before pasting it into Vercel:
 
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
 ```
-
-Optional fallback admin variables:
-
-```env
-ADMIN_EMAIL=admin@resurgence.local
-ADMIN_PASSWORD_HASH=
-```
-
-Only set `ADMIN_PASSWORD_HASH` if you intentionally want the emergency fallback admin path enabled.
-
-Optional support and automation variables:
-
-```env
-OPENAI_API_KEY=
-OPENAI_WORKFLOW_ID=
-OPENAI_WORKFLOW_VERSION=1
-OPENAI_WEBHOOK_SECRET=
-OPENAI_DEFAULT_MODEL=
-EMAIL_WEBHOOK_URL=
-EMAIL_WEBHOOK_SECRET=
-```
-
-`OPENAI_WORKFLOW_VERSION` should be the plain version number such as `1`. Do not use `version="1"` inside the value.
 
 ## Preview And Development Environments
 

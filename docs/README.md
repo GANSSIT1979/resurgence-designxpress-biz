@@ -12,6 +12,7 @@ RESURGENCE Powered by DesignXpress is a Next.js 15 + Prisma platform for basketb
 - `npm run build` passes.
 - `npm run support:verify` passes against a running local server.
 - The Prisma provider workflow is `scripts/prepare-prisma-schema.mjs` plus `prisma/schema.prisma` -> `prisma/schema.generated.prisma`.
+- Environment variable source of truth is `docs/CONFIGURATION.md`; Prisma/runtime database access is keyed off `DATABASE_URL`.
 - Public signup now covers free member, creator, coach, referee, sponsor, and partner registration through `/login`.
 - The member experience now includes a dedicated `/member` dashboard alongside the public `/feed` and merch flows.
 
@@ -109,3 +110,10 @@ If you are validating the live product surface:
 ## Documentation Policy
 
 The `docs/` folder is the source of truth. Root Markdown files outside `docs/` are retained as historical implementation notes unless a document explicitly says otherwise.
+
+Environment accuracy policy:
+
+- `DATABASE_URL` is the current database connection source of truth
+- `PRISMA_DB_PROVIDER` is the optional provider override for generated-schema prep
+- `POSTGRES_URL`, `POSTGRES_PRISMA_URL`, `POSTGRES_URL_NON_POOLING`, and `POSTGRES_PASSWORD` are optional platform helper variables, not direct runtime requirements in this repo
+- `SUPABASE_SECRET_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_JWT_SECRET` are unused in the current codebase

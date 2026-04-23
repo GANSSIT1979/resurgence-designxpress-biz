@@ -1,34 +1,48 @@
 # CONFIGURATION
 
 Updated: 2026-04-23
-## Core Environment Variables
+## Environment Variable Source Of Truth
 
-### Database
+This repo currently treats:
+
+- `DATABASE_URL` as the Prisma and runtime database source of truth
+- `PRISMA_DB_PROVIDER` as the optional provider override for generated-schema prep
+
+Important accuracy notes:
+
+- the checked-in Prisma schemas use `env("DATABASE_URL")`
+- `scripts/prepare-prisma-schema.mjs` infers the provider from `PRISMA_DB_PROVIDER` or `DATABASE_URL`
+- the current app does not use a direct Supabase SDK client in `src/`
+- Supabase or Vercel helper variables do not replace `DATABASE_URL` unless you explicitly copy or map them yourself
+
+## Required In The Current Codebase
+
+Always required for a real working environment:
 
 ```env
-PRISMA_DB_PROVIDER="sqlite"
 DATABASE_URL="file:./dev.db"
+JWT_SECRET="local-dev-jwt-secret-not-for-production"
 ```
 
-Hosted deployment baseline:
+Hosted baseline:
 
 ```env
 PRISMA_DB_PROVIDER="postgresql"
 DATABASE_URL="postgresql://..."
+JWT_SECRET="replace-with-a-long-random-production-secret"
 ```
 
 Notes:
 
 - local development can stay on SQLite
 - hosted builds should use PostgreSQL
-- `scripts/prepare-prisma-schema.mjs` writes `prisma/schema.generated.prisma` from `prisma/schema.prisma`
+- `PRISMA_DB_PROVIDER=postgresql` is strongly recommended on Preview and Production even when `DATABASE_URL` is already PostgreSQL
 
-### Authentication And Site Metadata
+## Recommended Public Runtime Configuration
+
+These are not all universally required, but they are part of the normal app surface:
 
 ```env
-ADMIN_EMAIL="admin@resurgence.local"
-ADMIN_PASSWORD_HASH=""
-JWT_SECRET="change-this-super-secret-key"
 COMPANY_NAME="DesignXpress Merchandising OPC"
 NEXT_PUBLIC_SITE_NAME="Resurgence Powered by DesignXpress"
 NEXT_PUBLIC_SITE_URL="https://resurgence-dx.biz"
@@ -48,7 +62,7 @@ NEXT_PUBLIC_SHIPPING_AREA="Philippines nationwide"
 NEXT_PUBLIC_CONTACT_ADDRESS="Philippines"
 ```
 
-`ADMIN_PASSWORD_HASH` is only for the emergency fallback admin flow. Normal sign-in uses database users.
+## Feature-Gated Optional Variables
 
 ### Google And Mobile Auth
 
@@ -63,7 +77,7 @@ SMS_WEBHOOK_SECRET=""
 Notes:
 
 - `NEXT_PUBLIC_GOOGLE_CLIENT_ID` enables the client-side Google button
-- `GOOGLE_CLIENT_ID` is used server-side to verify the Google credential audience
+- `GOOGLE_CLIENT_ID` is used server-side to verify the credential audience
 - `OTP_DELIVERY_MODE=demo` returns the OTP in the API response for setup/testing
 - `OTP_DELIVERY_MODE=webhook` posts the OTP payload to `SMS_WEBHOOK_URL`
 
@@ -72,7 +86,7 @@ Notes:
 ```env
 OPENAI_API_KEY=""
 OPENAI_WORKFLOW_ID=""
-OPENAI_WORKFLOW_VERSION=""
+OPENAI_WORKFLOW_VERSION="1"
 OPENAI_WEBHOOK_SECRET=""
 OPENAI_DEFAULT_MODEL="gpt-4.1-mini"
 EMAIL_WEBHOOK_URL=""
@@ -105,6 +119,72 @@ R2_BUCKET=""
 R2_PUBLIC_BASE_URL=""
 ```
 
+### Manual Shop Payment Instructions
+
+```env
+GCASH_NUMBER=""
+MAYA_NUMBER=""
+BANK_ACCOUNT_NAME=""
+BANK_ACCOUNT_NUMBER=""
+BANK_NAME=""
+```
+
+### Optional Emergency Fallback Admin
+
+```env
+ADMIN_EMAIL="admin@resurgence.local"
+ADMIN_PASSWORD_HASH=""
+```
+
+`ADMIN_PASSWORD_HASH` is only for the emergency fallback admin flow. Normal sign-in uses database users.
+
+## Optional Platform Helper Variables Not Read Directly By App Code
+
+These can exist in Vercel or Supabase, but the current codebase does not read them directly:
+
+- `POSTGRES_URL`
+- `POSTGRES_PRISMA_URL`
+- `POSTGRES_URL_NON_POOLING`
+- `POSTGRES_PASSWORD`
+
+Accuracy note:
+
+- keep them only if your platform injects them or you intentionally use them for manual admin/database tasks
+- they do not satisfy Prisma for this repo unless their value is copied into `DATABASE_URL`
+
+## Unused In The Current Codebase
+
+These are not used by the current application code:
+
+- `SUPABASE_SECRET_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_JWT_SECRET`
+
+Recommended handling:
+
+- do not add them just to make Prisma or auth work
+- never expose them through `NEXT_PUBLIC_*`
+- if they were shared or pasted into insecure places, rotate them
+
+## Local Example
+
+```env
+PRISMA_DB_PROVIDER="sqlite"
+DATABASE_URL="file:./dev.db"
+JWT_SECRET="local-dev-jwt-secret-not-for-production"
+FORCE_HTTPS="false"
+```
+
+## Hosted Example
+
+```env
+PRISMA_DB_PROVIDER="postgresql"
+DATABASE_URL="postgresql://POOLER_USER:POOLER_PASSWORD@POOLER_HOST:6543/postgres?sslmode=require&pgbouncer=true"
+JWT_SECRET="replace-with-a-long-random-production-secret"
+NEXT_PUBLIC_SITE_URL="https://resurgence-dx.biz"
+FORCE_HTTPS="true"
+```
+
 ## Prisma Script Flow
 
 - source schema file: `prisma/schema.prisma`
@@ -124,7 +204,7 @@ Active package scripts:
 Important accuracy note:
 
 - build, generate, and migrate commands target `schema.generated.prisma`
-- `db:deploy` is the repoâ€™s push-style path
+- `db:deploy` is the repo's push-style path
 - reviewed migrations should use `db:migrate` and `db:migrate:deploy`
 
 ## Upload Configuration
@@ -141,6 +221,7 @@ Important accuracy note:
 
 - keep local development on SQLite unless you are testing hosted parity
 - use PostgreSQL for Preview and Production
+- keep `DATABASE_URL` as the single runtime database source of truth
 - rotate `JWT_SECRET` and demo credentials before deployment
 - use database-backed storage, R2, or Cloudflare Stream in hosted environments
 - do not rely on Vercel filesystem persistence for durable uploads or media

@@ -5,6 +5,8 @@ Updated: 2026-04-23
 
 Historical implementation note.
 
+Environment/source-of-truth note: use [docs/CONFIGURATION.md](./docs/CONFIGURATION.md), [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md), and [docs/VERCEL.md](./docs/VERCEL.md) for current environment and rollout requirements.
+
 ## Current Accurate Summary
 
 - The authoritative statuses now come from Prisma enums such as `InquiryStatus`, `SponsorSubmissionStatus`, `InvoiceStatus`, `DeliverableStatus`, and the partner and staff status enums.

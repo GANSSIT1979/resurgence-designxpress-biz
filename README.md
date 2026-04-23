@@ -18,6 +18,7 @@ RESURGENCE Powered by DesignXpress is a Next.js 15 + Prisma platform for basketb
 - Runtime: `Node.js 20.x`
 - ORM: `Prisma`
 - Database provider workflow: `scripts/prepare-prisma-schema.mjs` writes `prisma/schema.generated.prisma` based on `PRISMA_DB_PROVIDER` or `DATABASE_URL`
+- Prisma and the runtime read `DATABASE_URL`; platform helper variables such as `POSTGRES_URL*` are not direct substitutes unless you intentionally map them
 - This is not a WordPress site, Laravel/PHP app, or static HTML-only project
 
 ## Current Product Surface
@@ -152,5 +153,6 @@ Recommended references:
 
 - Local development falls back to SQLite when neither `PRISMA_DB_PROVIDER` nor a provider-shaped `DATABASE_URL` is set.
 - Hosted environments should use PostgreSQL and set `PRISMA_DB_PROVIDER=postgresql` or a PostgreSQL `DATABASE_URL`.
+- The current codebase does not use direct Supabase SDK secrets. `SUPABASE_SECRET_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_JWT_SECRET` are unused unless future Supabase integration is added.
 - The `docs/` folder is the canonical documentation set.
 - Root-level patch-note Markdown files are retained as historical implementation notes, not the source of truth.

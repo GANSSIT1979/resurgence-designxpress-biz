@@ -72,6 +72,7 @@ Before starting the smoke test, confirm all items below.
 
 - [ ] `DATABASE_URL` is present in Vercel Preview
 - [ ] `PRISMA_DB_PROVIDER=postgresql` is correct for Preview
+- [ ] `DATABASE_URL` is the active runtime connection string, not only a helper such as `POSTGRES_URL`
 - [ ] `CLOUDFLARE_ACCOUNT_ID` is present
 - [ ] `CLOUDFLARE_STREAM_TOKEN` is present
 - [ ] `CLOUDFLARE_STREAM_CUSTOMER_CODE` is present

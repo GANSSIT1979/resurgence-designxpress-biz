@@ -39,6 +39,7 @@ Before merging the stack into the production branch:
 
 - confirm `DATABASE_URL` points to the production PostgreSQL database
 - confirm `PRISMA_DB_PROVIDER=postgresql`
+- confirm you are not relying on `POSTGRES_URL*` helper variables without mapping the chosen value into `DATABASE_URL`
 - confirm `NEXT_PUBLIC_SITE_URL=https://resurgence-dx.biz`
 - confirm auth, OpenAI, payment, and storage env vars are set in Vercel
 - confirm the production database has backups or point-in-time recovery enabled

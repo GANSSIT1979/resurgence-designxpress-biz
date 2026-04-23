@@ -11,6 +11,8 @@ npm run prisma:generate
 
 Then restart the dev server or rebuild. This is especially important after changing `PRISMA_DB_PROVIDER` or `DATABASE_URL`.
 
+If the environment still looks wrong, verify that you did not set only `POSTGRES_URL`, `POSTGRES_PRISMA_URL`, or `POSTGRES_URL_NON_POOLING` without also setting `DATABASE_URL`.
+
 ## Hosted Build Fails With A ContentPost Column Error
 
 If you see an error like:

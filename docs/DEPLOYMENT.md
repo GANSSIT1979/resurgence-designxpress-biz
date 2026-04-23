@@ -33,17 +33,42 @@ Required production steps:
 
 ## Environment Baseline
 
-Required or commonly used variables:
+Required in this repo:
 
 - `DATABASE_URL`
-- `PRISMA_DB_PROVIDER`
 - `JWT_SECRET`
+
+Strongly recommended for hosted builds:
+
+- `PRISMA_DB_PROVIDER=postgresql`
 - `NEXT_PUBLIC_SITE_URL`
 - `FORCE_HTTPS=true`
+
+Required only when the related feature is enabled:
+
 - Google auth variables
-- OTP delivery variables when enabled
-- Cloudflare Stream variables when creator video upload is enabled
-- optional OpenAI and email webhook settings
+- OTP delivery variables
+- Cloudflare Stream variables
+- OpenAI and email webhook settings
+
+Optional platform helper variables:
+
+- `POSTGRES_URL`
+- `POSTGRES_PRISMA_URL`
+- `POSTGRES_URL_NON_POOLING`
+- `POSTGRES_PASSWORD`
+
+Unused in the current codebase:
+
+- `SUPABASE_SECRET_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_JWT_SECRET`
+
+Accuracy notes:
+
+- `DATABASE_URL` is the live Prisma/runtime connection string for this repo
+- `POSTGRES_URL*` helper variables do not replace `DATABASE_URL` unless you intentionally map one of them into it
+- the current codebase does not use direct Supabase SDK secrets
 
 See [CONFIGURATION.md](./CONFIGURATION.md).
 
@@ -59,7 +84,7 @@ The live path is:
 
 Important notes:
 
-- `db:deploy` is the repoâ€™s push-style path
+- `db:deploy` is the repo's push-style path
 - `db:migrate` and `db:migrate:deploy` are the migration-first path
 - additive feed and media fields should use reviewed migrations, not an accidental production `db push`
 
@@ -82,7 +107,7 @@ Important:
 
 - Vercel provisions HTTPS automatically for configured domains
 - do not rely on Vercel filesystem persistence for long-term uploads
-- verify `/api/health` after deployment because it now probes additive content-post, media-asset, and notification drift
+- verify `/api/health` after deployment because it now probes additive content-post, media-asset, analytics-table, and notification drift
 
 ## Railway / Render
 

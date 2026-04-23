@@ -31,6 +31,11 @@ npm run dev
 
 If you change `PRISMA_DB_PROVIDER` or `DATABASE_URL`, rerun `npm run prisma:generate`.
 
+Accuracy notes:
+
+- `DATABASE_URL` is the Prisma/runtime source of truth in this repo
+- local setup does not require `POSTGRES_URL*` or `SUPABASE_*` variables
+
 ## Verify Locally
 
 - `http://localhost:3000`

@@ -8,6 +8,7 @@ This root guide is the short deployment companion to `docs/DEPLOYMENT.md`, `docs
 - This project is a `Next.js` app with Prisma-backed persistence and a generated-schema deployment flow.
 - Hosted releases should use PostgreSQL, migration-first rollout, and durable media delivery.
 - The current production-sensitive areas are creator feed tables, Cloudflare Stream upload, and additive Prisma schema rollout.
+- `DATABASE_URL` is the actual Prisma/runtime database connection variable; `POSTGRES_URL*` and `SUPABASE_*` variables are not direct substitutes in the current codebase.
 
 ## Canonical References
 

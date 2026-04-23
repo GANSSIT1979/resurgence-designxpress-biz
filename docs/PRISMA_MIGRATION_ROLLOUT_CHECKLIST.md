@@ -225,6 +225,11 @@ Confirm at minimum:
 - `CLOUDFLARE_STREAM_MAX_DURATION_SECONDS`
 - `CLOUDFLARE_REQUIRE_SIGNED_URLS`
 
+Accuracy note:
+
+- `DATABASE_URL` is the only Prisma connection variable the current app and checked-in schemas read directly
+- `POSTGRES_URL*` helper variables are optional operational aliases and should not be treated as substitutes for `DATABASE_URL`
+
 ### Preview smoke tests
 
 Run these before promoting anything:

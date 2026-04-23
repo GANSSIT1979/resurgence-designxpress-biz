@@ -29,7 +29,7 @@ This pass proposes one focused task in each requested category: typo, bug, docum
 ## 2) Bug Fix Task
 
 **Issue found**
-- `formatCurrency` in `src/lib/partner.ts` treats `0` as missing because it checks `if (!amount)`, returning `â€”` instead of `â‚±0`.
+- `formatCurrency` in `src/lib/partner.ts` treats `0` as missing because it checks `if (!amount)`, returning `—` instead of `₱0`.
 
 **Task**
 - Update the null/undefined guard to allow zero values (for example: `if (amount == null)`).
@@ -38,7 +38,7 @@ This pass proposes one focused task in each requested category: typo, bug, docum
 - `0` is a valid monetary value and should render correctly in partner dashboards/reports.
 
 **Acceptance criteria**
-- `formatCurrency(0)` returns a currency string, not `â€”`.
+- `formatCurrency(0)` returns a currency string, not `—`.
 - Existing null/undefined behavior remains unchanged.
 
 ---

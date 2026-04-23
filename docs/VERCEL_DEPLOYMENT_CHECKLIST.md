@@ -59,6 +59,11 @@ Confirm these are present in the correct Vercel environment scopes:
 - `NEXT_PUBLIC_GOOGLE_CLIENT_ID`
 - `GOOGLE_CLIENT_ID`
 
+Accuracy note:
+
+- `DATABASE_URL` is the actual Prisma/runtime connection string in this repo
+- platform helper variables such as `POSTGRES_URL`, `POSTGRES_PRISMA_URL`, `POSTGRES_URL_NON_POOLING`, and `POSTGRES_PASSWORD` are optional but do not replace `DATABASE_URL`
+
 ### Required When The Related Feature Is Enabled
 
 - `OTP_DELIVERY_MODE`
@@ -71,11 +76,30 @@ Confirm these are present in the correct Vercel environment scopes:
 - `OPENAI_WORKFLOW_VERSION`
 - `OPENAI_WEBHOOK_SECRET`
 - `OPENAI_DEFAULT_MODEL`
+- `CLOUDFLARE_ACCOUNT_ID`
+- `CLOUDFLARE_STREAM_TOKEN`
+- `CLOUDFLARE_STREAM_CUSTOMER_CODE`
+- `CLOUDFLARE_STREAM_ALLOWED_ORIGINS`
+- `CLOUDFLARE_STREAM_MAX_DURATION_SECONDS`
+- `CLOUDFLARE_REQUIRE_SIGNED_URLS`
 - `R2_ACCOUNT_ID`
 - `R2_ACCESS_KEY_ID`
 - `R2_SECRET_ACCESS_KEY`
 - `R2_BUCKET`
 - `R2_PUBLIC_BASE_URL`
+
+### Optional Platform Helper Variables
+
+- `POSTGRES_URL`
+- `POSTGRES_PRISMA_URL`
+- `POSTGRES_URL_NON_POOLING`
+- `POSTGRES_PASSWORD`
+
+### Unused In The Current Codebase
+
+- `SUPABASE_SECRET_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_JWT_SECRET`
 
 ### Environment Scope Check
 

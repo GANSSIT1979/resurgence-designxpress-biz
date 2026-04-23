@@ -22,6 +22,12 @@ For the additive analytics-schema rollout on the existing feed path, also use [P
 
 The source schema remains `prisma/schema.prisma`, but generate, push, and migrate commands operate on `schema.generated.prisma` after the provider is prepared.
 
+Environment accuracy note:
+
+- Prisma uses `DATABASE_URL`
+- `PRISMA_DB_PROVIDER` helps the provider-switch script choose SQLite or PostgreSQL
+- Supabase or Vercel helper variables such as `POSTGRES_URL`, `POSTGRES_PRISMA_URL`, and `POSTGRES_URL_NON_POOLING` are optional operational helpers, not direct inputs to the checked-in schema
+
 ## Major Model Areas
 
 ### Identity And Access

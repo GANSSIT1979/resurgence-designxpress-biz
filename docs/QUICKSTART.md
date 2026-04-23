@@ -38,6 +38,7 @@ Provider note:
 
 - if you changed `PRISMA_DB_PROVIDER` or `DATABASE_URL`, run `npm run prisma:generate` before `npm run build`
 - if neither is set, the Prisma prep step falls back to SQLite for local development
+- `DATABASE_URL` is the current database source of truth for Prisma in this repo
 
 ## Key URLs
 
