@@ -107,6 +107,9 @@ Community behavior notes:
 
 ## Creator Media And Post Studio Routes
 
+- `GET /api/creator/analytics`
+- `GET /api/creator/analytics/export`
+- `GET /api/creator/analytics/sponsor-summary`
 - `POST /api/media/cloudflare/direct-upload`
 - `POST /api/creator/posts/create`
 - `POST /api/creator/posts/[postId]/publish`
@@ -118,9 +121,13 @@ Community behavior notes:
 
 Creator workflow notes:
 
+- creator analytics routes now use the repo's real session lookup, not bridge headers
+- `GET /api/creator/analytics` and `/export` are limited to creator, staff, and system-admin reads
+- `GET /api/creator/analytics/sponsor-summary` is the sponsor-safe surface for creator, sponsor, partner, staff, and system-admin reads
+- creator analytics payloads reuse the live dashboard helper, including `live`, `demo`, and `empty` data modes during rollout
 - direct video upload is designed for Vercel-safe Cloudflare Stream delivery
-- creator action routes use the repoâ€™s real session and ownership checks, not bridge headers
-- creator â€œpublishâ€ respects the moderation model, so creators usually move posts into `PENDING_REVIEW` while elevated roles can publish directly
+- creator action routes use the repo's real session and ownership checks, not bridge headers
+- creator "publish" respects the moderation model, so creators usually move posts into `PENDING_REVIEW` while elevated roles can publish directly
 
 ## Notifications, Uploads, And Shared Protected Routes
 

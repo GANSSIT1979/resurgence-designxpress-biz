@@ -130,6 +130,7 @@ const pageRouteRules: readonly RoutePermissionRule[] = [
   { prefix: '/partner/profile', permission: 'partner.profile.manage' },
   { prefix: '/partner', permission: 'partner.dashboard.view' },
   { prefix: '/creator/posts', permission: 'creator.posts.manage' },
+  { prefix: '/creator/analytics', permission: 'creator.dashboard.view' },
   { prefix: '/creator/dashboard', permission: 'creator.dashboard.view' },
   { prefix: '/coach', permission: 'coach.dashboard.view' },
   { prefix: '/referee', permission: 'referee.dashboard.view' },
