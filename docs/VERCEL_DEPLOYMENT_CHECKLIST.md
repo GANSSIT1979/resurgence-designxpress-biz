@@ -1,7 +1,6 @@
 # Vercel Deployment Checklist
 
 Updated: 2026-04-23
-
 ## Purpose
 
 This checklist is tailored to the current RESURGENCE Powered by DesignXpress application and its active upgrade path:

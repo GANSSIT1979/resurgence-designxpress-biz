@@ -1,7 +1,6 @@
 # Feed Release Handoff
 
-Updated: 2026-04-20
-
+Updated: 2026-04-23
 ## Purpose
 
 This document is the merge and deployment handoff for the TikTok-inspired creator-commerce upgrade.

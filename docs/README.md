@@ -1,7 +1,6 @@
 # RESURGENCE Documentation
 
 Updated: 2026-04-23
-
 ## Snapshot
 
 RESURGENCE Powered by DesignXpress is a Next.js 15 + Prisma platform for basketball community access, creator-commerce feed experiences, Official Resurgence Merch commerce, sponsor and partner workflows, and role-based operations.

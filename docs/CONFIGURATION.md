@@ -1,7 +1,6 @@
 # CONFIGURATION
 
-Updated: 2026-04-19
-
+Updated: 2026-04-23
 ## Core Environment Variables
 
 ### Database
@@ -11,20 +10,18 @@ PRISMA_DB_PROVIDER="sqlite"
 DATABASE_URL="file:./dev.db"
 ```
 
-Production-style provider:
+Hosted deployment baseline:
 
 ```env
 PRISMA_DB_PROVIDER="postgresql"
-DATABASE_URL="postgresql://postgres.dkipwveehizhmdiceabm:[YOUR-PASSWORD]@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres?sslmode=require&pgbouncer=true"
+DATABASE_URL="postgresql://..."
 ```
 
-Admin-only direct Supabase connection for one-off maintenance tasks:
+Notes:
 
-```env
-postgresql://postgres:[YOUR-PASSWORD]@db.dkipwveehizhmdiceabm.supabase.co:5432/postgres
-```
-
-For this project, keep the runtime `DATABASE_URL` on the session pooler. The direct `db.dkipwveehizhmdiceabm.supabase.co:5432` host is documented for admin use only and may not be reachable on IPv4-only networks.
+- local development can stay on SQLite
+- hosted builds should use PostgreSQL
+- `scripts/prepare-prisma-schema.mjs` writes `prisma/schema.generated.prisma` from `prisma/schema.prisma`
 
 ### Authentication And Site Metadata
 
@@ -51,108 +48,9 @@ NEXT_PUBLIC_SHIPPING_AREA="Philippines nationwide"
 NEXT_PUBLIC_CONTACT_ADDRESS="Philippines"
 ```
 
-`ADMIN_PASSWORD_HASH` is only for the emergency fallback admin flow. Normal sign-in uses seeded database users.
+`ADMIN_PASSWORD_HASH` is only for the emergency fallback admin flow. Normal sign-in uses database users.
 
-### Manual Shop Payment Instructions
-
-```env
-GCASH_NUMBER="replace-with-gcash-number"
-MAYA_NUMBER=""
-BANK_ACCOUNT_NAME="replace-with-bank-account-name"
-BANK_ACCOUNT_NUMBER="replace-with-bank-account-number"
-BANK_NAME="replace-with-bank-name"
-```
-
-These values are used on `/checkout` for customer-facing manual GCash, Maya, and bank transfer instructions.
-
-### HTTPS
-
-```env
-NEXT_PUBLIC_SITE_URL="https://resurgence-dx.biz"
-FORCE_HTTPS="true"
-```
-
-HTTPS behavior:
-
-- `NEXT_PUBLIC_SITE_URL` should use the final `https://` production origin.
-- `FORCE_HTTPS=true` redirects HTTP requests to HTTPS for non-local hosts.
-- local hosts such as `localhost` and `127.0.0.1` are not force-redirected, so normal local development still works.
-- use `npm run dev:https` for local HTTPS with the certificates in `certificates/`.
-- local network IPs are automatically added to `allowedDevOrigins` during development.
-- set `NEXT_ALLOWED_DEV_ORIGINS` to a comma-separated list if you need extra development hostnames.
-- production TLS certificates should be handled by Vercel, Railway, Render, Docker ingress, Nginx, Caddy, or another HTTPS-capable host/proxy.
-
-### Support And Webhooks
-
-```env
-OPENAI_API_KEY="your_openai_api_key"
-OPENAI_WORKFLOW_ID="wf_your_workflow_id"
-OPENAI_WORKFLOW_VERSION="1"
-OPENAI_WEBHOOK_SECRET="whsec_your_webhook_secret"
-OPENAI_DEFAULT_MODEL="gpt-4.1-mini"
-EMAIL_WEBHOOK_URL=""
-EMAIL_WEBHOOK_SECRET=""
-```
-
-`OPENAI_WORKFLOW_VERSION` is optional. If set, use only the plain version number, such as `1`.
-
-## Prisma Script Flow
-
-- active schema file: `prisma/schema.prisma`
-- npm prep script: `scripts/prepare-prisma-schema.mjs`
-- package scripts: `prisma:generate`, `db:push`, `db:migrate`, `db:seed`, `build`
-
-The package scripts use `scripts/prepare-prisma-schema.mjs` to switch the datasource provider directly inside `prisma/schema.prisma`.
-
-For Vercel production setup, use `vercel.production.env.example` as the copy-ready environment reference and run `npm run db:deploy` with `PRISMA_DB_PROVIDER=postgresql` and the production pooler `DATABASE_URL`. Only swap in the direct Supabase host for admin-only maintenance tasks when your network can reach it.
-
-For PostgreSQL targets, `npm run db:deploy` prepares the Prisma schema, runs `prisma db push`, then applies the checked-in `prisma/postgres-hardening.sql` and `prisma/postgres-public-read-policies.sql` files.
-
-`prisma/schema.template.prisma` and `scripts/prepare-prisma.mjs` are still in the repo, but they are legacy artifacts and are not the default path used by `package.json`.
-
-## Upload Configuration
-
-- upload API: `POST /api/uploads/image`
-- image serving API for database-backed uploads: `GET /api/uploads/image/[id]`
-- image serving API for proxied Cloudflare R2 uploads: `GET /api/uploads/r2/[...key]`
-- local filesystem storage path: `public/uploads/<scope>/<year>/<month>`
-- production/serverless storage: set `UPLOAD_STORAGE=r2` for Cloudflare R2, `UPLOAD_STORAGE=database` for PostgreSQL-backed storage, or omit it on Vercel where database storage is selected automatically
-- accepted file types: JPG, PNG, WEBP, GIF
-- size limit: `5 MB`
-- upload scopes: `sponsor`, `creator`, `brand-profile`, `merch`
-
-Cloudflare R2 variables:
-
-- `R2_ACCOUNT_ID`
-- `R2_ACCESS_KEY_ID`
-- `R2_SECRET_ACCESS_KEY`
-- `R2_BUCKET`
-- optional `R2_PUBLIC_BASE_URL`
-
-Role access:
-
-- `SYSTEM_ADMIN`: `sponsor`, `creator`, `brand-profile`, `merch`
-- `SPONSOR`: `brand-profile`
-- `PARTNER`: `brand-profile`
-
-## Public Registration Configuration
-
-The login page supports free public account creation for:
-
-- Regular Member
-- Creator
-- Coach
-- Referee
-- Sponsor
-- Partner
-
-Authentication routes:
-
-- `POST /api/auth/google`
-- `POST /api/auth/mobile/request-otp`
-- `POST /api/auth/mobile/verify-otp`
-
-Environment variables:
+### Google And Mobile Auth
 
 ```env
 NEXT_PUBLIC_GOOGLE_CLIENT_ID=""
@@ -164,22 +62,85 @@ SMS_WEBHOOK_SECRET=""
 
 Notes:
 
-- `NEXT_PUBLIC_GOOGLE_CLIENT_ID` enables the client-side Gmail button.
-- `GOOGLE_CLIENT_ID` is used server-side to verify the Google credential audience. It should match the public client ID.
-- `OTP_DELIVERY_MODE=demo` returns the OTP in the API response for setup/testing.
-- `OTP_DELIVERY_MODE=webhook` posts the OTP payload to `SMS_WEBHOOK_URL` for real SMS delivery.
+- `NEXT_PUBLIC_GOOGLE_CLIENT_ID` enables the client-side Google button
+- `GOOGLE_CLIENT_ID` is used server-side to verify the Google credential audience
+- `OTP_DELIVERY_MODE=demo` returns the OTP in the API response for setup/testing
+- `OTP_DELIVERY_MODE=webhook` posts the OTP payload to `SMS_WEBHOOK_URL`
 
-## Support Configuration
+### Support And Webhooks
 
-- `/support` is the public entry point
-- `/api/chatkit/session` bootstraps the support widget and local ChatKit-style session response
-- `/api/chatkit/message` uses the stored OpenAI prompt template when `OPENAI_API_KEY` and `OPENAI_WORKFLOW_ID` are configured, otherwise it falls back to local routing
-- `/api/chatkit/lead` creates `Inquiry` records and workflow automation records
-- `/api/openai/webhook` verifies signed webhook payloads when the signing secret is configured
+```env
+OPENAI_API_KEY=""
+OPENAI_WORKFLOW_ID=""
+OPENAI_WORKFLOW_VERSION=""
+OPENAI_WEBHOOK_SECRET=""
+OPENAI_DEFAULT_MODEL="gpt-4.1-mini"
+EMAIL_WEBHOOK_URL=""
+EMAIL_WEBHOOK_SECRET=""
+```
+
+### Cloudflare Stream
+
+```env
+CLOUDFLARE_ACCOUNT_ID=""
+CLOUDFLARE_STREAM_TOKEN=""
+CLOUDFLARE_STREAM_CUSTOMER_CODE=""
+CLOUDFLARE_STREAM_ALLOWED_ORIGINS="https://resurgence-dx.biz"
+CLOUDFLARE_STREAM_MAX_DURATION_SECONDS="300"
+CLOUDFLARE_REQUIRE_SIGNED_URLS="false"
+```
+
+These variables support the direct-upload creator flow and feed playback path.
+
+### Upload Delivery
+
+Database-backed and R2-backed image delivery use:
+
+```env
+UPLOAD_STORAGE="database"
+R2_ACCOUNT_ID=""
+R2_ACCESS_KEY_ID=""
+R2_SECRET_ACCESS_KEY=""
+R2_BUCKET=""
+R2_PUBLIC_BASE_URL=""
+```
+
+## Prisma Script Flow
+
+- source schema file: `prisma/schema.prisma`
+- generated schema file: `prisma/schema.generated.prisma`
+- prep script: `scripts/prepare-prisma-schema.mjs`
+- push script: `scripts/push-prisma-schema.mjs`
+
+Active package scripts:
+
+- `npm run prisma:prepare`
+- `npm run prisma:generate`
+- `npm run db:push`
+- `npm run db:migrate`
+- `npm run db:deploy`
+- `npm run db:migrate:deploy`
+
+Important accuracy note:
+
+- build, generate, and migrate commands target `schema.generated.prisma`
+- `db:deploy` is the repoâ€™s push-style path
+- reviewed migrations should use `db:migrate` and `db:migrate:deploy`
+
+## Upload Configuration
+
+- image upload API: `POST /api/uploads/image`
+- database-backed image serving: `GET /api/uploads/image/[id]`
+- proxied R2 image serving: `GET /api/uploads/r2/[...key]`
+- creator video upload: `POST /api/media/cloudflare/direct-upload`
+- accepted image types: JPG, PNG, WEBP, GIF
+- image size limit: `5 MB`
+- upload scopes: `sponsor`, `creator`, `brand-profile`, `merch`
 
 ## Recommendations
 
-- keep local development on SQLite unless you are testing deployment parity
-- use PostgreSQL for production
+- keep local development on SQLite unless you are testing hosted parity
+- use PostgreSQL for Preview and Production
 - rotate `JWT_SECRET` and demo credentials before deployment
-- use database-backed uploads or external object storage in production; do not rely on Vercel app filesystem writes
+- use database-backed storage, R2, or Cloudflare Stream in hosted environments
+- do not rely on Vercel filesystem persistence for durable uploads or media

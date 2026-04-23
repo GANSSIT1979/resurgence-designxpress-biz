@@ -1,7 +1,6 @@
 # Feed Upgrade Phase 8: Sponsor Placements
 
-Updated: 2026-04-19
-
+Updated: 2026-04-23
 ## Objective
 
 Add sponsor-facing feed placement requests so sponsors can plan promoted creator-commerce visibility without changing the existing sponsor application, deliverable, billing, profile, shop, or public feed workflows.

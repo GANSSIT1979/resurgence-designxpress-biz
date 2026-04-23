@@ -1,7 +1,6 @@
 # AI Customer Service Production Checklist
 
-Updated: 2026-04-19
-
+Updated: 2026-04-23
 ## Current Support Reality
 
 The support desk already works locally without a published OpenAI workflow.
@@ -11,8 +10,9 @@ Today the stack includes:
 - `/support` for the public support experience
 - `/api/chatkit/session` for widget bootstrap and local ChatKit-style session payloads
 - `/api/chatkit/message` for prompt-backed routing when OpenAI is configured, with local fallback routing when it is not
-- `/api/chatkit/lead` for inquiry creation and workflow automation
+- `/api/chatkit/lead` for inquiry creation, notification creation, and automated email records
 - `/api/openai/webhook` for signed webhook verification
+- `/api/health` for quick support-readiness and schema-readiness checks
 
 ## Supported Categories
 
@@ -25,7 +25,7 @@ Today the stack includes:
 
 ## What Still Requires OpenAI Project Setup
 
-If you want a fully configured workflow-backed production setup, you still need to:
+If you want the full workflow-backed production setup, you still need to:
 
 1. set `OPENAI_API_KEY`
 2. publish the support workflow and save its ID to `OPENAI_WORKFLOW_ID`
@@ -40,10 +40,11 @@ OPENAI_API_KEY="sk-..."
 OPENAI_WORKFLOW_ID="pmpt_..."
 OPENAI_WORKFLOW_VERSION="1"
 OPENAI_WEBHOOK_SECRET="whsec_..."
+OPENAI_DEFAULT_MODEL="gpt-4.1-mini"
 NEXT_PUBLIC_SITE_URL="https://resurgence-dx.biz"
 ```
 
-Use the plain workflow or prompt version number. Do not paste `version="1"` as the value.
+Use the plain workflow version number only. Do not paste `version="1"` as the value.
 
 ## Verification
 
@@ -59,7 +60,7 @@ Production verification:
 npm run support:verify -- --base-url=https://resurgence-dx.biz --webhook-secret=whsec_...
 ```
 
-The verifier now auto-loads `.env` when run locally, but the target app must already be running.
+The verifier auto-loads `.env` locally, but the target app must already be running.
 
 ## What The Verifier Checks
 
@@ -67,11 +68,12 @@ The verifier now auto-loads `.env` when run locally, but the target app must alr
 - `/api/chatkit/session` readiness data responds
 - conversation bootstrap works
 - local ChatKit-style session creation works
-- route classification works for all four support categories
+- route classification works for all support categories
 - `/api/openai/webhook` accepts a correctly signed payload when the secret is available
 
 ## Operational Notes
 
-- `GET /api/health` is the easiest way to inspect support readiness from the app side
-- `POST /api/chatkit/lead` creates an `Inquiry` plus notification and automated email records
+- `GET /api/health` is the fastest way to inspect support and schema readiness from the app side
+- `POST /api/chatkit/lead` creates `Inquiry`, notification, and automated email records
 - if `EMAIL_WEBHOOK_URL` is not configured, outbound email records are marked `SKIPPED`
+- support can degrade cleanly even when OpenAI workflow credentials are absent, but production webhook validation still depends on the secret being correct

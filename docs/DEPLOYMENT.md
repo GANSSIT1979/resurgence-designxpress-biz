@@ -1,16 +1,15 @@
 # DEPLOYMENT
 
-Updated: 2026-04-21
-
+Updated: 2026-04-23
 For schema-first Preview and Production rollout of the current creator-feed migration, also use [PRISMA_MIGRATION_ROLLOUT_CHECKLIST.md](./PRISMA_MIGRATION_ROLLOUT_CHECKLIST.md).
 
-For the narrow Preview release gate covering auth, upload, save, and feed playback on the current branch, also use [PREVIEW_RELEASE_SMOKE_TEST.md](./PREVIEW_RELEASE_SMOKE_TEST.md).
+For the narrow Preview release gate covering auth, upload, save, feed playback, and creator surfaces, also use [PREVIEW_RELEASE_SMOKE_TEST.md](./PREVIEW_RELEASE_SMOKE_TEST.md).
 
 ## Site Type
 
-- This is a `React/Node` deployment target built on `Next.js`.
-- Production hosting must support the Next.js server/runtime model.
-- WordPress hosting, Laravel/PHP-only hosting, or static-only hosting are not valid deployment targets for this codebase.
+- this is a `React/Node` deployment target built on `Next.js`
+- production hosting must support the Next.js server/runtime model
+- WordPress hosting, Laravel/PHP-only hosting, or static-only hosting are not valid deployment targets
 
 ## Supported Targets
 
@@ -28,70 +27,62 @@ Required production steps:
 2. point the database to PostgreSQL
 3. run `npm run prisma:prepare`
 4. run `npm run prisma:generate`
-5. run schema deployment with `npm run db:deploy`
-6. build and start the app
-
-As of 2026-04-19, the local production build is green.
+5. apply schema changes with the intended rollout path
+6. run `npm run build`
+7. verify `/api/health`
 
 ## Environment Baseline
 
 Required or commonly used variables:
 
 - `DATABASE_URL`
+- `PRISMA_DB_PROVIDER`
 - `JWT_SECRET`
 - `NEXT_PUBLIC_SITE_URL`
 - `FORCE_HTTPS=true`
-- `NEXT_PUBLIC_SITE_NAME`
-- `PRISMA_DB_PROVIDER`
-- `ADMIN_EMAIL`
-- `ADMIN_PASSWORD_HASH` only if you want the fallback admin path enabled
-- optional OpenAI keys and webhook settings
-- optional email webhook settings
+- Google auth variables
+- OTP delivery variables when enabled
+- Cloudflare Stream variables when creator video upload is enabled
+- optional OpenAI and email webhook settings
 
-See [CONFIGURATION.md](./CONFIGURATION.md)
+See [CONFIGURATION.md](./CONFIGURATION.md).
 
 ## Important Prisma Deployment Note
 
-This project’s active deployment flow is provider-switched, not template-driven by default.
+The active deployment flow is generated-schema based, not direct-schema mutation during build.
 
 The live path is:
 
 - `npm run prisma:prepare`
 - `scripts/prepare-prisma-schema.mjs`
-- `prisma/schema.prisma`
+- `prisma/schema.generated.prisma`
 
-Legacy files such as `prisma/schema.template.prisma` and `scripts/prepare-prisma.mjs` still exist in the repo, but they are not the default path used by `package.json`.
+Important notes:
 
-Before build or migration commands, confirm:
-
-- `PRISMA_DB_PROVIDER=postgresql`
-- `npm run prisma:prepare` updates the datasource provider in `prisma/schema.prisma`
-- `npm run prisma:generate` succeeds against the prepared schema
-
-For this repo's current content-post rollout, prefer reviewed migrations via `npm run db:migrate` and `npm run db:migrate:deploy` instead of relying on `npm run db:deploy`, which still uses a `db push` style flow.
+- `db:deploy` is the repoâ€™s push-style path
+- `db:migrate` and `db:migrate:deploy` are the migration-first path
+- additive feed and media fields should use reviewed migrations, not an accidental production `db push`
 
 ## Vercel
 
-See [VERCEL.md](./VERCEL.md) for the exact Vercel project settings and environment variable checklist.
-
-Use [VERCEL_DEPLOYMENT_CHECKLIST.md](./VERCEL_DEPLOYMENT_CHECKLIST.md) as the route-aware go/no-go document before promoting a Preview deployment to Production.
+See [VERCEL.md](./VERCEL.md) for the exact Vercel setup and [VERCEL_DEPLOYMENT_CHECKLIST.md](./VERCEL_DEPLOYMENT_CHECKLIST.md) for the release gate.
 
 Typical flow:
 
-1. push the repository to GitHub
-2. import the project into Vercel
-3. configure environment variables
-4. connect a PostgreSQL database
-5. run `npm run build` as the build command
-6. run schema deployment separately with `PRISMA_DB_PROVIDER=postgresql npm run db:deploy`
+1. connect the repository to Vercel
+2. configure Preview and Production environment variables separately
+3. connect PostgreSQL
+4. apply the reviewed schema change to Preview first
+5. deploy Preview
+6. smoke-test Preview
+7. apply the same reviewed schema change to Production
+8. promote the matching build
 
 Important:
 
-- Vercel provisions and renews HTTPS certificates automatically for configured domains
-
-- do not rely on Vercel’s filesystem for long-term uploads
-- confirm the prepared Prisma schema reflects PostgreSQL before deployment
-- verify `/api/health` after deployment
+- Vercel provisions HTTPS automatically for configured domains
+- do not rely on Vercel filesystem persistence for long-term uploads
+- verify `/api/health` after deployment because it now probes additive content-post, media-asset, and notification drift
 
 ## Railway / Render
 
@@ -102,14 +93,12 @@ Typical flow:
 3. set environment variables
 4. run `npm run build`
 5. run `npm run start`
-6. run `npm run db:deploy` during release or pre-start orchestration
+6. apply schema changes before serving the matching app revision
 
 Recommended:
 
-- use platform-managed HTTPS or terminate TLS at a reverse proxy before traffic reaches Next.js
-
-- use `UPLOAD_STORAGE=database` or persistent object storage for uploaded media in production
-- keep `public/uploads` only for local or temporary workflows unless persistent disk support exists
+- use platform-managed HTTPS or terminate TLS at a reverse proxy
+- use Cloudflare Stream, database-backed uploads, or durable object storage for media
 
 ## Docker
 
@@ -118,16 +107,15 @@ Typical pattern:
 - install dependencies
 - run `npm run prisma:prepare`
 - run `npm run prisma:generate`
+- apply schema changes intentionally
 - run `npm run build`
-- run `npm run db:deploy`
 - start the production server with `npm run start`
 
 Make sure:
 
 - `DATABASE_URL` is injected correctly
 - Prisma Client is generated against the prepared schema
-- migrations are handled intentionally during release, not implicitly by app traffic
-- HTTPS is terminated by your ingress, load balancer, Caddy, Nginx, Traefik, or another TLS proxy
+- migrations are handled during release, not by first user traffic
 
 ## VPS Or Custom Node Hosting
 
@@ -139,34 +127,25 @@ Typical flow:
 4. run `npm install`
 5. run `npm run prisma:prepare`
 6. run `npm run prisma:generate`
-7. run `npm run db:deploy`
+7. apply schema changes
 8. run `npm run build`
 9. run `npm run start` behind a process manager or reverse proxy
 
-For HTTPS on a VPS, terminate TLS at Caddy or Nginx and forward requests to the app on port `3000`. Set `FORCE_HTTPS=true` so direct HTTP requests are redirected to the HTTPS origin.
+For HTTPS on a VPS, terminate TLS at Caddy or Nginx and forward requests to the app on port `3000`.
 
 ## Release Checklist
 
 - `npm run prisma:prepare` passes
 - `npm run prisma:generate` passes
-- `npm run db:deploy` passes
+- the intended schema deployment path has been applied to the target database
 - `npm run build` passes
-- `GET /api/health` returns `ok`
-- `NEXT_PUBLIC_SITE_URL` uses `https://`
-- `FORCE_HTTPS=true` is set in production
-- HTTP requests redirect to HTTPS
+- `GET /api/health` reflects a healthy or intentionally understood state
 - login works
-- admin dashboard loads
-- admin users module loads
-- cashier dashboard loads
-- sponsor dashboard loads
-- staff dashboard loads
-- partner dashboard loads
-- public creator profile pages load
-- official merch storefront, product detail, cart, and checkout load
-- admin official merch and merch orders modules load
-- support page responds and degrades gracefully if OpenAI is disabled
-- upload handling is either persistent or intentionally limited
+- `/feed` loads
+- `/creators/[slug]` loads
+- `/creator/dashboard` loads or degrades safely
+- merch routes load
+- support routes load
 
 ## Production Storage Guidance
 
@@ -175,36 +154,32 @@ Local:
 - `public/uploads`
 - `UPLOAD_STORAGE=filesystem`
 
-Production:
+Hosted environments:
 
-- Cloudflare R2: `UPLOAD_STORAGE=r2` stores uploaded images in the configured R2 bucket and returns either `R2_PUBLIC_BASE_URL/<key>` or the app proxy URL `/api/uploads/r2/<key>`
-- Vercel/serverless: `UPLOAD_STORAGE=database` stores uploaded images in PostgreSQL and serves them through `/api/uploads/image/[id]`
-- larger catalogs: prefer object storage such as S3-compatible storage, Cloudflare R2, or similar
+- Cloudflare Stream for creator video upload and playback
+- `UPLOAD_STORAGE=database` for database-backed image delivery
+- `UPLOAD_STORAGE=r2` for durable R2-backed image delivery
 
 ## Post-Deployment Validation
 
 Verify:
 
-- homepage
-- login
-- protected routes
-- contact and sponsor apply forms
-- admin overview
-- admin users
-- cashier overview
-- sponsor overview
-- staff overview
-- partner overview
-- creator profile pages
-- official merch storefront
-- product detail, cart, checkout, and order lookup
-- admin official merch and merch orders
-- upload route
-- support route
+- `/`
+- `/feed`
+- `/creators/[slug]`
+- `/login`
+- `/member`
+- `/creator/dashboard`
+- `/creator/posts`
+- `/shop`
+- `/shop/product/[slug]`
+- `/checkout`
+- `/support`
+- `/api/health`
 
 ## AI Support Production Notes
 
-If you are enabling the workflow-backed support path:
+If you are enabling workflow-backed support:
 
 1. set `OPENAI_API_KEY`
 2. set `OPENAI_WORKFLOW_ID`

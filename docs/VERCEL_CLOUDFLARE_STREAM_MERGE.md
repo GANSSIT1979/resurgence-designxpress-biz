@@ -1,7 +1,6 @@
 # Vercel + Cloudflare Stream Merge
 
 Updated: 2026-04-23
-
 ## Goal
 
 Merge Cloudflare Stream direct uploads into the existing Resurgence DX Next.js 15 + Prisma app deployed on Vercel, without reintroducing local filesystem video storage or splitting the feed into a second media system.

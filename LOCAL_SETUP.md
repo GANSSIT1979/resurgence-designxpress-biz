@@ -1,7 +1,6 @@
 # Local Setup Guide
 
-Updated: 2026-04-19
-
+Updated: 2026-04-23
 This root guide is the short local bootstrap companion to `docs/INSTALL.md` and `docs/QUICKSTART.md`.
 
 ## Commands
@@ -30,19 +29,15 @@ npm run db:seed
 npm run dev
 ```
 
-Optional Windows local HTTPS:
-
-```powershell
-npm run dev:https
-```
-
-If you change `PRISMA_DB_PROVIDER`, run `npm run prisma:generate` before the database commands.
+If you change `PRISMA_DB_PROVIDER` or `DATABASE_URL`, rerun `npm run prisma:generate`.
 
 ## Verify Locally
 
 - `http://localhost:3000`
-- `https://localhost:3000` with `npm run dev:https`
+- `http://localhost:3000/feed`
 - `http://localhost:3000/login`
+- `http://localhost:3000/member`
+- `http://localhost:3000/creator/posts`
 - `http://localhost:3000/support`
 - `http://localhost:3000/api/health`
 
@@ -53,6 +48,7 @@ If you change `PRISMA_DB_PROVIDER`, run `npm run prisma:generate` before the dat
 - Sponsor: `sponsor@resurgence.local` / `Sponsor123!`
 - Staff: `staff@resurgence.local` / `Staff123!`
 - Partner: `partner@resurgence.local` / `Partner123!`
+- Creator example: `jake.anilao@resurgence.local` / `Jake@2026Resurgence!`
 
 ## Local Checks
 

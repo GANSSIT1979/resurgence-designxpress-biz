@@ -1,31 +1,28 @@
 # API
 
 Updated: 2026-04-23
-
 ## Overview
 
-Route handlers live under `src/app/api`. Middleware protects `/api/*` with the role permission matrix in `src/lib/permissions.ts`.
+Route handlers live under `src/app/api`. Middleware and the permission matrix in `src/lib/permissions.ts` protect sensitive routes, while public routes are intentionally readable without exposing admin data.
 
 Accuracy notes:
 
-- many admin and dashboard-backed modules use pragmatic form-oriented handlers rather than a strict REST-only style
-- some page compatibility redirects exist in the UI layer and should not be treated as separate API modules
+- this repo mixes page-oriented and form-oriented handlers with route families that behave like APIs
+- several creator and feed flows are intentionally incremental, so compatibility aliases still exist beside the primary handlers
+- the current feed analytics layer is Phase 1 lightweight and should not be treated as anti-fraud-grade reporting
 
-## Public Health, Inquiry, And Commerce Entry Points
+## Health And Readiness
 
 - `GET /api/health`
-- `POST /api/inquiries`
-- `POST /api/sponsor-submissions`
-- `GET /api/shop/products`
-- `GET /api/shop/products/[slug]`
-- `POST /api/checkout`
+- `GET /api/auth/me`
 
-Commerce behavior notes:
+`/api/health` is the quickest way to verify:
 
-- the cart is client-side and there is no active collection-level `/api/cart` route
-- checkout accepts merch variants through each item `variantLabel`
-- supported payment methods are `COD`, `GCASH_MANUAL`, `MAYA_MANUAL`, `BANK_TRANSFER`, `CARD_MANUAL`, and `CASH`
-- `/account/orders` is a page-level email lookup flow, not an order API resource
+- database connectivity
+- support readiness
+- additive schema drift on `ContentPost`
+- additive schema drift on `MediaAsset`
+- notification actor-column readiness on `PlatformNotification.actorUserId`
 
 ## Auth And Session Routes
 
@@ -35,31 +32,95 @@ Commerce behavior notes:
 - `POST /api/auth/google`
 - `POST /api/auth/mobile/request-otp`
 - `POST /api/auth/mobile/verify-otp`
+- `POST /api/auth/mobile/login/request-otp`
+- `POST /api/auth/mobile/login/verify-otp`
 
-These routes power both standard sign-in and free public account creation from `/login`.
+These routes support:
+
+- standard password login
+- Google sign-in and signup
+- public mobile OTP signup
+- public mobile OTP login
+- role-aware redirect behavior after login
+
+## Public Inquiry, Support, And Commerce Entry Points
+
+- `POST /api/inquiries`
+- `POST /api/sponsor-submissions`
+- `GET /api/shop/products`
+- `GET /api/shop/products/[slug]`
+- `POST /api/checkout`
+- `GET /api/chatkit/session`
+- `POST /api/chatkit/session`
+- `POST /api/chatkit/message`
+- `POST /api/chatkit/lead`
+- `GET /api/openai/webhook`
+- `POST /api/openai/webhook`
+
+Support behavior notes:
+
+- `/api/chatkit/message` is the active support routing surface
+- `/api/chatkit/lead` writes `Inquiry`, `PlatformNotification`, and `AutomatedEmail` records
+- `/api/openai/webhook` verifies signed payloads when the webhook secret is configured
 
 ## Feed And Community Routes
+
+Primary feed routes:
 
 - `GET /api/feed`
 - `POST /api/feed`
 - `GET /api/feed/[postId]`
 - `PATCH /api/feed/[postId]`
 - `DELETE /api/feed/[postId]`
-- `GET /api/feed/[postId]/comments`
-- `POST /api/feed/[postId]/comments`
 - `POST /api/feed/[postId]/like`
 - `POST /api/feed/[postId]/save`
+- `POST /api/feed/[postId]/share`
+- `GET /api/feed/[postId]/stats`
+- `POST /api/feed/[postId]/view`
+- `POST /api/feed/[postId]/watchtime`
 - `POST /api/feed/[postId]/products`
+
+Comment routes:
+
+- `GET /api/feed/[postId]/comments`
+- `POST /api/feed/[postId]/comments`
+- `PATCH /api/feed/[postId]/comments/[commentId]`
+- `DELETE /api/feed/[postId]/comments/[commentId]`
+- `POST /api/feed/[postId]/comments/[commentId]/reply`
+- `POST /api/feed/[postId]/comments/[commentId]/moderate`
+
+Creator follow routes:
+
 - `POST /api/feed/creators/[creatorId]/follow`
 - `POST /api/creators/[creatorId]/follow`
+
+Promoted feed routes:
+
 - `GET /api/feed/promoted`
 
 Community behavior notes:
 
-- public reads work without authentication
-- create/update/delete flows are limited to allowed feed actors such as creator, staff, or admin users
-- follow, like, comment, and save actions require an authenticated actor
-- `/api/creators/[creatorId]/follow` is a compatibility alias that re-exports the feed follow handler
+- public feed reads work without authentication
+- follow, like, save, share, and comment mutations are session-aware
+- `/api/creators/[creatorId]/follow` is a compatibility alias that re-exports the feed follow behavior
+- view and watch-time registration use the current lightweight `ContentPost.viewCount` plus `metadataJson.analytics` bridge
+
+## Creator Media And Post Studio Routes
+
+- `POST /api/media/cloudflare/direct-upload`
+- `POST /api/creator/posts/create`
+- `POST /api/creator/posts/[postId]/publish`
+- `POST /api/creator/posts/[postId]/unpublish`
+- `POST /api/creator/posts/[postId]/archive`
+- `POST /api/creator/posts/[postId]/duplicate`
+- `DELETE /api/creator/posts/[postId]/delete`
+- `PATCH /api/creator/posts/[postId]/update`
+
+Creator workflow notes:
+
+- direct video upload is designed for Vercel-safe Cloudflare Stream delivery
+- creator action routes use the repoâ€™s real session and ownership checks, not bridge headers
+- creator â€œpublishâ€ respects the moderation model, so creators usually move posts into `PENDING_REVIEW` while elevated roles can publish directly
 
 ## Notifications, Uploads, And Shared Protected Routes
 
@@ -70,35 +131,12 @@ Community behavior notes:
 - `GET /api/uploads/image/[id]`
 - `GET /api/uploads/r2/[...key]`
 
-`GET /api/notifications` returns the role/user inbox view backed by `PlatformNotification` and `AutomatedEmail` records.
+Upload behavior notes:
 
-## Support Routes
+- image uploads support database-backed and R2-backed delivery
+- creator video uploads are handled through the Cloudflare Stream direct-upload route, not local disk
 
-- `GET /api/chatkit/session`
-- `POST /api/chatkit/session`
-- `POST /api/chatkit/message`
-- `POST /api/chatkit/lead`
-- `GET /api/openai/webhook`
-- `POST /api/openai/webhook`
-
-Current support routing categories:
-
-- sponsorships
-- orders
-- payments
-- events
-- custom-apparel
-- partnerships
-
-Support behavior notes:
-
-- `GET /api/chatkit/session` returns support bootstrap status for the widget
-- `POST /api/chatkit/session` returns either a conversation bootstrap or a local ChatKit-style session payload
-- `POST /api/chatkit/message` routes support questions into the configured category lanes above
-- `POST /api/chatkit/lead` creates `Inquiry`, notification, and automated email records
-- `POST /api/openai/webhook` verifies signed webhook payloads
-
-## Sponsor Portal Routes
+## Sponsor Routes
 
 - `/api/sponsor/applications` and `/api/sponsor/applications/[id]`
 - `/api/sponsor/deliverables` and `/api/sponsor/deliverables/[id]`
@@ -106,8 +144,6 @@ Support behavior notes:
 - `/api/sponsor/billing`
 - `/api/sponsor/placements` and `/api/sponsor/placements/[id]`
 - `/api/sponsor/profile`
-
-These routes back the sponsor dashboard, applications, deliverables, billing, placements, and profile pages.
 
 ## Partner Routes
 
@@ -133,7 +169,7 @@ These routes back the sponsor dashboard, applications, deliverables, billing, pl
 
 ## Admin Routes
 
-Admin module routes exist for:
+Admin route families live under `/api/admin/*` and back the dashboard modules for:
 
 - content
 - creator network
@@ -153,4 +189,4 @@ Admin module routes exist for:
 - sponsors
 - users
 
-Admin route families live under `/api/admin/*` and are intentionally aligned with the admin dashboard modules rather than exposed as a public third-party API surface.
+This is an internal admin surface, not a public third-party API contract.

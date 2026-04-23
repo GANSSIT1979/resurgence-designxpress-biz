@@ -1,17 +1,16 @@
 # ADMIN GUIDE
 
 Updated: 2026-04-23
-
 ## Admin Scope
 
 System Admin users oversee:
 
 - users and role assignments
 - sponsors, sponsor packages, submissions, placements, and sponsor inventory
-- creators, feed content, media events, gallery media, and public presentation
-- inquiries, support leads, notifications, and automation visibility
+- creators, creator profiles, creator posts, media events, gallery media, and feed moderation
+- inquiries, support leads, notifications, and workflow visibility
 - Official Resurgence Merch products and merch orders
-- settings, reports, and executive operational visibility
+- settings, reports, and operational visibility
 
 ## Core Admin Areas
 
@@ -40,10 +39,10 @@ System Admin users oversee:
 
 1. Review new inquiries, support leads, and unread notifications
 2. Review sponsor submissions, placements, deliverables, and sponsor records
-3. Review creator, gallery, and feed content changes
+3. Review creator profile changes, creator posts, gallery media, and feed moderation queues
 4. Review merch products, stock, featured drops, and open merch orders
-5. Review user records, role assignments, and linked sponsor/partner/creator profiles
-6. Review reports, settings, and email automation failures when `EMAIL_WEBHOOK_URL` is configured
+5. Review user records, role assignments, and linked sponsor, partner, or creator profiles
+6. Review reports, settings, and automation failures when webhook delivery is enabled
 
 ## User And Role Administration
 
@@ -52,7 +51,7 @@ Use `/admin/users` to:
 - activate or deactivate users
 - assign roles
 - validate whether a role-linked record exists
-- help troubleshoot why a dashboard or protected page is not loading as expected
+- troubleshoot why a dashboard or protected page is not loading as expected
 
 Important examples:
 
@@ -69,8 +68,9 @@ Admin content responsibilities span:
 - promoted sponsor placement oversight
 - media events and gallery uploads
 - public content sections and settings-driven copy
+- creator post review and publish decisions
 
-Use `/admin/feed` when you need to moderate creator-commerce content or review promoted placements.
+Use `/admin/feed` when you need to moderate creator-commerce content, review promoted placements, or validate how public posts are surfaced.
 
 ## Official Merch Admin
 
@@ -93,10 +93,10 @@ The support and automation layer can create:
 - `PlatformNotification` records
 - `AutomatedEmail` records
 
-Support follow-up usually starts from `/admin/inquiries`, but admins should also be aware of notification inbox behavior and degraded workflow states reported by the app.
+Use `/api/health` when you need a fast probe for support readiness and schema drift before assuming a dashboard query problem is user-specific.
 
 ## API Notes
 
 - admin collection and item routes live under `/api/admin/*`
-- many admin handlers are form-oriented `POST`/`PUT`/`DELETE` flows rather than a public REST contract
+- many admin handlers are form-oriented `POST`, `PUT`, `PATCH`, or `DELETE` flows rather than a public REST contract
 - admin-only data access is enforced by middleware and the permission matrix

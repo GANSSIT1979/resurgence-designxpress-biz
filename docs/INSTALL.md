@@ -1,18 +1,18 @@
 # INSTALL
 
-Updated: 2026-04-21
-
+Updated: 2026-04-23
 ## Site Type
 
-- This repository is a `React/Node` application built with `Next.js`.
-- Local setup requires `Node.js`; it is not a PHP or static-site install flow.
+- this repository is a `React/Node` application built with `Next.js`
+- local setup requires `Node.js`
+- it is not a PHP or static-site install flow
 
 ## Requirements
 
 - Node.js 20.x
 - npm 10+
-- SQLite for local development
-- PostgreSQL is supported when you want a production-style provider
+- SQLite for local development by default
+- PostgreSQL when you want hosted or production-style parity
 - OpenAI credentials only if you are enabling workflow-backed support verification
 
 ## Install Steps
@@ -41,29 +41,25 @@ npm run db:seed
 npm run dev
 ```
 
-Optional Windows local HTTPS:
-
-```powershell
-npm run dev:https
-```
-
-`npm install` already runs Prisma generate through `postinstall`. If you change `PRISMA_DB_PROVIDER`, rerun `npm run prisma:generate`.
+If you change `PRISMA_DB_PROVIDER` or `DATABASE_URL`, rerun `npm run prisma:generate`.
 
 ## First Local Checks
 
-- Open `http://localhost:3000`
-- Open `https://localhost:3000` when running `npm run dev:https`
-- Open `http://localhost:3000/login`
-- Open `http://localhost:3000/support`
-- Open `http://localhost:3000/api/health`
+- open `http://localhost:3000`
+- open `http://localhost:3000/feed`
+- open `http://localhost:3000/login`
+- open `http://localhost:3000/member`
+- open `http://localhost:3000/support`
+- open `http://localhost:3000/api/health`
 
-## Demo Accounts
+## Seeded Local Accounts
 
 - System Admin: `admin@resurgence.local` / `Admin123!`
 - Cashier: `cashier@resurgence.local` / `Cashier123!`
 - Sponsor: `sponsor@resurgence.local` / `Sponsor123!`
 - Staff: `staff@resurgence.local` / `Staff123!`
 - Partner: `partner@resurgence.local` / `Partner123!`
+- Creator example: `jake.anilao@resurgence.local` / `Jake@2026Resurgence!`
 
 ## Optional Verification
 

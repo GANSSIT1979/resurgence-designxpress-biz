@@ -1,7 +1,6 @@
 # QUICKSTART
 
 Updated: 2026-04-23
-
 ## Site Type
 
 - Exact category: `React/Node`

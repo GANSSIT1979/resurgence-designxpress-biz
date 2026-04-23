@@ -1,7 +1,6 @@
 # ROADMAP
 
 Updated: 2026-04-23
-
 ## Current Phase
 
 ### Phase 1 Experience Upgrade And Release Hardening

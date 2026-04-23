@@ -1,7 +1,6 @@
 # OFFICIAL RESURGENCE MERCH MODULE
 
 Updated: 2026-04-23
-
 ## Overview
 
 The Resurgence shop is the Official Resurgence Merch module already integrated into this repository. It powers public merch browsing, checkout, order lookup, and admin product/order operations from the same application that serves the community feed and role dashboards.

@@ -1,7 +1,6 @@
 # TESTING
 
-Updated: 2026-04-19
-
+Updated: 2026-04-23
 ## Recommended Command Checks
 
 ### Bootstrap
@@ -19,30 +18,33 @@ npx tsc --noEmit --pretty false
 npm run build
 ```
 
-### Support Verification
+### Runtime And Support Verification
 
 Start the app first, then run:
 
 ```bash
+npm run runtime:verify -- --base-url=http://localhost:3000
 npm run support:verify -- --base-url=http://localhost:3000
 ```
-
-For local HTTPS, use browser smoke tests against `https://localhost:3000`. The support verifier should use a trusted HTTPS endpoint or the default local HTTP URL unless your local certificate is trusted by Node.js.
 
 ## Route Smoke Tests
 
 Verify these pages load:
 
 - `/`
+- `/feed`
+- `/creators/jake-anilao`
 - `/login`
-- `/contact`
-- `/sponsor/apply`
-- `/support`
+- `/member`
+- `/creator/dashboard`
+- `/creator/posts`
+- `/creator/posts/new`
 - `/shop`
 - `/shop/product/resurgence-black-jersey`
 - `/cart`
 - `/checkout`
 - `/account/orders`
+- `/support`
 - `/api/health`
 
 ## Role Smoke Tests
@@ -50,18 +52,25 @@ Verify these pages load:
 - Admin can open `/admin`
 - Cashier can open `/cashier`
 - Sponsor can open `/sponsor/dashboard`
-- Creator can open `/creator/dashboard` when a creator account is configured
+- Creator can open `/creator/dashboard`
 - Staff can open `/staff`
 - Partner can open `/partner`
+- Member can open `/member`
 
-## Official Merch Checks
+## Feed Checks
 
-- `/shop` search and filters return seeded official merch products
-- product details allow selecting size/color where available
-- cart preserves selected variants as separate line items
-- checkout accepts Cash on Delivery, GCash, Maya, Bank Transfer, Credit/Debit Card, and Cash
-- admin can create/update merch products on `/admin/products`
-- admin can review variants and update order/payment status on `/admin/orders`
+- public feed reads succeed on `/` and `/feed`
+- likes, saves, comments, and share flows degrade safely when signed out
+- creator follow works when signed in
+- comments modal opens and comment counts refresh
+- share counts, view counts, and watch-time tracking do not break feed rendering
+
+## Creator Workflow Checks
+
+- Cloudflare direct upload route responds when env vars are present
+- creator post create route can save a draft or review-bound post
+- creator action routes respond with the correct ownership rules
+- creator edit route loads and updates metadata without type or schema errors
 
 ## Support Checks
 
@@ -73,8 +82,7 @@ Verify these pages load:
 
 ## Current Verification Status
 
-As of 2026-04-19:
+As of 2026-04-23:
 
 - `npx tsc --noEmit --pretty false` passes
 - `npm run build` passes
-- `npm run support:verify` passes against a running local app

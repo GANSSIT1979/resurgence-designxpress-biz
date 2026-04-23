@@ -1,7 +1,6 @@
 # PRISMA ContentPost Comment Schema Integration
 
 Updated: 2026-04-23
-
 ## Goal
 
 Standardize the `ContentPost` comment layer so Preview and Production use the same enums, moderation fields, indexes, and `ContentPost.commentCount` / `lastCommentedAt` contract.

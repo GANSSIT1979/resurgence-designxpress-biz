@@ -1,7 +1,6 @@
 # Phase 1 Route Integration Plan
 
 Updated: 2026-04-23
-
 ## Purpose
 
 This document maps the Phase 1 TikTok-style component layer into the actual RESURGENCE route files, components, and data loaders already active in this repository.

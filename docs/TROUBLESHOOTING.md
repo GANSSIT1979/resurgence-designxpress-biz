@@ -1,7 +1,6 @@
 # TROUBLESHOOTING
 
-Updated: 2026-04-19
-
+Updated: 2026-04-23
 ## Prisma Client Or Provider Looks Wrong
 
 Run:
@@ -10,7 +9,28 @@ Run:
 npm run prisma:generate
 ```
 
-Then restart the dev server or rebuild. This is especially important after changing `PRISMA_DB_PROVIDER`.
+Then restart the dev server or rebuild. This is especially important after changing `PRISMA_DB_PROVIDER` or `DATABASE_URL`.
+
+## Hosted Build Fails With A ContentPost Column Error
+
+If you see an error like:
+
+```text
+The column `ContentPost.title` does not exist in the current database.
+```
+
+the code is ahead of the hosted PostgreSQL schema.
+
+Do this next:
+
+1. apply the reviewed migration to Preview or Production
+2. verify `GET /api/health`
+3. retest `/`, `/feed`, `/creators/[slug]`, and `/creator/dashboard`
+
+Use:
+
+- `docs/PRISMA_MIGRATION_ROLLOUT_CHECKLIST.md`
+- `docs/PREVIEW_RELEASE_SMOKE_TEST.md`
 
 ## Windows Prisma `EPERM` Rename Error
 
@@ -24,36 +44,34 @@ stop any local `node.exe` or `next` processes that still have the Prisma engine 
 
 ## Support Verifier Returns `ECONNREFUSED`
 
-The verifier does not start the app for you. Start the dev server or production server first, then run:
+The verifier does not start the app for you. Start the dev or production server first, then run:
 
 ```bash
 npm run support:verify -- --base-url=http://localhost:3000
 ```
 
-## Support Readiness Looks Incomplete
+## Health Endpoint Reports Schema Drift
 
-Check `GET /api/health`. The `support` object is the easiest summary of:
+Check `GET /api/health`.
 
-- `OPENAI_API_KEY`
-- `OPENAI_WORKFLOW_ID`
-- `OPENAI_WEBHOOK_SECRET`
+The health probe now checks:
 
-Add `OPENAI_WORKFLOW_VERSION` only if you want to pin a specific published workflow version.
+- additive `ContentPost` columns
+- additive `MediaAsset` columns
+- `PlatformNotification.actorUserId`
+- support readiness
 
-## Webhook Signature Fails
+If `/api/health` reports schema mismatch, do not trust Preview or Production route behavior until the database is aligned.
 
-- confirm the webhook targets `/api/openai/webhook`
-- confirm the secret in `OPENAI_WEBHOOK_SECRET` matches the OpenAI project webhook
-- rerun the verifier with `--webhook-secret=whsec_...` if you are not relying on `.env`
-
-## Upload Fails
+## Upload Or Cloudflare Video Flow Fails
 
 Check:
 
-- file type is JPG, PNG, WEBP, or GIF
-- file size is `5 MB` or smaller
-- the signed-in user has access to the requested upload scope
+- the creator account has the correct role and linked profile
+- Cloudflare Stream environment variables exist in the current environment
+- allowed origins include the active Preview or Production domain
+- the save route receives the expected Cloudflare UID
 
 ## Session Or Login Looks Stale
 
-Clear the `resurgence_admin_session` cookie for the local domain, then sign in again.
+Clear the `resurgence_admin_session` cookie for the local or hosted domain, then sign in again.

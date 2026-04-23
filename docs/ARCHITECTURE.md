@@ -1,23 +1,23 @@
 # ARCHITECTURE
 
 Updated: 2026-04-23
-
 ## Site Type
 
-- Application class: `React/Node`
-- Framework: `Next.js 15` App Router
+- application class: `React/Node`
+- framework: `Next.js 15` App Router
 - UI model: React server and client components under `src/app` and `src/components`
-- Server model: Next.js route handlers under `src/app/api`
-- Persistence: Prisma-backed relational database access
-- Explicitly not a WordPress CMS, Laravel/PHP stack, or static-only export
+- server model: Next.js route handlers under `src/app/api`
+- persistence: Prisma-backed relational database access
+- explicitly not a WordPress CMS, Laravel/PHP stack, or static-only export
 
 ## High-Level Layers
 
 1. Public marketing, community, and commerce pages
 2. Auth, registration, role redirects, and protected dashboards
-3. Route handlers and domain helpers
-4. Prisma persistence and upload/storage workflows
-5. External webhooks, notifications, and automation integrations
+3. Creator studio, feed interactions, and member personalization
+4. Route handlers and domain helpers
+5. Prisma persistence plus upload and storage workflows
+6. External webhooks, notifications, and automation integrations
 
 ## Public Route Surface
 
@@ -45,9 +45,9 @@ Primary public pages include:
 - `/privacy`
 - `/terms`
 
-The homepage and `/feed` both mount the creator-commerce feed experience, with fallbacks into gallery content when feed tables are unavailable.
+The homepage and `/feed` both mount the creator-commerce feed. The system can fall back to gallery content when the normalized feed query path is unavailable.
 
-## Protected Dashboards
+## Protected Route Surface
 
 Protected dashboard entry points include:
 
@@ -56,78 +56,73 @@ Protected dashboard entry points include:
 - `/member`
 - `/creator/dashboard`
 - `/creator/posts`
+- `/creator/posts/new`
+- `/creator/posts/[postId]`
 - `/coach`
 - `/referee`
 - `/sponsor/dashboard`
 - `/staff`
 - `/partner`
 
-Role experience shape:
-
-- `MEMBER` has a dedicated dashboard that aggregates orders, follows, saved posts, community highlights, merch recommendations, and notifications
-- `CREATOR`, `SPONSOR`, `PARTNER`, `STAFF`, `CASHIER`, and `SYSTEM_ADMIN` have workflow-oriented dashboards
-- `COACH` and `REFEREE` currently use lighter community dashboard shells that prepare for future profile and coordination workflows
-
-Compatibility routes such as `/partner/dashboard` and nested `/sponsor/dashboard/*` paths redirect into their primary top-level destinations.
+Compatibility routes such as `/partner/dashboard`, nested sponsor dashboard URLs, and older revenue-monitoring paths are preserved where needed for redirects or backward compatibility.
 
 ## Auth And Permissions
 
 - session cookie name: `resurgence_admin_session`
 - session signing and verification: `src/lib/auth.ts`
 - server-side session lookup: `src/lib/session-server.ts`
-- protected route middleware: `src/middleware.ts`
+- middleware protection: `src/middleware.ts`
 - permission matrix: `src/lib/permissions.ts`
 - role metadata and redirect mapping: `src/lib/resurgence.ts`
 
 Auth flows include:
 
-- standard login through `/api/auth/login`
-- public Gmail signup through `/api/auth/google`
+- standard password login through `/api/auth/login`
+- Google sign-in and signup through `/api/auth/google`
 - public mobile OTP signup through `/api/auth/mobile/request-otp` and `/api/auth/mobile/verify-otp`
+- public mobile OTP login through `/api/auth/mobile/login/request-otp` and `/api/auth/mobile/login/verify-otp`
 - role-based redirect after successful authentication or signup
 
-## Community And Commerce Layer
+## Feed, Community, And Creator Layer
 
-Community feed capabilities include:
+The public community layer now includes:
 
-- public feed reads
-- creator follow/unfollow
-- like/unlike, comment, and save/unsave interactions
-- product tags that deep-link into merch
-- promoted sponsor placements
-- admin moderation support
+- creator-commerce feed cards on `/` and `/feed`
+- likes, saves, follows, comments, and share tracking
+- comments modal and threaded replies
+- lightweight view and watch-time tracking
+- product tags and sponsor placements inside feed cards
+- creator profile channel sections on `/creators/[slug]`
+- creator dashboard, post index, composer, and edit workspace
+
+Important implementation notes:
+
+- the feed is powered by the normalized `ContentPost` plus `MediaAsset` model
+- the analytics layer is additive and lightweight, using `ContentPost.viewCount` plus `metadataJson.analytics`
+- public creator pages and feed reads now degrade more safely when production schema drift is detected
+
+## Commerce Layer
 
 Commerce capabilities include:
 
 - public shop browsing
+- product detail pages aligned with creator-linked content
 - client-side cart storage
 - checkout with selected variants
 - transactional order creation and stock deduction
 - email-based order lookup on `/account/orders`
 
-Important commerce nuance:
+Important nuance:
 
-- the member dashboard can prefill order lookup links for the signed-in user
-- the merch order system is still email-based and is not a server-side customer account order history model
-
-## API Domains
-
-Route handlers in `src/app/api` cover:
-
-- auth and session
-- public inquiries and sponsor submissions
-- feed and creator-commerce interactions
-- support routing and lead capture
-- merch listing and checkout
-- notifications and uploads
-- sponsor, partner, staff, and cashier workflows
-- admin CRUD and reporting modules
+- the member dashboard can prefill order lookup links
+- merch history is still keyed to checkout email, not a full server-side customer-order account model
 
 ## Data Layer
 
 - source schema: `prisma/schema.prisma`
 - generated schema for Prisma CLI: `prisma/schema.generated.prisma`
 - provider prep script: `scripts/prepare-prisma-schema.mjs`
+- push helper: `scripts/push-prisma-schema.mjs`
 - seed file: `prisma/seed.ts`
 
 Provider behavior:
@@ -135,17 +130,26 @@ Provider behavior:
 - local development can fall back to SQLite
 - hosted builds should use PostgreSQL
 - the provider is inferred from `PRISMA_DB_PROVIDER` or `DATABASE_URL`
+- build and migration commands run against `schema.generated.prisma`, not directly against the source schema file
 
-## Support And Automation Flow
+## Media And Storage
 
-1. A visitor opens `/support`.
-2. The widget checks `/api/chatkit/session`.
-3. Messages are posted to `/api/chatkit/message`.
-4. Lead capture posts to `/api/chatkit/lead`.
-5. The server creates `Inquiry`, `PlatformNotification`, and `AutomatedEmail` records.
-6. Signed webhook events can be received on `/api/openai/webhook`.
+- filesystem uploads under `public/uploads` remain local-development friendly only
+- database-backed image delivery uses `/api/uploads/image/[id]`
+- optional R2-backed image delivery uses `/api/uploads/r2/[...key]`
+- creator video upload uses Cloudflare Stream direct upload through `/api/media/cloudflare/direct-upload`
+- public video playback uses the stored media asset path, not local disk
 
-Current support routing categories are:
+## Operational And Support Layer
+
+- support entry point: `/support`
+- support bootstrap: `/api/chatkit/session`
+- support message routing: `/api/chatkit/message`
+- lead capture: `/api/chatkit/lead`
+- webhook intake: `/api/openai/webhook`
+- inbox and degraded workflow visibility: `PlatformNotification` plus `AutomatedEmail`
+
+Current support routing categories:
 
 - sponsorships
 - orders
@@ -154,12 +158,8 @@ Current support routing categories are:
 - custom-apparel
 - partnerships
 
-## Storage And Integrations
+## Deployment Safety Notes
 
-- Prisma for relational data
-- browser local storage for cart state
-- filesystem uploads under `public/uploads` for local development
-- database-backed uploads served through `/api/uploads/image/[id]` for serverless/database-backed deployment modes
-- optional R2-backed delivery through `/api/uploads/r2/[...key]`
-- optional OpenAI workflow credentials
-- optional email webhook delivery through `EMAIL_WEBHOOK_URL`
+- use migration-first rollout on Preview and Production when additive Prisma fields are introduced
+- verify `/api/health` after deploy because it now probes content-post, media-asset, and notification drift
+- do not rely on Vercel filesystem persistence for creator media

@@ -1,5 +1,12 @@
 # Creator-Commerce Feed Upgrade: Phases 1-4
 
+Updated: 2026-04-23
+
+## Status
+
+Historical planning or handoff note. Use README.md, docs/README.md, docs/ROADMAP.md, and the rollout checklists for the current system state.
+
+
 This document records the first reversible implementation slice for evolving Resurgence Powered by DesignXpress into a TikTok-inspired creator-commerce platform.
 
 ## Phase 1 - Codebase Assessment

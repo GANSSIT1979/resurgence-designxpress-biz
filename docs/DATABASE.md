@@ -1,22 +1,24 @@
 # DATABASE
 
-Updated: 2026-04-19
+Updated: 2026-04-23
+For migration-first rollout of the current content-post schema, also use [PRISMA_MIGRATION_ROLLOUT_CHECKLIST.md](./PRISMA_MIGRATION_ROLLOUT_CHECKLIST.md).
 
-For the current additive `ContentPost` / `MediaAsset` migration rollout, also use [PRISMA_MIGRATION_ROLLOUT_CHECKLIST.md](./PRISMA_MIGRATION_ROLLOUT_CHECKLIST.md).
-For the additive comment-schema rollout on the existing `PostComment` table, also use [PRISMA_CONTENTPOST_COMMENT_SCHEMA_INTEGRATION.md](./PRISMA_CONTENTPOST_COMMENT_SCHEMA_INTEGRATION.md) and [contentpost-comment-migration-checks.sql](./contentpost-comment-migration-checks.sql).
+For the additive comment-schema rollout on the existing comment path, also use [PRISMA_CONTENTPOST_COMMENT_SCHEMA_INTEGRATION.md](./PRISMA_CONTENTPOST_COMMENT_SCHEMA_INTEGRATION.md) and [contentpost-comment-migration-checks.sql](./contentpost-comment-migration-checks.sql).
 
 ## Provider Strategy
 
-- Local development: SQLite
-- Production-style provider: PostgreSQL
+- local development: SQLite
+- hosted Preview and Production: PostgreSQL
 
 ## Prisma Source Of Truth
 
-- active schema file: `prisma/schema.prisma`
-- active prep script: `scripts/prepare-prisma-schema.mjs`
+- source schema: `prisma/schema.prisma`
+- generated schema for CLI work: `prisma/schema.generated.prisma`
+- prep script: `scripts/prepare-prisma-schema.mjs`
+- push helper: `scripts/push-prisma-schema.mjs`
 - seed file: `prisma/seed.ts`
 
-The app, Prisma Client, and package scripts all run against `prisma/schema.prisma`. The prep script only rewrites the datasource provider.
+The source schema remains `prisma/schema.prisma`, but generate, push, and migrate commands operate on `schema.generated.prisma` after the provider is prepared.
 
 ## Major Model Areas
 
@@ -26,6 +28,7 @@ The app, Prisma Client, and package scripts all run against `prisma/schema.prism
 - `SponsorProfile`
 - `StaffProfile`
 - `PartnerProfile`
+- `CreatorProfile`
 
 ### Public Intake And Support
 
@@ -34,60 +37,79 @@ The app, Prisma Client, and package scripts all run against `prisma/schema.prism
 - `PlatformNotification`
 - `AutomatedEmail`
 
-### Sponsorship Operations
+### Sponsorship And Partner Operations
 
 - `Sponsor`
 - `SponsorPackageTemplate`
 - `SponsorDeliverable`
 - `SponsorInventoryCategory`
-
-### Partner Operations
-
 - `Partner`
 - `PartnerCampaign`
 - `PartnerReferral`
 - `PartnerAgreement`
 
-### Staff Operations
+### Staff, Finance, And Reporting
 
 - `StaffTask`
 - `StaffScheduleItem`
 - `StaffAnnouncement`
-
-### Media And Content
-
-- `PageContent`
-- `CreatorProfile`
-- `MediaEvent`
-- `GalleryMedia`
-- `ProductService`
-- `AppSetting`
-- `AdminReport`
-
-### Finance
-
 - `Invoice`
 - `CashierTransaction`
 - `Receipt`
+- `AdminReport`
+
+### Media, Feed, And Community
+
+- `MediaEvent`
+- `GalleryMedia`
+- `ContentPost`
+- `MediaAsset`
+- `Hashtag`
+- `PostHashtag`
+- `PostLike`
+- `PostComment`
+- `PostSave`
+- `PostProductTag`
+- `SponsoredPlacement`
 
 ### Commerce
 
 - `ShopCategory`
-- `ShopProduct` with official merch metadata, available sizes/colors, material, fit, and care fields
+- `ShopProduct`
 - `ShopOrder`
-- `ShopOrderItem` with selected variant labels for fulfillment
+- `ShopOrderItem`
+
+## Current Feed Model Reality
+
+The active feed stack is normalized, not a flat one-table content model.
+
+Important fields and relationships now include:
+
+- `ContentPost.title`
+- `ContentPost.slug`
+- `ContentPost.viewCount`
+- `ContentPost.lastCommentedAt`
+- `ContentPost.metadataJson`
+- `MediaAsset.originalFileName`
+- `MediaAsset.storageProvider`
+- `MediaAsset.storageKey`
+- `PostComment` moderation, reply threading, and metadata fields
+
+Important accuracy note:
+
+- Cloudflare video identity is stored through `MediaAsset.storageProvider`, `MediaAsset.storageKey`, and media metadata
+- hashtags remain normalized through `Hashtag` and `PostHashtag`
+- likes, saves, comments, and follows use real relational tables
 
 ## Seed Data
 
-`prisma/seed.ts` populates:
+`prisma/seed.ts` populates development-friendly records for:
 
-- five demo users
-- sponsors, partner records, package templates, creators, media, settings
-- sponsor profile, partner profile, staff profile data
-- inquiries, tasks, schedule items, announcements
-- invoices, transactions, receipts
+- admin, cashier, sponsor, staff, partner, and creator login flows
+- creators, media events, settings, sponsors, packages, and partner records
 - official merch categories and products
 - platform notifications and automated email records
+- dashboard-supporting operational sample data
 
 ## Local Commands
 
@@ -97,8 +119,9 @@ npm run db:push
 npm run db:seed
 ```
 
-## Recommendation
+## Production Guidance
 
-Treat `prisma/schema.prisma` as the database authority. If a historical note or stale route name conflicts with Prisma, Prisma wins.
-
-For production rollouts that must avoid schema drift, generate reviewed migrations in development and deploy them with `npm run db:migrate:deploy` against the target PostgreSQL database before promoting the matching app code.
+- treat additive Prisma fields as rollout risks until the target PostgreSQL database is migrated
+- generate and review migrations in development
+- deploy migrations to Preview before trusting Preview behavior
+- promote Production only after the matching database and app revision are both verified

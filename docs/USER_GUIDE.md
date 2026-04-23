@@ -1,7 +1,6 @@
 # USER GUIDE
 
 Updated: 2026-04-23
-
 ## What This Platform Is
 
 RESURGENCE Powered by DesignXpress is a basketball-focused platform that combines:
@@ -31,7 +30,7 @@ Without signing in, you can:
 Open `/login` to:
 
 - sign in with an existing account
-- create a new free account with Gmail
+- create a new free account with Google
 - create a new free account with mobile OTP verification
 
 Public signup roles are:
@@ -56,9 +55,10 @@ The member dashboard can show:
 - merch order summary and quick lookup links
 - followed creators
 - saved feed posts
+- notifications and workflow inbox items
+- uploaded content tied to the account
 - community highlights
 - featured merch recommendations
-- notifications and automated workflow inbox items
 
 ### Creator
 
@@ -66,13 +66,15 @@ Creator users can access:
 
 - `/creator/dashboard`
 - `/creator/posts`
+- `/creator/posts/new`
+- `/creator/posts/[postId]`
 
 What to expect:
 
-- public creator profiles still appear in the creators directory
-- dashboard access requires a `CREATOR` role login
-- the best experience happens when the signed-in email is linked to a `CreatorProfile`
-- creators can manage feed-post activity from the creator workspace
+- creator dashboards work best when the signed-in account is linked to a `CreatorProfile`
+- creators can upload video through the Cloudflare-backed composer flow
+- creators can draft, submit for review, edit, duplicate, archive, and delete their own posts
+- creator self-publish still respects the moderation model
 
 ### Coach And Referee
 
@@ -126,7 +128,12 @@ What signed-in users can do depends on role and permissions, but the platform su
 - liking posts
 - saving posts
 - commenting on posts
+- sharing posts and opening deep links
 - opening merch linked from product tags or sponsor placements
+
+Important note:
+
+- view counts and watch-time tracking are active, but the current analytics layer is lightweight and intended for product feedback rather than fraud-resistant reporting
 
 ## Official Merch
 
@@ -138,9 +145,7 @@ The merch flow supports:
 - checkout payment choices for COD, GCash, Maya, bank transfer, card, and cash
 - email-based order lookup on `/account/orders`
 
-Important accuracy note:
-
-- even if you are signed in as a member, merch order lookup is still keyed to the checkout email, not a separate customer-account order system
+Even if you are signed in as a member, merch order lookup is still keyed to the checkout email, not a separate customer-account order system.
 
 ## Support And Quotation Help
 
@@ -162,6 +167,7 @@ This usually means one of these:
 - your account is not linked to the right role or related record
 - required data has not been created yet
 - your role has a lightweight shell today and a deeper workflow is planned later
+- the current environment is behind on additive Prisma migrations
 - the relevant feature needs a human team member to confirm next steps
 
 When in doubt, contact the admin or support team.
