@@ -2,26 +2,34 @@
 
 import Link from 'next/link';
 import { Fragment, startTransition, useEffect, useMemo, useRef, useState } from 'react';
-import { CommentsPanel } from '@/components/resurgence/CommentsPanel';
+import { FeedCommentsModal } from '@/components/resurgence/FeedCommentsModal';
 import {
   FeedToastViewport,
   type FeedToastItem,
   type FeedToastTone,
 } from '@/components/resurgence/FeedToastViewport';
+import CreatorAnalyticsMiniCard from '@/components/resurgence/CreatorAnalyticsMiniCard';
+import { ShareSheetModal } from '@/components/resurgence/ShareSheetModal';
+import { ShareSheetToastViewport } from '@/components/resurgence/ShareSheetToastViewport';
+import { useContentPostAnalytics } from '@/components/resurgence/useContentPostAnalytics';
+import { useCommentsModal } from '@/components/resurgence/useCommentsModal';
+import ViewportViewTracker from '@/components/resurgence/ViewportViewTracker';
+import { useShareSheet } from '@/components/resurgence/useShareSheet';
+import WatchTimeTracker from '@/components/resurgence/WatchTimeTracker';
 import {
   getCloudflareStreamEmbedUrl,
   isCloudflareStreamAsset,
 } from '@/lib/cloudflare-stream';
 import {
-  fetchFeedStats,
   getFeedInteractionErrorMessage,
   getFeedInteractionErrorStatus,
-  recordFeedShare,
   toggleCreatorFollow,
   toggleFeedLike,
   toggleFeedSave,
 } from '@/lib/feed-interactions/client';
+import { extractAnalyticsSnapshot } from '@/lib/feed-analytics/types';
 import { FeedPost } from '@/lib/feed/types';
+import type { ShareableFeedItem } from '@/lib/share/types';
 import { addProductToCart, CART_UPDATED_EVENT, getCartItemCount, readCart } from '@/lib/shop/cart-storage';
 
 type Props = {
@@ -40,7 +48,7 @@ const FEED_PAGE_SIZE = 8;
 const MEDIA_PREFETCH_DISTANCE = 1;
 const DISCOVERY_CLUSTER_INTERVAL = 3;
 
-type PendingFeedAction = 'like' | 'save' | 'follow' | 'comment' | 'share';
+type PendingFeedAction = 'like' | 'save' | 'follow' | 'comment';
 
 function compactNumber(value: number) {
   return new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(value);
@@ -86,6 +94,33 @@ function getEmbedUrl(media: FeedPost['mediaAssets'][number], active: boolean) {
   return '';
 }
 
+function mapFeedPostToShareItem(post: FeedPost): ShareableFeedItem {
+  const taggedProduct = post.productTags[0];
+
+  return {
+    id: post.id,
+    title: post.title || null,
+    caption: post.caption || null,
+    canonicalUrl: `/feed#post-${post.id}`,
+    creator: post.creator
+      ? {
+          id: post.creator.id,
+          slug: post.creator.slug,
+          href: `/creators/${post.creator.slug}`,
+          label: post.creator.name,
+        }
+      : null,
+    product: taggedProduct
+      ? {
+          id: taggedProduct.productId,
+          slug: taggedProduct.slug,
+          href: taggedProduct.slug ? `/shop/product/${taggedProduct.slug}` : '/shop',
+          label: taggedProduct.name,
+        }
+      : null,
+  };
+}
+
 export function CreatorCommerceFeed({
   initialItems,
   initialCursor = null,
@@ -100,9 +135,23 @@ export function CreatorCommerceFeed({
   const [loadError, setLoadError] = useState<string | null>(null);
   const [toasts, setToasts] = useState<FeedToastItem[]>([]);
   const [cartCount, setCartCount] = useState(0);
+  const [commentCountOverrides, setCommentCountOverrides] = useState<Record<string, number>>({});
+  const [shareCountOverrides, setShareCountOverrides] = useState<Record<string, number>>({});
   const cardRefs = useRef<Array<HTMLElement | null>>([]);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const loadAbortRef = useRef<AbortController | null>(null);
+  const commentsModal = useCommentsModal<FeedPost>();
+  const shareSheet = useShareSheet({
+    onShareCountChange: (postId, shareCount) => {
+      setShareCountOverrides((current) => {
+        if (current[postId] === shareCount) return current;
+        return {
+          ...current,
+          [postId]: shareCount,
+        };
+      });
+    },
+  });
 
   function pushToast(message: string, tone: FeedToastTone = 'info') {
     setToasts((current) => [
@@ -117,6 +166,16 @@ export function CreatorCommerceFeed({
 
   function dismissToast(id: string) {
     setToasts((current) => current.filter((toast) => toast.id !== id));
+  }
+
+  function syncCommentCount(postId: string, visibleCount: number) {
+    setCommentCountOverrides((current) => {
+      if (current[postId] === visibleCount) return current;
+      return {
+        ...current,
+        [postId]: visibleCount,
+      };
+    });
   }
 
   useEffect(() => {
@@ -318,6 +377,32 @@ export function CreatorCommerceFeed({
   return (
     <section className={`creator-commerce-feed-shell creator-commerce-feed-shell-${surface}`} id="feed">
       <FeedToastViewport items={toasts} onDismiss={dismissToast} />
+      <ShareSheetToastViewport toast={shareSheet.toast} onDismiss={shareSheet.clearToast} />
+      <FeedCommentsModal
+        post={commentsModal.activePost}
+        open={commentsModal.isOpen}
+        viewer={viewer ?? null}
+        initialCount={
+          commentsModal.activePost
+            ? commentCountOverrides[commentsModal.activePost.id] ?? commentsModal.activePost.metrics.comments
+            : 0
+        }
+        onClose={commentsModal.closeComments}
+        onCountChange={syncCommentCount}
+      />
+      <ShareSheetModal
+        open={shareSheet.isOpen}
+        busy={shareSheet.isBusy}
+        canNativeShare={shareSheet.canNativeShare}
+        payload={shareSheet.payload}
+        externalLinks={shareSheet.externalLinks}
+        onClose={shareSheet.close}
+        onNativeShare={shareSheet.nativeShare}
+        onCopyLink={shareSheet.copyLink}
+        onOpenCreator={shareSheet.openCreator}
+        onOpenProduct={shareSheet.openProduct}
+        onOpenExternal={shareSheet.openExternal}
+      />
 
       <div className="creator-commerce-launchpad">
         <div className="creator-commerce-launchpad-copy">
@@ -399,7 +484,14 @@ export function CreatorCommerceFeed({
                 refCallback={(node) => {
                   cardRefs.current[index] = node;
                 }}
+                commentCount={commentCountOverrides[post.id]}
+                commentsOpen={commentsModal.activePost?.id === post.id && commentsModal.isOpen}
+                onOpenComments={commentsModal.openComments}
+                shareCount={shareCountOverrides[post.id]}
+                shareOpen={shareSheet.activeItem?.id === post.id && shareSheet.isOpen}
+                onOpenShare={(item) => shareSheet.open(mapFeedPostToShareItem(item))}
                 pushToast={pushToast}
+                surface={surface}
                 shouldLoadMedia={Math.abs(index - activeIndex) <= MEDIA_PREFETCH_DISTANCE}
                 viewer={viewer}
               />
@@ -498,6 +590,13 @@ function FeedCard({
   index,
   shouldLoadMedia,
   viewer,
+  commentCount,
+  commentsOpen,
+  onOpenComments,
+  shareCount,
+  shareOpen,
+  onOpenShare,
+  surface,
 }: {
   active: boolean;
   post: FeedPost;
@@ -510,42 +609,74 @@ function FeedCard({
     role: string;
     displayName?: string | null;
   } | null;
+  commentCount?: number;
+  commentsOpen?: boolean;
+  onOpenComments: (post: FeedPost) => void;
+  shareCount?: number;
+  shareOpen?: boolean;
+  onOpenShare: (post: FeedPost) => void;
+  surface: 'home' | 'feed';
 }) {
   const [mediaIndex, setMediaIndex] = useState(0);
   const [liked, setLiked] = useState(Boolean(post.viewerState?.liked));
   const [saved, setSaved] = useState(Boolean(post.viewerState?.saved));
   const [following, setFollowing] = useState(Boolean(post.viewerState?.followingCreator));
-  const [commentsOpen, setCommentsOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<PendingFeedAction | null>(null);
   const [metrics, setMetrics] = useState(post.metrics);
+  const [nativePlayback, setNativePlayback] = useState<{
+    currentTimeSeconds: number;
+    durationSeconds: number | null;
+  }>({
+    currentTimeSeconds: 0,
+    durationSeconds: post.mediaAssets[0]?.durationSeconds ?? null,
+  });
   const media = post.mediaAssets[mediaIndex] || post.mediaAssets[0];
   const hashtags = useMemo(() => post.hashtags.slice(0, 6), [post.hashtags]);
   const primarySponsor = post.sponsorPlacements[0];
   const isActionablePost = post.source === 'content-post';
-
-  async function refreshMetrics() {
-    if (!isActionablePost) return;
-
-    try {
-      const data = await fetchFeedStats(post.id);
-      setMetrics(data.metrics);
-    } catch {
-      // Keep the current optimistic state when stats refresh is unavailable.
-    }
-  }
+  const initialAnalytics = useMemo(
+    () =>
+      extractAnalyticsSnapshot({
+        viewCount: post.metrics.views,
+        likeCount: post.metrics.likes,
+        saveCount: post.metrics.saves,
+        shareCount: post.metrics.shares,
+        commentCount: post.metrics.comments,
+        metadata: post.meta,
+      }),
+    [post.meta, post.metrics.comments, post.metrics.likes, post.metrics.saves, post.metrics.shares, post.metrics.views],
+  );
+  const {
+    analytics,
+    registerView,
+    markCompleted,
+    setIsActive: setAnalyticsActive,
+  } = useContentPostAnalytics({
+    postId: post.id,
+    initialAnalytics,
+    source: surface,
+    enabled: isActionablePost,
+  });
+  const commentTotal = commentCount ?? metrics.comments;
+  const shareTotal = shareCount ?? metrics.shares;
+  const viewTotal = analytics.viewCount ?? metrics.views;
+  const canInspectAnalytics = Boolean(
+    isActionablePost &&
+      viewer &&
+      (viewer.id === post.author?.id || viewer.role === 'SYSTEM_ADMIN' || viewer.role === 'STAFF'),
+  );
+  const trackWatchTime = Boolean(
+    isActionablePost &&
+      media &&
+      (media.mediaType === 'VIDEO' || media.mediaType === 'YOUTUBE' || media.mediaType === 'VIMEO'),
+  );
 
   useEffect(() => {
-    if (!commentsOpen) return;
-
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        setCommentsOpen(false);
-      }
-    }
-
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [commentsOpen]);
+    setNativePlayback({
+      currentTimeSeconds: 0,
+      durationSeconds: media.durationSeconds ?? null,
+    });
+  }, [media.durationSeconds, media.id]);
 
   async function runAction<T>(
     request: () => Promise<T>,
@@ -599,7 +730,7 @@ function FeedCard({
       pushToast('Comments activate on published creator-commerce posts.');
       return;
     }
-    setCommentsOpen(true);
+    onOpenComments(post);
   }
 
   function addToCart(product: FeedPost['productTags'][number]) {
@@ -630,93 +761,44 @@ function FeedCard({
     );
   }
 
-  async function sharePost() {
-    const shareUrl = `${window.location.origin}/feed#post-${post.id}`;
-    const shareText = `${post.caption} | RESURGENCE`;
-    const previousShares = metrics.shares;
-
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: 'RESURGENCE Feed',
-          text: shareText,
-          url: shareUrl,
-        });
-      } else if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(shareUrl);
-      } else {
-        throw new Error('share-unavailable');
-      }
-
-      if (!isActionablePost) {
-        pushToast('Post link ready to share.', 'success');
-        return;
-      }
-
-      setPendingAction('share');
-      setMetrics((current) => ({ ...current, shares: current.shares + 1 }));
-
-      const data = await recordFeedShare(post.id);
-      setMetrics((current) => ({ ...current, shares: data.shareCount ?? current.shares }));
-      pushToast('Post link ready to share.', 'success');
-    } catch (error) {
-      if (error instanceof DOMException && error.name === 'AbortError') return;
-
-      if (isActionablePost) {
-        setMetrics((current) => ({ ...current, shares: previousShares }));
-      }
-
-      const message =
-        isActionablePost && getFeedInteractionErrorStatus(error)
-          ? getFeedInteractionErrorMessage(error, 'Unable to sync this share right now.')
-          : 'Sharing is not available on this device right now.';
-
-      pushToast(message, 'error');
-    } finally {
-      setPendingAction((current) => (current === 'share' ? null : current));
+  function openShareSheet() {
+    if (!isActionablePost) {
+      pushToast('Sharing activates on published creator-commerce posts.');
+      return;
     }
+
+    onOpenShare(post);
   }
 
   return (
     <article className={`feed-story-card ${active ? 'is-active' : ''}`} data-index={index} id={`post-${post.id}`} ref={refCallback}>
-      {commentsOpen ? (
-        <div className="feed-comments-overlay" role="dialog" aria-modal="true" aria-label="Feed comments">
-          <button
-            type="button"
-            className="feed-comments-backdrop"
-            aria-label="Close comments"
-            onClick={() => setCommentsOpen(false)}
-          />
-          <div className="feed-comments-sheet">
-            <div className="feed-comments-sheet-head">
-              <div>
-                <div className="section-kicker">Conversation</div>
-                <h3>{post.creator?.name || post.author?.displayName || 'Resurgence'}</h3>
-                <p>{post.caption}</p>
-              </div>
-              <button type="button" className="feed-comments-close" onClick={() => setCommentsOpen(false)}>
-                Close
-              </button>
-            </div>
-
-            <CommentsPanel
-              postId={post.id}
-              viewer={viewer ?? null}
-              initialCount={metrics.comments}
-              onStatsChange={(stats) => {
-                setMetrics((current) => ({
-                  ...current,
-                  comments: stats.visibleCount,
-                }));
-              }}
-            />
-          </div>
-        </div>
-      ) : null}
-
       <div className="feed-phone-frame">
+        <ViewportViewTracker
+          postId={post.id}
+          className="feed-viewport-tracker"
+          onEnterViewport={() => {
+            void registerView();
+          }}
+        />
+        <WatchTimeTracker
+          isPlaying={Boolean(active && shouldLoadMedia && trackWatchTime)}
+          onActiveChange={setAnalyticsActive}
+          onCompleted={markCompleted}
+          currentTimeSeconds={nativePlayback.currentTimeSeconds}
+          durationSeconds={nativePlayback.durationSeconds}
+        />
         <div className="feed-media-stage">
-          {media ? <FeedMedia active={active} caption={post.caption} media={media} shouldLoad={shouldLoadMedia} /> : <div className="feed-media-missing">No media available</div>}
+          {media ? (
+            <FeedMedia
+              active={active}
+              caption={post.caption}
+              media={media}
+              shouldLoad={shouldLoadMedia}
+              onPlaybackProgress={(playback) => setNativePlayback(playback)}
+            />
+          ) : (
+            <div className="feed-media-missing">No media available</div>
+          )}
         </div>
 
         {post.mediaAssets.length > 1 ? (
@@ -778,7 +860,7 @@ function FeedCard({
           </div>
 
           <div className="feed-creator-stats">
-            <span>{compactNumber(metrics.views)} views</span>
+            <span>{compactNumber(viewTotal)} views</span>
             <span>{compactNumber(metrics.likes)} likes</span>
             <span>{post.productTags.length ? `${post.productTags.length} merch tag${post.productTags.length === 1 ? '' : 's'}` : 'Story-first post'}</span>
           </div>
@@ -815,6 +897,13 @@ function FeedCard({
                 );
               })}
             </div>
+          ) : null}
+
+          {canInspectAnalytics && active ? (
+            <CreatorAnalyticsMiniCard
+              analytics={analytics}
+              className="mt-3 max-w-[280px] border-white/12 bg-slate-950/72"
+            />
           ) : null}
         </div>
       </div>
@@ -857,7 +946,7 @@ function FeedCard({
         </button>
         <button aria-pressed={commentsOpen} disabled={pendingAction !== null} type="button" onClick={openComments}>
           <strong>{commentsOpen ? 'Opened' : 'Comment'}</strong>
-          <span>{compactNumber(metrics.comments)}</span>
+          <span>{compactNumber(commentTotal)}</span>
         </button>
         <button
           aria-busy={pendingAction === 'save'}
@@ -894,9 +983,9 @@ function FeedCard({
           <strong>{pendingAction === 'save' ? 'Saving' : saved ? 'Saved' : 'Save'}</strong>
           <span>{compactNumber(metrics.saves)}</span>
         </button>
-        <button aria-busy={pendingAction === 'share'} disabled={pendingAction !== null} type="button" onClick={sharePost}>
-          <strong>{pendingAction === 'share' ? 'Sharing' : 'Share'}</strong>
-          <span>{compactNumber(metrics.shares)}</span>
+        <button aria-pressed={shareOpen} disabled={pendingAction !== null} type="button" onClick={openShareSheet}>
+          <strong>{shareOpen ? 'Opened' : 'Share'}</strong>
+          <span>{compactNumber(shareTotal)}</span>
         </button>
         <Link href={post.creator ? `/creators/${post.creator.slug}` : '/creators'}>
           <strong>Profile</strong>
@@ -1033,11 +1122,13 @@ function FeedMedia({
   active,
   caption,
   shouldLoad,
+  onPlaybackProgress,
 }: {
   media: FeedPost['mediaAssets'][number];
   active: boolean;
   caption: string;
   shouldLoad: boolean;
+  onPlaybackProgress?: (payload: { currentTimeSeconds: number; durationSeconds: number | null }) => void;
 }) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
@@ -1056,6 +1147,33 @@ function FeedMedia({
     if (active) video.play().catch(() => null);
     else video.pause();
   }, [active, media, shouldLoad]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || media.mediaType !== 'VIDEO' || isCloudflareStreamAsset(media) || !onPlaybackProgress) {
+      return;
+    }
+    const handlePlaybackProgress = onPlaybackProgress;
+
+    function emitPlayback() {
+      const currentVideo = videoRef.current;
+      if (!currentVideo) return;
+
+      handlePlaybackProgress({
+        currentTimeSeconds: Number.isFinite(currentVideo.currentTime) ? currentVideo.currentTime : 0,
+        durationSeconds: Number.isFinite(currentVideo.duration) ? currentVideo.duration : media.durationSeconds ?? null,
+      });
+    }
+
+    emitPlayback();
+    video.addEventListener('loadedmetadata', emitPlayback);
+    video.addEventListener('timeupdate', emitPlayback);
+
+    return () => {
+      video.removeEventListener('loadedmetadata', emitPlayback);
+      video.removeEventListener('timeupdate', emitPlayback);
+    };
+  }, [media.durationSeconds, media.mediaType, onPlaybackProgress]);
 
   if (!shouldLoad) {
     return <FeedMediaPlaceholder caption={caption} media={media} />;

@@ -17,11 +17,13 @@ export function CommentsPanel({
   viewer,
   initialCount = 0,
   onStatsChange,
+  showHeader = true,
 }: {
   postId: string;
   viewer?: Viewer;
   initialCount?: number;
   onStatsChange?: (stats: { postId: string; totalCount: number; visibleCount: number; hiddenCount: number }) => void;
+  showHeader?: boolean;
 }) {
   const {
     tree,
@@ -41,17 +43,19 @@ export function CommentsPanel({
 
   return (
     <section className="feed-comments-panel">
-      <header className="feed-comments-panel-header">
-        <div>
-          <div className="section-kicker">Comments</div>
-          <h3>{tree.totalCount} comment{tree.totalCount === 1 ? '' : 's'} in thread</h3>
-          {tree.permissions.canModerate && tree.hiddenCount ? (
-            <p>{tree.hiddenCount} hidden comment{tree.hiddenCount === 1 ? '' : 's'} still available to moderators.</p>
-          ) : (
-            <p>Replies, moderation, and count refresh stay synced with the live feed stats.</p>
-          )}
-        </div>
-      </header>
+      {showHeader ? (
+        <header className="feed-comments-panel-header">
+          <div>
+            <div className="section-kicker">Comments</div>
+            <h3>{tree.totalCount} comment{tree.totalCount === 1 ? '' : 's'} in thread</h3>
+            {tree.permissions.canModerate && tree.hiddenCount ? (
+              <p>{tree.hiddenCount} hidden comment{tree.hiddenCount === 1 ? '' : 's'} still available to moderators.</p>
+            ) : (
+              <p>Replies, moderation, and count refresh stay synced with the live feed stats.</p>
+            )}
+          </div>
+        </header>
+      ) : null}
 
       {tree.permissions.canComment ? (
         <CommentComposer onSubmit={(body) => submitComment(body)} isSaving={isSaving} />
