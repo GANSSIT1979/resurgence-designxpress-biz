@@ -54,6 +54,30 @@ function buildCaption(input: z.infer<typeof createCreatorPostBodySchema>) {
   return caption.length >= 2 ? caption.slice(0, 2200) : 'New creator video';
 }
 
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 120);
+}
+
+function buildSlug(input: z.infer<typeof createCreatorPostBodySchema>) {
+  const preferred = input.slug?.trim();
+  if (preferred) return slugify(preferred);
+
+  const base = input.title?.trim() || input.caption?.trim();
+  if (base) {
+    const normalized = slugify(base);
+    if (normalized) {
+      const suffix = slugify(input.cloudflareVideoId).slice(-8);
+      return suffix ? `${normalized.slice(0, 111)}-${suffix}` : normalized;
+    }
+  }
+
+  return `video-${slugify(input.cloudflareVideoId).slice(0, 32)}`;
+}
+
 function buildFeedPreview(item: FeedPost, fallback: z.infer<typeof createCreatorPostBodySchema>) {
   const primaryMedia = item.mediaAssets[0] ?? null;
   const metadata =
@@ -77,9 +101,12 @@ function buildFeedPreview(item: FeedPost, fallback: z.infer<typeof createCreator
     thumbnailUrl:
       primaryMedia?.thumbnailUrl || fallback.thumbnailUrl || fallback.posterUrl || null,
     title:
+      item.title ||
       fallback.title ||
+      primaryMedia?.originalFileName ||
       primaryMedia?.caption ||
       (typeof metadata?.title === 'string' ? metadata.title : null),
+    slug: item.slug || fallback.slug || null,
     postId: item.id,
   };
 }
@@ -145,20 +172,29 @@ export async function POST(request: NextRequest) {
     const caption = buildCaption(parsed.data);
     const summary = parsed.data.summary?.slice(0, 280) || parsed.data.title?.slice(0, 280) || '';
     const mediaCaption = parsed.data.title || parsed.data.originalFileName || '';
+    const slug = buildSlug(parsed.data);
     const mediaMetadata = {
       source: 'cloudflare-stream-direct-upload',
       cloudflareVideoId: parsed.data.cloudflareVideoId,
       customerCode,
       originalFileName: parsed.data.originalFileName,
       title: parsed.data.title,
-      slug: parsed.data.slug,
+      slug,
       ...(parsed.data.meta || {}),
     };
 
     const result = await createFeedPost(actor, {
       creatorProfileId: creatorProfile.id,
+      title: parsed.data.title,
       caption,
       summary,
+      slug,
+      meta: {
+        source: 'cloudflare-stream-direct-upload',
+        cloudflareVideoId: parsed.data.cloudflareVideoId,
+        customerCode,
+        ...(parsed.data.meta || {}),
+      },
       visibility: parsed.data.visibility ?? 'PUBLIC',
       status: parsed.data.status ?? 'DRAFT',
       mediaAssets: [
@@ -166,6 +202,7 @@ export async function POST(request: NextRequest) {
           mediaType: 'VIDEO',
           url: previewUrl,
           thumbnailUrl,
+          originalFileName: parsed.data.originalFileName,
           storageProvider: CLOUDFLARE_STREAM_STORAGE_PROVIDER,
           storageKey: parsed.data.cloudflareVideoId,
           altText: caption,

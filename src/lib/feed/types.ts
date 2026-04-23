@@ -4,8 +4,11 @@ export type FeedMediaMetadata = Record<string, unknown> | null;
 
 export type FeedPost = {
   id: string;
+  title?: string | null;
   caption: string;
   summary: string | null;
+  slug?: string | null;
+  meta?: FeedMediaMetadata;
   status: string;
   visibility: string;
   isFeatured: boolean;
@@ -30,6 +33,7 @@ export type FeedPost = {
     mediaType: FeedMediaType;
     url: string;
     thumbnailUrl: string | null;
+    originalFileName?: string | null;
     storageProvider?: string | null;
     storageKey?: string | null;
     contentType?: string | null;

@@ -2,6 +2,8 @@
 
 Updated: 2026-04-21
 
+For schema-first Preview and Production rollout of the current creator-feed migration, also use [PRISMA_MIGRATION_ROLLOUT_CHECKLIST.md](./PRISMA_MIGRATION_ROLLOUT_CHECKLIST.md).
+
 ## Site Type
 
 - This is a `React/Node` deployment target built on `Next.js`.
@@ -63,6 +65,8 @@ Before build or migration commands, confirm:
 - `PRISMA_DB_PROVIDER=postgresql`
 - `npm run prisma:prepare` updates the datasource provider in `prisma/schema.prisma`
 - `npm run prisma:generate` succeeds against the prepared schema
+
+For this repo's current content-post rollout, prefer reviewed migrations via `npm run db:migrate` and `npm run db:migrate:deploy` instead of relying on `npm run db:deploy`, which still uses a `db push` style flow.
 
 ## Vercel
 

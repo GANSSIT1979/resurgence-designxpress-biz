@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import type { ContentPostStatus } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { AppRole } from '@/lib/resurgence';
@@ -21,6 +22,12 @@ function nullableText(value?: string | null) {
 
 function uniqueStrings(values: string[] = []) {
   return Array.from(new Set(values.map((value) => value.trim()).filter(Boolean)));
+}
+
+function nullableObject(value?: Record<string, unknown> | null) {
+  if (value === null) return Prisma.DbNull;
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+  return Object.keys(value).length ? (value as Prisma.InputJsonValue) : undefined;
 }
 
 function resolvePostStatus(requested: string | undefined, role: AppRole): ContentPostStatus {
@@ -94,6 +101,7 @@ async function replaceMediaAssets(tx: any, postId: string, mediaAssets: any[]) {
         mediaType: asset.mediaType,
         url: asset.url,
         thumbnailUrl: nullableText(asset.thumbnailUrl),
+        originalFileName: nullableText(asset.originalFileName),
         storageProvider: nullableText(asset.storageProvider),
         storageKey: nullableText(asset.storageKey),
         contentType: nullableText(asset.contentType),
@@ -128,12 +136,15 @@ export async function createFeedPost(actor: FeedActor, body: unknown) {
       data: {
         authorUserId: actor.id,
         creatorProfileId,
+        title: nullableText(parsed.data.title),
         caption: parsed.data.caption,
         summary: nullableText(parsed.data.summary),
+        slug: nullableText(parsed.data.slug),
         visibility: parsed.data.visibility,
         status,
         isFeatured: canManageAnyFeedPost(actor.role) ? parsed.data.isFeatured : false,
         isPinned: canManageAnyFeedPost(actor.role) ? parsed.data.isPinned : false,
+        metadataJson: nullableObject(parsed.data.meta),
         publishedAt: status === 'PUBLISHED' ? new Date() : null,
       },
     });
@@ -158,8 +169,11 @@ export async function updateFeedPost(actor: FeedActor, postId: string, body: unk
     await tx.contentPost.update({
       where: { id: postId },
       data: {
+        ...(parsed.data.title !== undefined ? { title: nullableText(parsed.data.title) } : {}),
         ...(parsed.data.caption !== undefined ? { caption: parsed.data.caption } : {}),
         ...(parsed.data.summary !== undefined ? { summary: nullableText(parsed.data.summary) } : {}),
+        ...(parsed.data.slug !== undefined ? { slug: nullableText(parsed.data.slug) } : {}),
+        ...(parsed.data.meta !== undefined ? { metadataJson: nullableObject(parsed.data.meta) } : {}),
         ...(parsed.data.visibility !== undefined ? { visibility: parsed.data.visibility } : {}),
         ...(status ? { status } : {}),
         ...(status === 'PUBLISHED' ? { publishedAt: new Date(), archivedAt: null } : {}),

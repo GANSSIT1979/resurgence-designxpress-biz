@@ -21,6 +21,7 @@ export const feedMediaAssetInputSchema = z.object({
   mediaType: z.enum(['IMAGE', 'VIDEO', 'YOUTUBE', 'VIMEO', 'EXTERNAL']).default('IMAGE'),
   url: urlValue,
   thumbnailUrl: urlValue,
+  originalFileName: optionalText,
   storageProvider: optionalText,
   storageKey: optionalText,
   contentType: optionalText,
@@ -33,8 +34,11 @@ export const feedMediaAssetInputSchema = z.object({
 });
 
 export const feedPostInputSchema = z.object({
+  title: optionalText,
   caption: z.string().trim().min(2).max(2200),
   summary: optionalText,
+  slug: optionalText,
+  meta: z.record(z.string(), z.unknown()).nullable().optional(),
   visibility: z.enum(['PUBLIC', 'MEMBERS_ONLY', 'PRIVATE']).default('PUBLIC'),
   status: z.enum(['DRAFT', 'PENDING_REVIEW', 'PUBLISHED', 'HIDDEN', 'ARCHIVED']).optional(),
   creatorProfileId: optionalText,

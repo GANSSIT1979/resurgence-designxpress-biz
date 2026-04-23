@@ -27,8 +27,11 @@ export function serializeContentPost(item: any, viewerId?: string | null): FeedP
 
   return {
     id: item.id,
+    title: item.title ?? null,
     caption: item.caption,
     summary: item.summary,
+    slug: item.slug ?? null,
+    meta: asRecord(item.metadataJson),
     status: item.status,
     visibility: item.visibility,
     isFeatured: item.isFeatured,
@@ -57,6 +60,7 @@ export function serializeContentPost(item: any, viewerId?: string | null): FeedP
       mediaType: asset.mediaType,
       url: asset.url,
       thumbnailUrl: asset.thumbnailUrl,
+      originalFileName: asset.originalFileName,
       storageProvider: asset.storageProvider,
       storageKey: asset.storageKey,
       contentType: asset.contentType,
@@ -112,8 +116,11 @@ export function serializeContentPost(item: any, viewerId?: string | null): FeedP
 export function serializeGalleryEventAsFeedPost(event: any): FeedPost {
   return {
     id: `gallery-${event.id}`,
+    title: event.title,
     caption: event.title,
     summary: event.description,
+    slug: null,
+    meta: null,
     status: 'PUBLISHED',
     visibility: 'PUBLIC',
     isFeatured: false,
@@ -136,6 +143,7 @@ export function serializeGalleryEventAsFeedPost(event: any): FeedPost {
       mediaType: item.mediaType,
       url: item.url,
       thumbnailUrl: item.thumbnailUrl,
+      originalFileName: null,
       storageProvider: null,
       storageKey: null,
       contentType: null,

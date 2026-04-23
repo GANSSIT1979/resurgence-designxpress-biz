@@ -649,8 +649,10 @@ model ContentPost {
   authorUser          User?                  @relation("PostAuthor", fields: [authorUserId], references: [id], onDelete: SetNull)
   creatorProfileId    String?
   creatorProfile      CreatorProfile?        @relation("CreatorContentPosts", fields: [creatorProfileId], references: [id], onDelete: SetNull)
+  title               String?
   caption             String
   summary             String?
+  slug                String?                @unique
   visibility          ContentPostVisibility  @default(PUBLIC)
   status              ContentPostStatus      @default(DRAFT)
   isFeatured          Boolean                @default(false)
@@ -689,6 +691,7 @@ model MediaAsset {
   mediaType       ContentPostMediaType @default(IMAGE)
   url             String
   thumbnailUrl    String?
+  originalFileName String?
   storageProvider String?
   storageKey      String?
   contentType     String?
@@ -705,6 +708,8 @@ model MediaAsset {
 
   @@index([postId, sortOrder])
   @@index([mediaType, createdAt])
+  @@index([storageKey])
+  @@index([storageProvider, storageKey])
 }
 
 model Hashtag {

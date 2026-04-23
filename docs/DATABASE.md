@@ -2,6 +2,8 @@
 
 Updated: 2026-04-19
 
+For the current additive `ContentPost` / `MediaAsset` migration rollout, also use [PRISMA_MIGRATION_ROLLOUT_CHECKLIST.md](./PRISMA_MIGRATION_ROLLOUT_CHECKLIST.md).
+
 ## Provider Strategy
 
 - Local development: SQLite
@@ -97,3 +99,5 @@ npm run db:seed
 ## Recommendation
 
 Treat `prisma/schema.prisma` as the database authority. If a historical note or stale route name conflicts with Prisma, Prisma wins.
+
+For production rollouts that must avoid schema drift, generate reviewed migrations in development and deploy them with `npm run db:migrate:deploy` against the target PostgreSQL database before promoting the matching app code.
