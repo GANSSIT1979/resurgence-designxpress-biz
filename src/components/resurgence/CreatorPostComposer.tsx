@@ -10,7 +10,11 @@ import CloudflareStreamEmbed from '@/components/resurgence/CloudflareStreamEmbed
 import HashtagInput from '@/components/resurgence/HashtagInput';
 import PublishActions from '@/components/resurgence/PublishActions';
 import VisibilitySelector from '@/components/resurgence/VisibilitySelector';
-import { isCloudflareStreamAsset } from '@/lib/cloudflare-stream';
+import {
+  getCloudflareStreamCustomerCode,
+  getCloudflareStreamVideoId,
+  isCloudflareStreamAsset,
+} from '@/lib/cloudflare-stream';
 import { mapContentPostToFeedItem } from '@/lib/feed/mapContentPostToFeedItem';
 import type { FeedPost } from '@/lib/feed/types';
 
@@ -40,6 +44,32 @@ function isFeedPost(value: unknown): value is FeedPost {
   );
 }
 
+function hashtagsToFeedTags(hashtags: string[]) {
+  return hashtags.map((tag, index) => ({
+    id: `preview-tag-${index}-${tag}`,
+    label: `#${tag.replace(/^#+/g, '')}`,
+    normalizedName: tag.replace(/^#+/g, '').toLowerCase(),
+  }));
+}
+
+function deriveInitialUpload(post?: FeedPost | null): CloudflareUploadCompletePayload | null {
+  const media = post?.mediaAssets[0];
+  if (!media || !isCloudflareStreamAsset(media)) return null;
+
+  const cloudflareVideoId = getCloudflareStreamVideoId(media);
+  if (!cloudflareVideoId) return null;
+
+  return {
+    cloudflareVideoId,
+    fileName: media.originalFileName || `${post?.slug || post?.id || 'creator-post'}.mp4`,
+    previewURL: media.url,
+    thumbnailURL: media.thumbnailUrl || '',
+    customerCode: getCloudflareStreamCustomerCode(media),
+    contentType: media.contentType || 'video/mp4',
+    size: media.size || 0,
+  };
+}
+
 export default function CreatorPostComposer({
   creatorId,
   creatorDisplayName,
@@ -50,6 +80,7 @@ export default function CreatorPostComposer({
   uploadEndpoint = '/api/media/cloudflare/direct-upload',
   redirectPath = '/creator/posts',
   publicProfileHref,
+  initialPost = null,
 }: {
   creatorId: string;
   creatorDisplayName: string;
@@ -60,20 +91,35 @@ export default function CreatorPostComposer({
   uploadEndpoint?: string;
   redirectPath?: string;
   publicProfileHref?: string;
+  initialPost?: FeedPost | null;
 }) {
   const router = useRouter();
-  const [title, setTitle] = useState('');
-  const [caption, setCaption] = useState('');
-  const [hashtags, setHashtags] = useState<string[]>([]);
-  const [visibility, setVisibility] = useState<VisibilityValue>('PUBLIC');
+  const isEditing = Boolean(initialPost?.id);
+  const [title, setTitle] = useState(initialPost?.title || '');
+  const [caption, setCaption] = useState(initialPost?.caption || '');
+  const [hashtags, setHashtags] = useState<string[]>(
+    initialPost?.hashtags.map((tag) => tag.label.replace(/^#/, '')) || [],
+  );
+  const [visibility, setVisibility] = useState<VisibilityValue>(
+    (initialPost?.visibility as VisibilityValue) || 'PUBLIC',
+  );
   const [busyMode, setBusyMode] = useState<'draft' | 'review' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [upload, setUpload] = useState<CloudflareUploadCompletePayload | null>(null);
-  const [savedPreview, setSavedPreview] = useState<FeedPost | null>(null);
+  const [upload, setUpload] = useState<CloudflareUploadCompletePayload | null>(() => deriveInitialUpload(initialPost));
+  const [savedPreview, setSavedPreview] = useState<FeedPost | null>(initialPost);
 
   const livePreviewItem = useMemo(() => {
-    if (savedPreview) return savedPreview;
+    if (savedPreview) {
+      return {
+        ...savedPreview,
+        title: title || null,
+        caption: caption || savedPreview.caption,
+        visibility,
+        hashtags: hashtagsToFeedTags(hashtags),
+      };
+    }
+
     if (!upload?.cloudflareVideoId) return null;
 
     return mapContentPostToFeedItem(
@@ -116,7 +162,8 @@ export default function CreatorPostComposer({
   ]);
 
   async function savePost(mode: SaveMode) {
-    if (!upload?.cloudflareVideoId) {
+    const hasExistingMedia = Boolean(initialPost?.mediaAssets[0]);
+    if (!upload?.cloudflareVideoId && !hasExistingMedia) {
       setError('Upload a Cloudflare Stream video before saving the post.');
       return;
     }
@@ -126,28 +173,96 @@ export default function CreatorPostComposer({
     setSuccessMessage(null);
 
     try {
-      const response = await fetch(saveEndpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          creatorId,
-          cloudflareVideoId: upload.cloudflareVideoId,
-          originalFileName: upload.fileName,
-          title: title.trim() || undefined,
-          caption: caption.trim() || undefined,
-          hashtags,
-          visibility,
-          status: mode,
-          thumbnailUrl: upload.thumbnailURL,
-          meta: {
-            source: 'creator-studio-phase1',
-            uploadEndpoint,
-            customerCode: upload.customerCode,
+      let response: Response;
+
+      if (isEditing && initialPost) {
+        const fallbackMedia = initialPost.mediaAssets[0];
+        const mediaAssets =
+          upload?.cloudflareVideoId
+            ? [
+                {
+                  mediaType: 'VIDEO',
+                  url: upload.previewURL,
+                  thumbnailUrl: upload.thumbnailURL,
+                  originalFileName: upload.fileName,
+                  storageProvider: 'cloudflare-stream',
+                  storageKey: upload.cloudflareVideoId,
+                  contentType: upload.contentType,
+                  size: upload.size,
+                  durationSeconds: null,
+                  metadata: {
+                    cloudflareVideoId: upload.cloudflareVideoId,
+                    customerCode: upload.customerCode,
+                    originalFileName: upload.fileName,
+                    uploadSource: 'cloudflare-direct-upload',
+                  },
+                  altText: caption.trim() || title.trim(),
+                  caption: title.trim(),
+                  sortOrder: 0,
+                },
+              ]
+            : fallbackMedia
+              ? [
+                  {
+                    mediaType: fallbackMedia.mediaType,
+                    url: fallbackMedia.url,
+                    thumbnailUrl: fallbackMedia.thumbnailUrl || '',
+                    originalFileName: fallbackMedia.originalFileName || '',
+                    storageProvider: fallbackMedia.storageProvider || '',
+                    storageKey: fallbackMedia.storageKey || '',
+                    contentType: fallbackMedia.contentType || '',
+                    size: fallbackMedia.size ?? null,
+                    durationSeconds: fallbackMedia.durationSeconds ?? null,
+                    metadata: fallbackMedia.metadata || undefined,
+                    altText: caption.trim() || fallbackMedia.altText || '',
+                    caption: title.trim() || fallbackMedia.caption || '',
+                    sortOrder: fallbackMedia.sortOrder,
+                  },
+                ]
+              : [];
+
+        response = await fetch(`/api/feed/${initialPost.id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
           },
-        }),
-      });
+          body: JSON.stringify({
+            title: title.trim() || undefined,
+            caption: caption.trim() || initialPost.caption,
+            summary: initialPost.summary || undefined,
+            slug: initialPost.slug || undefined,
+            visibility,
+            status: mode,
+            mediaAssets,
+            hashtags,
+            productIds: initialPost.productTags.map((tag) => tag.productId).filter(Boolean),
+            meta: initialPost.meta || undefined,
+          }),
+        });
+      } else {
+        response = await fetch(saveEndpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            creatorId,
+            cloudflareVideoId: upload?.cloudflareVideoId,
+            originalFileName: upload?.fileName,
+            title: title.trim() || undefined,
+            caption: caption.trim() || undefined,
+            hashtags,
+            visibility,
+            status: mode,
+            thumbnailUrl: upload?.thumbnailURL,
+            meta: {
+              source: 'creator-studio-phase1',
+              uploadEndpoint,
+              customerCode: upload?.customerCode,
+            },
+          }),
+        });
+      }
 
       const data = (await response.json().catch(() => null)) as SaveResponse | null;
       if (!response.ok || !data?.ok) {
@@ -159,14 +274,15 @@ export default function CreatorPostComposer({
         : mapContentPostToFeedItem(
             {
               ...(data.feedPreview || {}),
+              id: initialPost?.id || upload?.cloudflareVideoId || 'creator-post',
               creatorId,
               title,
               caption,
               visibility,
-              cloudflareVideoId: upload.cloudflareVideoId,
-              customerCode: upload.customerCode,
-              previewURL: upload.previewURL,
-              thumbnailUrl: upload.thumbnailURL,
+              cloudflareVideoId: upload?.cloudflareVideoId,
+              customerCode: upload?.customerCode,
+              previewURL: upload?.previewURL,
+              thumbnailUrl: upload?.thumbnailURL,
               hashtags,
             },
             {
@@ -185,8 +301,12 @@ export default function CreatorPostComposer({
         nextPreview.status === 'PUBLISHED'
           ? 'Post published successfully.'
           : nextPreview.status === 'PENDING_REVIEW'
-            ? 'Post submitted for review.'
-            : 'Draft saved successfully.',
+            ? isEditing
+              ? 'Post updated and submitted for review.'
+              : 'Post submitted for review.'
+            : isEditing
+              ? 'Draft updated successfully.'
+              : 'Draft saved successfully.',
       );
       router.refresh();
     } catch (saveError) {
@@ -204,10 +324,12 @@ export default function CreatorPostComposer({
         <div className="space-y-2">
           <div className="text-xs uppercase tracking-[0.28em] text-fuchsia-200/75">Creator studio</div>
           <h2 className="text-2xl font-semibold tracking-tight text-white">
-            Publish your next vertical post
+            {isEditing ? 'Edit creator post' : 'Publish your next vertical post'}
           </h2>
           <p className="max-w-3xl text-sm leading-6 text-white/65">
-            Upload to Cloudflare Stream, add caption and hashtags, then save the post into Prisma so it can flow into the creator feed stack without relying on local disk uploads.
+            {isEditing
+              ? 'Update caption, hashtags, visibility, or replace the Cloudflare video while keeping the post inside the current Prisma-backed creator workflow.'
+              : 'Upload to Cloudflare Stream, add caption and hashtags, then save the post into Prisma so it can flow into the creator feed stack without relying on local disk uploads.'}
           </p>
         </div>
 
@@ -250,12 +372,20 @@ export default function CreatorPostComposer({
         <CloudflareDirectUploadForm
           creatorId={creatorId}
           endpoint={uploadEndpoint}
-          title="Upload vertical video"
-          description="Upload the clip directly to Cloudflare Stream. Once the upload finishes, this composer will save the returned video ID into the current Prisma-backed feed model."
+          title={isEditing ? 'Replace vertical video' : 'Upload vertical video'}
+          description={
+            isEditing
+              ? 'Upload a replacement clip to Cloudflare Stream if this post needs a new video asset. You can also keep the current media and just update the metadata.'
+              : 'Upload the clip directly to Cloudflare Stream. Once the upload finishes, this composer will save the returned video ID into the current Prisma-backed feed model.'
+          }
           onUploadComplete={async (payload) => {
             setUpload(payload);
             setSavedPreview(null);
-            setSuccessMessage('Video upload complete. Review the preview, then save a draft or submit for review.');
+            setSuccessMessage(
+              isEditing
+                ? 'Replacement video upload complete. Review the preview, then save the draft or resubmit for review.'
+                : 'Video upload complete. Review the preview, then save a draft or submit for review.',
+            );
             setError(null);
           }}
         />
@@ -275,11 +405,15 @@ export default function CreatorPostComposer({
         <PublishActions
           busy={Boolean(busyMode)}
           busyMode={busyMode}
-          disabled={!upload?.cloudflareVideoId}
-          hasVideo={Boolean(upload?.cloudflareVideoId)}
+          disabled={!upload?.cloudflareVideoId && !initialPost?.mediaAssets[0]}
+          hasVideo={Boolean(upload?.cloudflareVideoId || initialPost?.mediaAssets[0])}
           onSaveDraft={() => savePost('DRAFT')}
           onSubmitForReview={() => savePost('PENDING_REVIEW')}
-          helperText="Creators save drafts locally in Prisma, then submit posts into the current review-safe feed workflow."
+          helperText={
+            isEditing
+              ? 'Update the current draft or resubmit the edited post into the current creator review workflow.'
+              : 'Creators save drafts locally in Prisma, then submit posts into the current review-safe feed workflow.'
+          }
         />
 
         <div className="flex flex-wrap items-center gap-3 text-sm">
@@ -428,10 +562,10 @@ export default function CreatorPostComposer({
           <div className="text-xs uppercase tracking-[0.24em] text-white/45">Workflow notes</div>
           <div className="mt-4 space-y-3 text-sm leading-6 text-white/65">
             <p>
-              This composer already uses the signed-in creator session and linked creator profile. There is no temporary creator ID field left open on the page.
+              This composer uses the signed-in creator session and linked creator profile. The manual creator ID field from the starter pack is not exposed here.
             </p>
             <p>
-              Uploads go to <code className="rounded bg-white/10 px-1.5 py-0.5 text-white">Cloudflare Stream</code>, then the save call posts to <code className="rounded bg-white/10 px-1.5 py-0.5 text-white">/api/creator/posts/create</code>.
+              Uploads go to <code className="rounded bg-white/10 px-1.5 py-0.5 text-white">Cloudflare Stream</code>, while save and update calls write through the current Prisma-backed feed routes.
             </p>
             <p>
               Creator submissions follow the current permission model, so the primary action is <strong>Submit for review</strong> instead of bypassing moderation and publishing directly.
