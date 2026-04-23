@@ -3,9 +3,24 @@
 import Link from 'next/link';
 import { Fragment, startTransition, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  FeedToastViewport,
+  type FeedToastItem,
+  type FeedToastTone,
+} from '@/components/resurgence/FeedToastViewport';
+import {
   getCloudflareStreamEmbedUrl,
   isCloudflareStreamAsset,
 } from '@/lib/cloudflare-stream';
+import {
+  createFeedComment,
+  fetchFeedStats,
+  getFeedInteractionErrorMessage,
+  getFeedInteractionErrorStatus,
+  recordFeedShare,
+  toggleCreatorFollow,
+  toggleFeedLike,
+  toggleFeedSave,
+} from '@/lib/feed-interactions/client';
 import { FeedPost } from '@/lib/feed/types';
 import { addProductToCart, CART_UPDATED_EVENT, getCartItemCount, readCart } from '@/lib/shop/cart-storage';
 
@@ -20,7 +35,7 @@ const FEED_PAGE_SIZE = 8;
 const MEDIA_PREFETCH_DISTANCE = 1;
 const DISCOVERY_CLUSTER_INTERVAL = 3;
 
-type PendingFeedAction = 'like' | 'save' | 'follow' | 'comment';
+type PendingFeedAction = 'like' | 'save' | 'follow' | 'comment' | 'share';
 
 function compactNumber(value: number) {
   return new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(value);
@@ -72,11 +87,26 @@ export function CreatorCommerceFeed({ initialItems, initialCursor = null, source
   const [activeIndex, setActiveIndex] = useState(0);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [toasts, setToasts] = useState<FeedToastItem[]>([]);
   const [cartCount, setCartCount] = useState(0);
   const cardRefs = useRef<Array<HTMLElement | null>>([]);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const loadAbortRef = useRef<AbortController | null>(null);
+
+  function pushToast(message: string, tone: FeedToastTone = 'info') {
+    setToasts((current) => [
+      ...current.slice(-2),
+      {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        message,
+        tone,
+      },
+    ]);
+  }
+
+  function dismissToast(id: string) {
+    setToasts((current) => current.filter((toast) => toast.id !== id));
+  }
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -235,7 +265,7 @@ export function CreatorCommerceFeed({ initialItems, initialCursor = null, source
       if (!response.ok || !data?.items) {
         const message = data?.error || 'Unable to load more feed posts.';
         setLoadError(message);
-        setNotice(message);
+        pushToast(message, 'error');
         return;
       }
 
@@ -247,7 +277,7 @@ export function CreatorCommerceFeed({ initialItems, initialCursor = null, source
       if (error instanceof DOMException && error.name === 'AbortError') return;
       const message = 'Feed connection interrupted. Please try again.';
       setLoadError(message);
-      setNotice(message);
+      pushToast(message, 'error');
     } finally {
       if (loadAbortRef.current === controller) {
         loadAbortRef.current = null;
@@ -276,6 +306,8 @@ export function CreatorCommerceFeed({ initialItems, initialCursor = null, source
 
   return (
     <section className={`creator-commerce-feed-shell creator-commerce-feed-shell-${surface}`} id="feed">
+      <FeedToastViewport items={toasts} onDismiss={dismissToast} />
+
       <div className="creator-commerce-launchpad">
         <div className="creator-commerce-launchpad-copy">
           <div className="section-kicker">{surface === 'home' ? 'Live Creator Commerce' : 'Discover Feed'}</div>
@@ -334,7 +366,7 @@ export function CreatorCommerceFeed({ initialItems, initialCursor = null, source
             <div className="feed-topic-stack">
               {trendingHashtags.length ? (
                 trendingHashtags.map((tag) => (
-                  <button key={tag.label} type="button" onClick={() => setNotice(`${tag.label} is trending across the current feed.`)}>
+                  <button key={tag.label} type="button" onClick={() => pushToast(`${tag.label} is trending across the current feed.`)}>
                     <strong>{tag.label}</strong>
                     <span>{tag.count} post{tag.count === 1 ? '' : 's'}</span>
                   </button>
@@ -356,7 +388,7 @@ export function CreatorCommerceFeed({ initialItems, initialCursor = null, source
                 refCallback={(node) => {
                   cardRefs.current[index] = node;
                 }}
-                setNotice={setNotice}
+                pushToast={pushToast}
                 shouldLoadMedia={Math.abs(index - activeIndex) <= MEDIA_PREFETCH_DISTANCE}
               />
 
@@ -440,13 +472,6 @@ export function CreatorCommerceFeed({ initialItems, initialCursor = null, source
               )}
             </div>
           </div>
-
-          {notice ? (
-            <div className="feed-notice">
-              <span>{notice}</span>
-              <button type="button" onClick={() => setNotice(null)}>Dismiss</button>
-            </div>
-          ) : null}
         </aside>
       </div>
     </section>
@@ -457,14 +482,14 @@ function FeedCard({
   active,
   post,
   refCallback,
-  setNotice,
+  pushToast,
   index,
   shouldLoadMedia,
 }: {
   active: boolean;
   post: FeedPost;
   refCallback: (node: HTMLElement | null) => void;
-  setNotice: (notice: string | null) => void;
+  pushToast: (message: string, tone?: FeedToastTone) => void;
   index: number;
   shouldLoadMedia: boolean;
 }) {
@@ -479,18 +504,30 @@ function FeedCard({
   const primarySponsor = post.sponsorPlacements[0];
   const isActionablePost = post.source === 'content-post';
 
-  async function runAction(
-    endpoint: string,
+  async function refreshMetrics() {
+    if (!isActionablePost) return;
+
+    try {
+      const data = await fetchFeedStats(post.id);
+      setMetrics(data.metrics);
+    } catch {
+      // Keep the current optimistic state when stats refresh is unavailable.
+    }
+  }
+
+  async function runAction<T>(
+    request: () => Promise<T>,
     label: string,
-    onSuccess: (data: any) => void,
+    onSuccess: (data: T) => void,
     options: {
       action: PendingFeedAction;
       optimistic?: () => void;
       rollback?: () => void;
+      successMessage?: string | ((data: T) => string | null | undefined);
     },
   ) {
     if (!isActionablePost) {
-      setNotice('Interactive actions activate on published creator-commerce posts.');
+      pushToast('Interactive actions activate on published creator-commerce posts.');
       return;
     }
 
@@ -500,17 +537,26 @@ function FeedCard({
     setPendingAction(options.action);
 
     try {
-      const response = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
-      const data = await response.json().catch(() => null);
-      if (!response.ok) {
-        options.rollback?.();
-        setNotice(response.status === 401 ? `Please log in to ${label}.` : data?.error || `Unable to ${label}.`);
-        return;
-      }
+      const data = await request();
       onSuccess(data);
-    } catch {
+
+      const successMessage =
+        typeof options.successMessage === 'function'
+          ? options.successMessage(data)
+          : options.successMessage;
+
+      if (successMessage) {
+        pushToast(successMessage, 'success');
+      }
+    } catch (error) {
       options.rollback?.();
-      setNotice(`Network issue while trying to ${label}.`);
+      const status = getFeedInteractionErrorStatus(error);
+      pushToast(
+        status === 401
+          ? `Please log in to ${label}.`
+          : getFeedInteractionErrorMessage(error, `Network issue while trying to ${label}.`),
+        'error',
+      );
     } finally {
       setPendingAction(null);
     }
@@ -518,30 +564,29 @@ function FeedCard({
 
   async function postComment() {
     if (!isActionablePost) {
-      setNotice('Comments activate on published creator-commerce posts.');
+      pushToast('Comments activate on published creator-commerce posts.');
       return;
     }
 
-    const body = window.prompt('Add a comment');
+    const body = window.prompt('Add a comment')?.trim();
     if (!body) return;
 
+    const previousComments = metrics.comments;
+    setMetrics((current) => ({ ...current, comments: current.comments + 1 }));
     setPendingAction('comment');
     try {
-      const response = await fetch(`/api/feed/${post.id}/comments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ body }),
-      });
-      const data = await response.json().catch(() => null);
-      if (!response.ok) {
-        setNotice(response.status === 401 ? 'Please log in to comment.' : data?.error || 'Unable to comment.');
-        return;
-      }
-
-      setMetrics((current) => ({ ...current, comments: current.comments + 1 }));
-      setNotice('Comment posted.');
-    } catch {
-      setNotice('Network issue while trying to comment.');
+      await createFeedComment(post.id, body);
+      await refreshMetrics();
+      pushToast('Comment posted.', 'success');
+    } catch (error) {
+      setMetrics((current) => ({ ...current, comments: previousComments }));
+      const status = getFeedInteractionErrorStatus(error);
+      pushToast(
+        status === 401
+          ? 'Please log in to comment.'
+          : getFeedInteractionErrorMessage(error, 'Network issue while trying to comment.'),
+        'error',
+      );
     } finally {
       setPendingAction(null);
     }
@@ -558,21 +603,27 @@ function FeedCard({
     });
 
     if (!result.ok && result.reason === 'missing-product') {
-      setNotice('This merch tag is missing product details.');
+      pushToast('This merch tag is missing product details.', 'error');
       return;
     }
 
     if (!result.ok && result.reason === 'sold-out') {
-      setNotice('This merch item is currently sold out.');
+      pushToast('This merch item is currently sold out.', 'error');
       return;
     }
 
-    setNotice(result.capped ? `${product.name} is already at available stock in your cart.` : `${product.name} added to cart. Checkout is ready when you are.`);
+    pushToast(
+      result.capped
+        ? `${product.name} is already at available stock in your cart.`
+        : `${product.name} added to cart. Checkout is ready when you are.`,
+      'success',
+    );
   }
 
   async function sharePost() {
     const shareUrl = `${window.location.origin}/feed#post-${post.id}`;
     const shareText = `${post.caption} | RESURGENCE`;
+    const previousShares = metrics.shares;
 
     try {
       if (navigator.share) {
@@ -587,9 +638,32 @@ function FeedCard({
         throw new Error('share-unavailable');
       }
 
-      setNotice('Post link ready to share.');
-    } catch {
-      setNotice('Sharing is not available on this device right now.');
+      if (!isActionablePost) {
+        pushToast('Post link ready to share.', 'success');
+        return;
+      }
+
+      setPendingAction('share');
+      setMetrics((current) => ({ ...current, shares: current.shares + 1 }));
+
+      const data = await recordFeedShare(post.id);
+      setMetrics((current) => ({ ...current, shares: data.shareCount ?? current.shares }));
+      pushToast('Post link ready to share.', 'success');
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return;
+
+      if (isActionablePost) {
+        setMetrics((current) => ({ ...current, shares: previousShares }));
+      }
+
+      const message =
+        isActionablePost && getFeedInteractionErrorStatus(error)
+          ? getFeedInteractionErrorMessage(error, 'Unable to sync this share right now.')
+          : 'Sharing is not available on this device right now.';
+
+      pushToast(message, 'error');
+    } finally {
+      setPendingAction((current) => (current === 'share' ? null : current));
     }
   }
 
@@ -641,13 +715,14 @@ function FeedCard({
                   const previousFollowing = following;
                   const nextFollowing = !following;
                   runAction(
-                    `/api/feed/creators/${post.creator?.id}/follow`,
+                    () => toggleCreatorFollow(post.creator!.id),
                     'follow creators',
                     (data) => setFollowing(Boolean(data.following)),
                     {
                       action: 'follow',
                       optimistic: () => setFollowing(nextFollowing),
                       rollback: () => setFollowing(previousFollowing),
+                      successMessage: (data) => (data.following ? 'Creator followed.' : 'Creator removed from your following list.'),
                     },
                   );
                 }}
@@ -658,8 +733,8 @@ function FeedCard({
           </div>
 
           <div className="feed-creator-stats">
-            <span>{compactNumber(post.metrics.views)} views</span>
-            <span>{compactNumber(post.metrics.likes)} likes</span>
+            <span>{compactNumber(metrics.views)} views</span>
+            <span>{compactNumber(metrics.likes)} likes</span>
             <span>{post.productTags.length ? `${post.productTags.length} merch tag${post.productTags.length === 1 ? '' : 's'}` : 'Story-first post'}</span>
           </div>
 
@@ -711,7 +786,7 @@ function FeedCard({
             const previousLikes = metrics.likes;
             const nextLiked = !liked;
             runAction(
-              `/api/feed/${post.id}/like`,
+              () => toggleFeedLike(post.id),
               'like posts',
               (data) => {
                 setLiked(Boolean(data.liked));
@@ -727,6 +802,7 @@ function FeedCard({
                   setLiked(previousLiked);
                   setMetrics((current) => ({ ...current, likes: previousLikes }));
                 },
+                successMessage: (data) => (data.liked ? 'Post liked.' : 'Like removed.'),
               },
             );
           }}
@@ -749,7 +825,7 @@ function FeedCard({
             const previousSaves = metrics.saves;
             const nextSaved = !saved;
             runAction(
-              `/api/feed/${post.id}/save`,
+              () => toggleFeedSave(post.id),
               'save posts',
               (data) => {
                 setSaved(Boolean(data.saved));
@@ -765,6 +841,7 @@ function FeedCard({
                   setSaved(previousSaved);
                   setMetrics((current) => ({ ...current, saves: previousSaves }));
                 },
+                successMessage: (data) => (data.saved ? 'Post saved to your member hub.' : 'Post removed from saved content.'),
               },
             );
           }}
@@ -772,8 +849,8 @@ function FeedCard({
           <strong>{pendingAction === 'save' ? 'Saving' : saved ? 'Saved' : 'Save'}</strong>
           <span>{compactNumber(metrics.saves)}</span>
         </button>
-        <button type="button" onClick={sharePost}>
-          <strong>Share</strong>
+        <button aria-busy={pendingAction === 'share'} disabled={pendingAction !== null} type="button" onClick={sharePost}>
+          <strong>{pendingAction === 'share' ? 'Sharing' : 'Share'}</strong>
           <span>{compactNumber(metrics.shares)}</span>
         </button>
         <Link href={post.creator ? `/creators/${post.creator.slug}` : '/creators'}>

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import type { FeedResponse } from '@/lib/feed/types';
+import { getCurrentUser } from '@/lib/auth-server';
 import { getFeaturedShopProducts, getHomeData, getProductServices } from '@/lib/site';
 import { buildHomeMetadata } from '@/lib/metadata';
 import { getPublicSettings } from '@/lib/settings';
@@ -75,12 +76,13 @@ function safeLines(value?: string | null) {
 }
 
 export default async function HomePage() {
+  const user = await getCurrentUser();
   const results = await Promise.allSettled([
     getHomeData(),
     getProductServices(),
     getPublicSettings(),
     getFeaturedShopProducts(4),
-    getPublicFeed({ limit: 8 }),
+    getPublicFeed({ limit: 8, viewerId: user?.id ?? null }),
   ]);
 
   const homeData = getValue(results[0], fallbackHomeData);

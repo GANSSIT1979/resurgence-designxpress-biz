@@ -141,3 +141,30 @@ export async function getPostForApi(postId: string) {
     },
   });
 }
+
+export async function getPublicFeedPostMetrics(postId: string) {
+  const item = await prisma.contentPost.findFirst({
+    where: {
+      id: postId,
+      status: 'PUBLISHED',
+      visibility: 'PUBLIC',
+    },
+    select: {
+      likeCount: true,
+      commentCount: true,
+      saveCount: true,
+      shareCount: true,
+      viewCount: true,
+    },
+  });
+
+  if (!item) return null;
+
+  return {
+    likes: item.likeCount ?? 0,
+    comments: item.commentCount ?? 0,
+    saves: item.saveCount ?? 0,
+    shares: item.shareCount ?? 0,
+    views: item.viewCount ?? 0,
+  };
+}

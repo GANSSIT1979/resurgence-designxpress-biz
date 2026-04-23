@@ -261,6 +261,27 @@ export async function togglePostSave(actor: FeedActor, postId: string) {
   });
 }
 
+export async function incrementPublicPostShare(postId: string) {
+  const item = await prisma.contentPost.findFirst({
+    where: {
+      id: postId,
+      status: 'PUBLISHED',
+      visibility: 'PUBLIC',
+    },
+    select: { id: true },
+  });
+
+  if (!item) return null;
+
+  const updated = await prisma.contentPost.update({
+    where: { id: item.id },
+    data: { shareCount: { increment: 1 } },
+    select: { shareCount: true },
+  });
+
+  return { shareCount: updated.shareCount };
+}
+
 export async function toggleCreatorFollow(actor: FeedActor, creatorProfileId: string) {
   const existing = await prisma.follow.findUnique({
     where: { followerUserId_creatorProfileId: { followerUserId: actor.id, creatorProfileId } },

@@ -3384,6 +3384,62 @@ th {
   background: rgba(255, 255, 255, 0.055);
 }
 
+.feed-toast-viewport {
+  bottom: clamp(18px, 4vw, 30px);
+  display: grid;
+  gap: 10px;
+  pointer-events: none;
+  position: fixed;
+  right: clamp(14px, 3vw, 30px);
+  width: min(360px, calc(100vw - 28px));
+  z-index: 90;
+}
+
+.feed-toast {
+  align-items: center;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04)),
+    rgba(4, 10, 19, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 20px;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.38);
+  color: #f8fbff;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 14px 16px;
+  pointer-events: auto;
+}
+
+.feed-toast span {
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.feed-toast button {
+  background: transparent;
+  border: 0;
+  color: #f8fbff;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  padding: 0;
+  text-transform: uppercase;
+}
+
+.feed-toast-success {
+  border-color: rgba(34, 197, 94, 0.35);
+}
+
+.feed-toast-error {
+  border-color: rgba(239, 68, 68, 0.36);
+}
+
+.feed-toast-info {
+  border-color: rgba(77, 192, 255, 0.34);
+}
+
 .feed-pill-stack {
   display: flex;
   flex-wrap: wrap;
@@ -3883,6 +3939,13 @@ th {
 @media (max-width: 720px) {
   .creator-commerce-feed-shell {
     padding: 18px 10px;
+  }
+
+  .feed-toast-viewport {
+    bottom: 94px;
+    left: 12px;
+    right: 12px;
+    width: auto;
   }
 
   .feed-story-card {
