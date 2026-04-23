@@ -76,9 +76,10 @@ export function MerchShopClient({ products }: { products: Product[] }) {
           <span className="badge">Official Resurgence Merch</span>
           <h1 className="section-title">Court-ready drops powered by DesignXpress.</h1>
           <p className="section-copy">
-            Shop jerseys, tees, hoodies, caps, creator drops, and accessories from the same Resurgence platform that manages creators, sponsors, and customer support.
+            Shop jerseys, tees, hoodies, caps, creator drops, and accessories from the same Resurgence platform that manages creators, sponsors, customer support, and the vertical social feed.
           </p>
           <div className="btn-row" style={{ marginTop: 20 }}>
+            <Link href="/feed" className="button-link btn-secondary">Shop from Feed</Link>
             <Link href="/cart" className="button-link">View Cart</Link>
             <Link href="/account/orders" className="button-link btn-secondary">Track Orders</Link>
           </div>
@@ -92,6 +93,12 @@ export function MerchShopClient({ products }: { products: Product[] }) {
             <div><strong>{readyDrops}</strong><span>Available drops</span></div>
             <div><strong>{totalStock}</strong><span>Units in stock</span></div>
             <div><strong>{officialDrops}</strong><span>Official merch</span></div>
+          </div>
+          <div className="feed-topic-inline" style={{ marginTop: 16 }}>
+            <span>New Drop</span>
+            <span>Best Seller</span>
+            <span>Limited Drop</span>
+            <span>Sponsor Pick</span>
           </div>
         </div>
       </section>

@@ -15,6 +15,12 @@ export function ProductCard({ product }: { product: any }) {
   const sizes = optionPreview(product.availableSizes);
   const colors = optionPreview(product.availableColors);
   const stockLabel = product.stock > 0 ? `${product.stock} in stock` : 'Sold out';
+  const badges = [
+    product.badgeLabel,
+    product.isFeatured ? 'Best Seller' : null,
+    product.stock > 0 && product.stock <= 10 ? 'Limited Drop' : null,
+    !product.isFeatured && product.stock > 10 ? 'New Drop' : null,
+  ].filter(Boolean);
 
   return (
     <article className="card shop-product-card">
@@ -30,6 +36,11 @@ export function ProductCard({ product }: { product: any }) {
         <div className="merch-card-meta">
           <span>{product.category?.name || 'Official Merch'}</span>
           {product.isOfficialMerch ? <span>Authentic</span> : null}
+        </div>
+        <div className="feed-topic-inline" style={{ marginTop: 10 }}>
+          {badges.slice(0, 3).map((badge) => (
+            <span key={`${product.id}-${badge}`}>{badge}</span>
+          ))}
         </div>
         <h3 style={{ marginBottom: 8 }}>{product.name}</h3>
         <p className="helper" style={{ minHeight: 48 }}>{product.shortDescription || product.description}</p>

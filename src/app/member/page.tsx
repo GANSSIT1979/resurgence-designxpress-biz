@@ -72,6 +72,40 @@ function getTimelineTimestamp(value: Date | string | null | undefined) {
   return Number.isNaN(date.getTime()) ? 0 : date.getTime();
 }
 
+function getTimelineDayKey(value: Date | string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toISOString().slice(0, 10);
+}
+
+function getMemberEngagementStreak(items: TimelineItem[]) {
+  const uniqueDays = Array.from(
+    new Set(
+      items
+        .map((item) => getTimelineDayKey(item.occurredAt))
+        .filter(Boolean),
+    ),
+  ).sort((left, right) => new Date(right).getTime() - new Date(left).getTime());
+
+  if (!uniqueDays.length) {
+    return { days: 0, badge: 'Getting started' };
+  }
+
+  let streak = 1;
+
+  for (let index = 1; index < uniqueDays.length; index += 1) {
+    const previous = new Date(uniqueDays[index - 1]);
+    const current = new Date(uniqueDays[index]);
+    const diffDays = Math.round((previous.getTime() - current.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDays === 1) streak += 1;
+    else break;
+  }
+
+  if (streak >= 7) return { days: streak, badge: 'Locked in' };
+  if (streak >= 3) return { days: streak, badge: 'On a run' };
+  return { days: streak, badge: 'Building momentum' };
+}
+
 function getMetricTone(percentage: number) {
   if (percentage >= 85) return 'tone-success';
   if (percentage >= 60) return 'tone-info';
@@ -360,6 +394,33 @@ export default async function MemberDashboardPage() {
         createdAt: true,
       },
     }),
+    prisma.creatorProfile.findMany({
+      where: {
+        isActive: true,
+        followers: {
+          none: {
+            followerUserId: context.user.id,
+          },
+        },
+      },
+      orderBy: [{ sortOrder: 'asc' }, { updatedAt: 'desc' }],
+      take: 4,
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        roleLabel: true,
+        imageUrl: true,
+        platformFocus: true,
+        audience: true,
+        _count: {
+          select: {
+            followers: true,
+            contentPosts: true,
+          },
+        },
+      },
+    }),
   ]);
 
   const recentOrders = getResultValue(results[0], []);
@@ -387,6 +448,7 @@ export default async function MemberDashboardPage() {
   const linkedCreatorProfile = getResultValue(results[13], null);
   const referredSignupCount = getResultValue(results[14], 0);
   const referredMembers = getResultValue(results[15], []);
+  const suggestedCreators = getResultValue(results[16], []);
 
   const orderCount = orderAggregate._count._all;
   const totalOrderValue = orderAggregate._sum.totalAmount ?? 0;
@@ -599,6 +661,7 @@ export default async function MemberDashboardPage() {
   ]
     .sort((left, right) => right.timestamp - left.timestamp)
     .slice(0, 10);
+  const engagementStreak = getMemberEngagementStreak(activityTimeline);
 
   return (
     <main>
@@ -950,14 +1013,51 @@ export default async function MemberDashboardPage() {
                 ))}
               </div>
             )}
+
+            <div className="panel" style={{ marginTop: 18 }}>
+              <div className="section-kicker">Suggested Creators</div>
+              <h3 style={{ marginTop: 0 }}>Suggested lanes to follow next</h3>
+              {!suggestedCreators.length ? (
+                <div className="helper">You are already following the current active creator suggestions.</div>
+              ) : (
+                <div className="panel-stack" style={{ marginTop: 12 }}>
+                  {suggestedCreators.map((creator) => (
+                    <article className="activity-item" key={creator.id}>
+                      <div className="activity-item-header">
+                        <span className="status-chip tone-info">{creator.roleLabel}</span>
+                        <span className="helper">{creator._count.followers} followers</span>
+                      </div>
+                      <strong>{creator.name}</strong>
+                      <div className="helper">{truncateText(creator.platformFocus || creator.audience, 130)}</div>
+                      <div className="helper">{creator._count.contentPosts} published post{creator._count.contentPosts === 1 ? '' : 's'} linked to this creator.</div>
+                      <div className="btn-row" style={{ marginTop: 10 }}>
+                        <Link className="button-link btn-secondary" href={`/creators/${creator.slug}`}>Open creator</Link>
+                        <Link className="button-link btn-secondary" href="/feed">View in feed</Link>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </div>
           </section>
 
           <section className="card">
             <div className="section-kicker">Recent Activity Timeline</div>
-            <h2 style={{ marginTop: 0 }}>Latest account movement</h2>
+            <h2 style={{ marginTop: 0 }}>Daily streak and latest account movement</h2>
             <p className="section-copy">
               This timeline combines member signup/login history, orders, follows, saves, uploads, and notifications tied directly to the current account.
             </p>
+
+            <div className="card-grid grid-2" style={{ marginTop: 18 }}>
+              <div className="panel">
+                <strong>{engagementStreak.days}</strong>
+                <div className="helper">Day engagement streak</div>
+              </div>
+              <div className="panel">
+                <strong>{engagementStreak.badge}</strong>
+                <div className="helper">Current member badge</div>
+              </div>
+            </div>
 
             {!activityTimeline.length ? (
               <div className="empty-state" style={{ marginTop: 18 }}>

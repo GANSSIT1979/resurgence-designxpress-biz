@@ -112,6 +112,16 @@ export default async function HomePage() {
   const supportPhone = settings.supportPhone ?? fallbackSettings.supportPhone;
   const businessHours = settings.businessHours ?? fallbackSettings.businessHours;
   const contactAddress = settings.contactAddress ?? fallbackSettings.contactAddress;
+  const creatorLaneCount = new Set((feed.items || []).map((item) => item.creator?.id).filter(Boolean)).size;
+  const shoppableFeedCount = (feed.items || []).filter((item) => item.productTags.length).length;
+  const sponsorMomentCount = (feed.items || []).filter((item) => item.sponsorPlacements.length).length;
+  const trendingHashtags = Array.from(
+    new Map(
+      (feed.items || [])
+        .flatMap((item) => item.hashtags)
+        .map((tag) => [tag.normalizedName, tag.label.startsWith('#') ? tag.label : `#${tag.label}`] as const),
+    ).values(),
+  ).slice(0, 4);
 
   return (
     <main>
@@ -119,6 +129,7 @@ export default async function HomePage() {
         initialItems={feed.items ?? []}
         initialCursor={feed.nextCursor ?? null}
         source={feed.source}
+        surface="home"
       />
 
       <section className="hero">
@@ -126,13 +137,16 @@ export default async function HomePage() {
           <div>
             <span className="badge">{hero.subtitle}</span>
             <h1 className="hero-title">{hero.title}</h1>
-            <p className="hero-copy">{hero.body}</p>
+            <p className="hero-copy">
+              {hero.body} The upgraded experience puts creator media, merch discovery, sponsor visibility, and community momentum into a single dark, mobile-first flow.
+            </p>
             <div className="btn-row" style={{ marginTop: 22 }}>
-              <Link href={hero.ctaHref || '/sponsor/apply'} className="button-link">
-                {hero.ctaLabel || 'Apply as Sponsor'}
-              </Link>
+              <Link href="/feed" className="button-link">Open For You Feed</Link>
               <Link href="/sponsors" className="button-link btn-secondary">
                 View Sponsor Packages
+              </Link>
+              <Link href="/login" className="button-link btn-secondary">
+                Join the Platform
               </Link>
             </div>
             <div className="stat-grid">
@@ -154,6 +168,43 @@ export default async function HomePage() {
               </h3>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="section" style={{ paddingTop: 36 }}>
+        <div className="container">
+          <div className="card-grid grid-4">
+            <article className="card">
+              <div className="section-kicker">Feed Ready</div>
+              <strong style={{ fontSize: '2rem' }}>{feed.items.length}</strong>
+              <div className="helper">Live posts and fallback stories currently loaded</div>
+            </article>
+            <article className="card">
+              <div className="section-kicker">Creator Lanes</div>
+              <strong style={{ fontSize: '2rem' }}>{creatorLaneCount}</strong>
+              <div className="helper">Creators already represented in the public scroll</div>
+            </article>
+            <article className="card">
+              <div className="section-kicker">Shop-linked</div>
+              <strong style={{ fontSize: '2rem' }}>{shoppableFeedCount}</strong>
+              <div className="helper">Feed moments already connected to merch</div>
+            </article>
+            <article className="card">
+              <div className="section-kicker">Sponsor Pulse</div>
+              <strong style={{ fontSize: '2rem' }}>{sponsorMomentCount}</strong>
+              <div className="helper">Approved sponsor or promoted moments in current content</div>
+            </article>
+          </div>
+
+          {trendingHashtags.length ? (
+            <div className="btn-row" style={{ marginTop: 20 }}>
+              {trendingHashtags.map((tag) => (
+                <Link className="button-link btn-secondary" href="/feed" key={tag}>
+                  {tag}
+                </Link>
+              ))}
+            </div>
+          ) : null}
         </div>
       </section>
 

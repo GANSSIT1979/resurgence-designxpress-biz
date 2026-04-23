@@ -4,12 +4,8 @@ import { SiteHeaderAccountControls } from '@/components/site-header-account-cont
 const links = [
   { href: '/', label: 'Home' },
   { href: '/feed', label: 'Feed' },
-  { href: '/about', label: 'About' },
-  { href: '/services', label: 'Services' },
-  { href: '/partnerships', label: 'Partnerships' },
-  { href: '/shop', label: 'Merch' },
-  { href: '/cart', label: 'Cart' },
   { href: '/creators', label: 'Creators' },
+  { href: '/shop', label: 'Merch' },
   { href: '/sponsors', label: 'Sponsors' },
   { href: '/sponsor/apply', label: 'Sponsor Apply' },
   { href: '/support', label: 'AI Support' },
@@ -30,14 +26,20 @@ export function SiteHeader() {
           </div>
         </Link>
 
-        <nav className="nav-links" aria-label="Primary navigation">
-          {links.map((link) => (
-            <Link key={link.href} href={link.href}>
-              {link.label}
-            </Link>
-          ))}
-          <SiteHeaderAccountControls />
-        </nav>
+        <div className="site-header-actions">
+          <nav className="nav-links" aria-label="Primary navigation">
+            {links.map((link) => (
+              <Link key={link.href} href={link.href}>
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+
+          <div className="site-header-cta-row">
+            <Link href="/shop" className="nav-highlight-link">Shop Drops</Link>
+            <SiteHeaderAccountControls />
+          </div>
+        </div>
       </div>
     </header>
   );

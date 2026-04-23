@@ -7,6 +7,7 @@ import { buildSiteMetadata } from '@/lib/metadata';
 import { getPublicSettings } from '@/lib/settings';
 import { SiteHeader } from '../components/site-header';
 import { SiteFooter } from '../components/site-footer';
+import { MobileBottomNav } from '@/components/mobile-bottom-nav';
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getPublicSettings();
@@ -19,6 +20,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body>
         <SiteHeader />
         <main className="site-main">{children}</main>
+        <MobileBottomNav />
         <SiteFooter />
         <Analytics />
       </body>

@@ -2,10 +2,21 @@
 
 import { useMemo, useState } from 'react';
 import { CreatorCard } from '@/components/creator/creator-card';
-import type { CreatorDisplayProfile } from '@/lib/creators';
+import { getCreatorStats, type CreatorDisplayProfile } from '@/lib/creators';
 
 export function CreatorDirectory({ creators }: { creators: CreatorDisplayProfile[] }) {
   const [query, setQuery] = useState('');
+  const directoryStats = useMemo(() => {
+    const totalFollowers = creators.reduce((sum, creator) => sum + getCreatorStats(creator).totalFollowers, 0);
+    const activeCreators = creators.filter((creator) => creator.isActive).length;
+    const linkedPlatforms = creators.reduce((sum, creator) => sum + getCreatorStats(creator).linkedPlatformCount, 0);
+
+    return {
+      totalFollowers,
+      activeCreators,
+      linkedPlatforms,
+    };
+  }, [creators]);
 
   const filteredCreators = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -32,7 +43,7 @@ export function CreatorDirectory({ creators }: { creators: CreatorDisplayProfile
     <div className="creator-directory-panel">
       <div className="creator-directory-search card">
         <div>
-          <div className="section-kicker">Searchable Creator Cards</div>
+          <div className="section-kicker">Searchable Creator Channels</div>
           <h2 style={{ marginTop: 0 }}>Find athletes, vloggers, and brand ambassadors</h2>
           <p className="helper">Search by creator name, position, job description, role, or audience focus.</p>
         </div>
@@ -42,6 +53,21 @@ export function CreatorDirectory({ creators }: { creators: CreatorDisplayProfile
           value={query}
           onChange={(event) => setQuery(event.target.value)}
         />
+      </div>
+
+      <div className="card-grid grid-3" style={{ marginTop: 20 }}>
+        <div className="panel">
+          <strong>{directoryStats.activeCreators}</strong>
+          <div className="helper">Active creator channels</div>
+        </div>
+        <div className="panel">
+          <strong>{new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(directoryStats.totalFollowers)}</strong>
+          <div className="helper">Visible social reach</div>
+        </div>
+        <div className="panel">
+          <strong>{directoryStats.linkedPlatforms}</strong>
+          <div className="helper">Connected social profiles</div>
+        </div>
       </div>
 
       <div className="card-grid grid-3" style={{ marginTop: 24 }}>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 type AdminFeedPost = {
   id: string;
@@ -113,6 +113,9 @@ export function FeedModerationManager({
 }) {
   const [posts, setPosts] = useState(initialPosts);
   const [placements, setPlacements] = useState(initialPlacements);
+  const [postFilter, setPostFilter] = useState<'ALL' | AdminFeedPost['status']>('ALL');
+  const [placementFilter, setPlacementFilter] = useState<'ALL' | AdminPlacement['status']>('ALL');
+  const [search, setSearch] = useState('');
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [savingKey, setSavingKey] = useState<string | null>(null);
@@ -126,6 +129,48 @@ export function FeedModerationManager({
     pending: placements.filter((placement) => placement.status === 'PENDING').length,
     live: placements.filter((placement) => ['APPROVED', 'ACTIVE'].includes(placement.status)).length,
   };
+  const normalizedSearch = search.trim().toLowerCase();
+  const filteredPosts = useMemo(
+    () =>
+      posts.filter((post) => {
+        const matchesFilter = postFilter === 'ALL' || post.status === postFilter;
+        const matchesSearch =
+          !normalizedSearch ||
+          [
+            post.caption,
+            post.summary || '',
+            post.author?.displayName || '',
+            post.creator?.name || '',
+            post.creator?.roleLabel || '',
+          ]
+            .join(' ')
+            .toLowerCase()
+            .includes(normalizedSearch);
+
+        return matchesFilter && matchesSearch;
+      }),
+    [normalizedSearch, postFilter, posts],
+  );
+  const filteredPlacements = useMemo(
+    () =>
+      placements.filter((placement) => {
+        const matchesFilter = placementFilter === 'ALL' || placement.status === placementFilter;
+        const matchesSearch =
+          !normalizedSearch ||
+          [
+            placement.title,
+            placement.sponsor?.name || '',
+            placement.sponsorProfile?.companyName || '',
+            placement.post?.caption || '',
+          ]
+            .join(' ')
+            .toLowerCase()
+            .includes(normalizedSearch);
+
+        return matchesFilter && matchesSearch;
+      }),
+    [normalizedSearch, placementFilter, placements],
+  );
 
   function updatePostDraft(id: string, patch: Partial<AdminFeedPost>) {
     setPosts((current) => current.map((post) => (post.id === id ? { ...post, ...patch } : post)));
@@ -219,9 +264,24 @@ export function FeedModerationManager({
           <a className="button-link btn-secondary" href="/feed">Preview Public Feed</a>
         </div>
 
-        {posts.length ? (
+        <div className="merch-filter-bar" style={{ marginTop: 18 }}>
+          <input className="input" placeholder="Search posts, creators, sponsors, or captions" value={search} onChange={(event) => setSearch(event.target.value)} />
+          <select className="select" value={postFilter} onChange={(event) => setPostFilter(event.target.value as 'ALL' | AdminFeedPost['status'])}>
+            <option value="ALL">All post states</option>
+            {postStatuses.map((status) => <option key={status} value={status}>{statusLabel(status)}</option>)}
+          </select>
+          <select className="select" value={placementFilter} onChange={(event) => setPlacementFilter(event.target.value as 'ALL' | AdminPlacement['status'])}>
+            <option value="ALL">All placement states</option>
+            {placementStatuses.map((status) => <option key={status} value={status}>{statusLabel(status)}</option>)}
+          </select>
+          <div className="panel" style={{ minHeight: 54, display: 'grid', alignItems: 'center' }}>
+            <div className="helper">{filteredPosts.length} post{filteredPosts.length === 1 ? '' : 's'} | {filteredPlacements.length} placement{filteredPlacements.length === 1 ? '' : 's'} shown</div>
+          </div>
+        </div>
+
+        {filteredPosts.length ? (
           <div className="admin-feed-post-grid">
-            {posts.map((post) => {
+            {filteredPosts.map((post) => {
               const media = post.media[0];
               const saving = savingKey === `post-${post.id}`;
 
@@ -288,7 +348,7 @@ export function FeedModerationManager({
           </div>
         ) : (
           <div className="admin-feed-empty">
-            <h4>No feed posts yet.</h4>
+            <h4>No feed posts match the current moderation filters.</h4>
             <p className="section-copy">Creator submissions will appear here after creators start posting from `/creator/posts`.</p>
           </div>
         )}
@@ -303,9 +363,9 @@ export function FeedModerationManager({
           <a className="button-link btn-secondary" href="/sponsor/placements">Sponsor View</a>
         </div>
 
-        {placements.length ? (
+        {filteredPlacements.length ? (
           <div className="admin-feed-placement-stack">
-            {placements.map((placement) => {
+            {filteredPlacements.map((placement) => {
               const saving = savingKey === `placement-${placement.id}`;
 
               return (
@@ -380,7 +440,7 @@ export function FeedModerationManager({
           </div>
         ) : (
           <div className="admin-feed-empty">
-            <h4>No sponsor placement requests yet.</h4>
+            <h4>No sponsor placement requests match the current filters.</h4>
             <p className="section-copy">Sponsor requests will appear here after sponsors submit them from `/sponsor/placements`.</p>
           </div>
         )}

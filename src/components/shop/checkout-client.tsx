@@ -112,7 +112,26 @@ export function CheckoutClient({ paymentInstructions }: { paymentInstructions: S
   }
 
   return (
-    <div className="split">
+    <div className="form-grid">
+      <section className="card">
+        <div className="section-kicker">Checkout Trust</div>
+        <div className="card-grid grid-3">
+          <div className="panel">
+            <strong>Secure order capture</strong>
+            <div className="helper">Orders are created first, then payment and fulfillment states are updated safely by the team.</div>
+          </div>
+          <div className="panel">
+            <strong>Manual payment safe path</strong>
+            <div className="helper">Card numbers should never be sent through notes, chat, or email. The team confirms the right payment channel.</div>
+          </div>
+          <div className="panel">
+            <strong>Trackable after checkout</strong>
+            <div className="helper">Use the same checkout email on the order lookup page to review status and delivery progress.</div>
+          </div>
+        </div>
+      </section>
+
+      <div className="split">
       <form className="card form-grid" onSubmit={onSubmit}>
         <div className="section-kicker">Shipping & Payment</div>
         <h2 style={{ marginTop: 0 }}>Checkout</h2>
@@ -165,8 +184,13 @@ export function CheckoutClient({ paymentInstructions }: { paymentInstructions: S
           <div className="shop-summary-line"><span>Subtotal</span><strong>{formatPeso(subtotal)}</strong></div>
           <div className="shop-summary-line"><span>Shipping</span><strong>{formatPeso(shippingFee)}</strong></div>
           <div className="shop-summary-line shop-summary-total"><span>Total</span><strong>{formatPeso(total)}</strong></div>
+          <div className="notice success">
+            <strong>Need help before placing the order?</strong>
+            <p style={{ marginBottom: 0 }}>Use the support desk or quotation workflow if your order needs confirmation for custom uniforms, large quantities, or sponsor-branded apparel.</p>
+          </div>
         </div>
       </aside>
+      </div>
     </div>
   );
 }

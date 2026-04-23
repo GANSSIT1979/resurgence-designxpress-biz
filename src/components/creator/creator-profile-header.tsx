@@ -1,6 +1,8 @@
-import { CreatorDisplayProfile, displayCreatorValue, getCreatorPrimaryRole, getCreatorStatus } from '@/lib/creators';
+import { CreatorDisplayProfile, displayCreatorValue, getCreatorPrimaryRole, getCreatorStats, getCreatorStatus } from '@/lib/creators';
 
 export function CreatorProfileHeader({ creator }: { creator: CreatorDisplayProfile }) {
+  const stats = getCreatorStats(creator);
+
   return (
     <section className="creator-profile-hero">
       <div className="container creator-profile-hero-grid">
@@ -24,6 +26,20 @@ export function CreatorProfileHeader({ creator }: { creator: CreatorDisplayProfi
             <div>
               <span>Height</span>
               <strong>{displayCreatorValue(creator.height)}</strong>
+            </div>
+          </div>
+          <div className="creator-header-facts creator-channel-facts">
+            <div>
+              <span>Total visible reach</span>
+              <strong>{stats.totalFollowersLabel}</strong>
+            </div>
+            <div>
+              <span>Linked platforms</span>
+              <strong>{stats.linkedPlatformCount}</strong>
+            </div>
+            <div>
+              <span>Profile readiness</span>
+              <strong>{stats.completeness}%</strong>
             </div>
           </div>
         </div>

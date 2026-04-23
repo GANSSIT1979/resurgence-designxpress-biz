@@ -8,7 +8,7 @@ export default async function FeedPage() {
 
   return (
     <main>
-      <CreatorCommerceFeed initialItems={feed.items} initialCursor={feed.nextCursor} source={feed.source} />
+      <CreatorCommerceFeed initialItems={feed.items} initialCursor={feed.nextCursor} source={feed.source} surface="feed" />
     </main>
   );
 }
