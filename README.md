@@ -1,170 +1,194 @@
-# RESURGENCE Powered by DesignXpress
+# GitHub Copilot CLI
 
-Updated: 2026-04-24
-RESURGENCE Powered by DesignXpress is a Next.js 15 + Prisma platform for basketball community access, creator visibility, Official Resurgence Merch commerce, sponsorship and partnership workflows, support intake, and role-based business operations.
+The power of GitHub Copilot, now in your terminal.
 
-## Platform Snapshot
+GitHub Copilot CLI brings AI-powered coding assistance directly to your command line, enabling you to build, debug, and understand code through natural language conversations. Powered by the same agentic harness as GitHub's Copilot coding agent, it provides intelligent assistance while staying deeply integrated with your GitHub workflow.
 
-- Public discovery pages for the brand, services, sponsors, creators, partnerships, support, and commerce
-- Free account creation for `MEMBER`, `CREATOR`, `COACH`, `REFEREE`, `SPONSOR`, and `PARTNER`
-- Protected workspaces for admin, cashier, member, sponsor, creator, coach, referee, staff, and partner users
-- Community feed experiences that connect creators, sponsor placements, merch tags, follows, likes, comments, and saved posts
-- Official merch browsing, checkout, and email-based order lookup
+See [our official documentation](https://docs.github.com/copilot/concepts/agents/about-copilot-cli) for more information.
 
-## Stack Reality
+![Image of the splash screen for the Copilot CLI](https://github.com/user-attachments/assets/f40aa23d-09dd-499e-9457-1d57d3368887)
 
-- Framework: `Next.js 15` App Router in `src/app`
-- Frontend: `React 19`
-- Runtime: `Node.js 20.x`
-- ORM: `Prisma`
-- Database provider workflow: `scripts/prepare-prisma-schema.mjs` writes `prisma/schema.generated.prisma` based on `PRISMA_DB_PROVIDER` or `DATABASE_URL`
-- Prisma and the runtime read `DATABASE_URL`; platform helper variables such as `POSTGRES_URL*` are not direct substitutes unless you intentionally map them
-- This is not a WordPress site, Laravel/PHP app, or static HTML-only project
 
-## Current Product Surface
+## 🚀 Introduction and Overview
 
-Public routes include:
+We're bringing the power of GitHub Copilot coding agent directly to your terminal. With GitHub Copilot CLI, you can work locally and synchronously with an AI agent that understands your code and GitHub context.
 
-- `/`
-- `/about`
-- `/services`
-- `/sponsors`
-- `/partnerships`
-- `/creators`
-- `/creators/[slug]`
-- `/creator/[slug]`
-- `/feed`
-- `/shop`
-- `/shop/product/[slug]`
-- `/cart`
-- `/checkout`
-- `/account/orders`
-- `/contact`
-- `/support`
-- `/quotation`
-- `/sponsor/apply`
-- `/login`
-- `/privacy`
-- `/terms`
+- **Terminal-native development:** Work with Copilot coding agent directly in your command line — no context switching required.
+- **GitHub integration out of the box:** Access your repositories, issues, and pull requests using natural language, all authenticated with your existing GitHub account.
+- **Agentic capabilities:** Build, edit, debug, and refactor code with an AI collaborator that can plan and execute complex tasks.
+- **MCP-powered extensibility:** Take advantage of the fact that the coding agent ships with GitHub's MCP server by default and supports custom MCP servers to extend capabilities.
+- **Full control:** Preview every action before execution — nothing happens without your explicit approval.
 
-Protected role areas include:
+We're still early in our journey, but with your feedback, we're rapidly iterating to make the GitHub Copilot CLI the best possible companion in your terminal.
 
-- `/admin`
-- `/cashier`
-- `/member`
-- `/creator/dashboard`
-- `/creator/posts`
-- `/coach`
-- `/referee`
-- `/sponsor/dashboard`
-- `/staff`
-- `/partner`
+## 📦 Getting Started
 
-Compatibility pages such as `/partner/dashboard`, `/admin/revenue-monitoring`, `/cashier/revenue-monitoring`, and nested sponsor dashboard subpages are preserved for redirect/backward-compatibility purposes.
+### Supported Platforms
 
-## Registration And Auth
+- **Linux**
+- **macOS**
+- **Windows**
 
-- `/login` handles both sign-in and free account creation
-- Public signup supports Gmail or mobile OTP flows
-- Public signup roles are `MEMBER`, `CREATOR`, `COACH`, `REFEREE`, `SPONSOR`, and `PARTNER`
-- Seeded local accounts exist for admin, cashier, sponsor, staff, partner, and creator testing
-- Member, coach, and referee local testing can be exercised by signing up through `/login`
+### Prerequisites
 
-## Quick Start
+- (On Windows) **PowerShell** v6 or higher
+- An **active Copilot subscription**. See [Copilot plans](https://github.com/features/copilot/plans?ref_cta=Copilot+plans+signup&ref_loc=install-copilot-cli&ref_page=docs).
+
+If you have access to GitHub Copilot via your organization or enterprise, you cannot use GitHub Copilot CLI if your organization owner or enterprise administrator has disabled it in the organization or enterprise settings. See [Managing policies and features for GitHub Copilot in your organization](http://docs.github.com/copilot/managing-copilot/managing-github-copilot-in-your-organization/managing-github-copilot-features-in-your-organization/managing-policies-for-copilot-in-your-organization) for more information.
+
+### Installation
+
+Install with the install script (macOS and Linux):
 
 ```bash
-cp .env.example .env
-npm install
-npm run db:push
-npm run db:seed
-npm run dev
+curl -fsSL https://gh.io/copilot-install | bash
 ```
 
-Local HTTPS:
+Or
 
 ```bash
-npm run dev:https
+wget -qO- https://gh.io/copilot-install | bash
 ```
 
-Windows PowerShell:
+Use `| sudo bash` to run as root and install to `/usr/local/bin`.
 
-```powershell
-Copy-Item .env.example .env
-npm install
-npm run local:preflight
-npm run db:push
-npm run db:seed
-npm run dev
-```
+Set `PREFIX` to install to `$PREFIX/bin/` directory. Defaults to `/usr/local`
+when run as root or `$HOME/.local` when run as a non-root user.
 
-If you changed `PRISMA_DB_PROVIDER` or `DATABASE_URL`, rerun `npm run prisma:generate` before building or deploying.
+Set `VERSION` to install a specific version. Defaults to the latest version.
 
-Optional local bootstrap check:
+For example, to install version `v0.0.369` to a custom directory:
 
 ```bash
-npm run local:preflight
+curl -fsSL https://gh.io/copilot-install | VERSION="v0.0.369" PREFIX="$HOME/custom" bash
 ```
 
-## Seeded Local Accounts
-
-- These are the default credentials created by the current local seed flow.
-- Rerun `npm run db:seed` against a fresh local database before relying on them for a clean test pass.
-
-- System Admin: `admin@resurgence.local` / `Admin123!`
-- Cashier: `cashier@resurgence.local` / `Cashier123!`
-- Sponsor: `sponsor@resurgence.local` / `Sponsor123!`
-- Staff: `staff@resurgence.local` / `Staff123!`
-- Partner: `partner@resurgence.local` / `Partner123!`
-- Creator example: `jake.anilao@resurgence.local` / `Jake@2026Resurgence!`
-
-## Verification
+Install with [Homebrew](https://formulae.brew.sh/cask/copilot-cli) (macOS and Linux):
 
 ```bash
-npx tsc --noEmit --pretty false
-npm run build
+brew install copilot-cli
 ```
-
-Support verification against a running local server:
 
 ```bash
-npm run support:verify -- --base-url=http://localhost:3000
+brew install copilot-cli@prerelease
 ```
 
-These commands are the recommended repeatable checks for the active branch. Rerun them before relying on local verification status.
 
-## Core Local URLs
+Install with [WinGet](https://github.com/microsoft/winget-cli) (Windows):
 
-- `http://localhost:3000`
-- `https://localhost:3000` with `npm run dev:https`
-- `http://localhost:3000/login`
-- `http://localhost:3000/member`
-- `http://localhost:3000/feed`
-- `http://localhost:3000/shop`
-- `http://localhost:3000/support`
-- `http://localhost:3000/api/health`
+```bash
+winget install GitHub.Copilot
+```
 
-## Documentation
+```bash
+winget install GitHub.Copilot.Prerelease
+```
 
-Start with [docs/README.md](./docs/README.md).
 
-Recommended references:
+Install with [npm](https://www.npmjs.com/package/@github/copilot) (macOS, Linux, and Windows):
 
-- [docs/INSTALL.md](./docs/INSTALL.md)
-- [docs/QUICKSTART.md](./docs/QUICKSTART.md)
-- [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)
-- [docs/API.md](./docs/API.md)
-- [docs/SHOP_MODULE.md](./docs/SHOP_MODULE.md)
-- [docs/USER_GUIDE.md](./docs/USER_GUIDE.md)
-- [docs/ADMIN_GUIDE.md](./docs/ADMIN_GUIDE.md)
-- [docs/VERCEL.md](./docs/VERCEL.md)
-- [docs/VERCEL_DEPLOYMENT_CHECKLIST.md](./docs/VERCEL_DEPLOYMENT_CHECKLIST.md)
-- [docs/PHASE1_ROUTE_INTEGRATION_PLAN.md](./docs/PHASE1_ROUTE_INTEGRATION_PLAN.md)
-- [docs/TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md)
+```bash
+npm install -g @github/copilot
+```
 
-## Notes
+```bash
+npm install -g @github/copilot@prerelease
+```
 
-- Local development falls back to SQLite when neither `PRISMA_DB_PROVIDER` nor a provider-shaped `DATABASE_URL` is set.
-- Hosted environments should use PostgreSQL and set `PRISMA_DB_PROVIDER=postgresql` or a PostgreSQL `DATABASE_URL`.
-- The current codebase does not use direct Supabase SDK secrets. `SUPABASE_SECRET_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_JWT_SECRET` are unused unless future Supabase integration is added.
-- The `docs/` folder is the canonical documentation set.
-- Root-level patch-note Markdown files are retained as historical implementation notes, not the source of truth.
+
+### Launching the CLI
+
+```bash
+copilot
+```
+
+On first launch, you'll be greeted with our adorable animated banner! If you'd like to see this banner again, launch `copilot` with the `--banner` flag.
+
+If you're not currently logged in to GitHub, you'll be prompted to use the `/login` slash command. Enter this command and follow the on-screen instructions to authenticate.
+
+#### Authenticate with a Personal Access Token (PAT)
+
+You can also authenticate using a fine-grained PAT with the "Copilot Requests" permission enabled.
+
+1. Visit https://github.com/settings/personal-access-tokens/new
+2. Under "Permissions," click "add permissions" and select "Copilot Requests"
+3. Generate your token
+4. Add the token to your environment via the environment variable `GH_TOKEN` or `GITHUB_TOKEN` (in order of precedence)
+
+### Using the CLI
+
+Launch `copilot` in a folder that contains code you want to work with.
+
+By default, `copilot` utilizes Claude Sonnet 4.5. Run the `/model` slash command to choose from other available models, including Claude Sonnet 4 and GPT-5.
+
+### Experimental Mode
+
+Experimental mode enables access to new features that are still in development. You can activate experimental mode by:
+
+- Launching with the `--experimental` flag: `copilot --experimental`
+- Using the `/experimental` slash command from within the CLI
+
+Once activated, the setting is persisted in your config, so the `--experimental` flag is no longer needed on subsequent launches.
+
+#### Experimental Features
+
+- **Autopilot mode:** Autopilot is a new mode (press `Shift+Tab` to cycle through modes), which encourages the agent to continue working until a task is completed.
+
+Each time you submit a prompt to GitHub Copilot CLI, your monthly quota of premium requests is reduced by one. For information about premium requests, see [About premium requests](https://docs.github.com/copilot/managing-copilot/monitoring-usage-and-entitlements/about-premium-requests).
+
+For more information about how to use the GitHub Copilot CLI, see [our official documentation](https://docs.github.com/copilot/concepts/agents/about-copilot-cli).
+
+## 🔧 Configuring LSP Servers
+
+GitHub Copilot CLI supports Language Server Protocol (LSP) for enhanced code intelligence. This feature provides intelligent code features like go-to-definition, hover information, and diagnostics.
+
+### Installing Language Servers
+
+Copilot CLI does not bundle LSP servers. You need to install them separately. For example, to set up TypeScript support:
+
+```bash
+npm install -g typescript-language-server
+```
+
+For other languages, install the corresponding LSP server and configure it following the same pattern shown below.
+
+### Configuring LSP Servers
+
+LSP servers are configured through a dedicated LSP configuration file. You can configure LSP servers at the user level or repository level:
+
+**User-level configuration** (applies to all projects):
+Edit `~/.copilot/lsp-config.json`
+
+**Repository-level configuration** (applies to specific project):
+Create `.github/lsp.json` in your repository root
+
+Example configuration:
+
+```json
+{
+  "lspServers": {
+    "typescript": {
+      "command": "typescript-language-server",
+      "args": ["--stdio"],
+      "fileExtensions": {
+        ".ts": "typescript",
+        ".tsx": "typescript"
+      }
+    }
+  }
+}
+```
+
+### Viewing LSP Server Status
+
+Check configured LSP servers using the `/lsp` command in an interactive session, or view your configuration files directly.
+
+For more information, see the [changelog](./changelog.md).
+
+## 📢 Feedback and Participation
+
+We're excited to have you join us early in the Copilot CLI journey.
+
+We're building quickly. Expect frequent updates--please keep your client up to date for the latest features and fixes!
+
+Your insights are invaluable! Open an issue in this repo, join Discussions, and run `/feedback` from the CLI to submit a confidential feedback survey!
