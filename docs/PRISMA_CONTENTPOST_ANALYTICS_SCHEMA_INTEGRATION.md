@@ -6,6 +6,12 @@ Updated: 2026-04-24
 
 Historical schema-integration note. Use [DATABASE.md](./DATABASE.md), [PRISMA_MIGRATION_ROLLOUT_CHECKLIST.md](./PRISMA_MIGRATION_ROLLOUT_CHECKLIST.md), and [PREVIEW_RELEASE_SMOKE_TEST.md](./PREVIEW_RELEASE_SMOKE_TEST.md) for the current rollout source of truth.
 
+The current corrective migration that brings the deployed PostgreSQL schema up to this analytics contract is:
+
+```txt
+prisma/migrations/20260424083000_add_contentpost_schema_parity/migration.sql
+```
+
 ## Purpose
 
 This document covers the additive analytics-schema merge for the existing RESURGENCE feed stack.
@@ -128,9 +134,8 @@ After the migration is applied, the canonical analytics fields should be:
 
 ## Repo-Specific Follow-Up Work
 
-The clean next steps after this schema merge are:
+The schema-parity migration now exists. The clean next steps after that migration are:
 
-- add a reviewed Prisma migration for the new analytics fields and tables
 - ship a backfill or rollup job for `ContentPostAnalyticsDay` and `CreatorAnalyticsDay`
 - update creator dashboard reporting to query rollup tables instead of only live post counters
 - retire the `metadataJson.analytics` bridge once Preview and Production are fully migrated

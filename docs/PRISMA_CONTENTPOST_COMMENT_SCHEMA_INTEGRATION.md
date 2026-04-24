@@ -6,6 +6,12 @@ Updated: 2026-04-24
 
 Historical schema-integration note. Use [DATABASE.md](./DATABASE.md), [PRISMA_MIGRATION_ROLLOUT_CHECKLIST.md](./PRISMA_MIGRATION_ROLLOUT_CHECKLIST.md), and [PREVIEW_RELEASE_SMOKE_TEST.md](./PREVIEW_RELEASE_SMOKE_TEST.md) for the current rollout source of truth.
 
+The current corrective migration that brings the deployed PostgreSQL schema up to this comment contract is:
+
+```txt
+prisma/migrations/20260424083000_add_contentpost_schema_parity/migration.sql
+```
+
 ## Goal
 
 Standardize the `ContentPost` comment layer so Preview and Production use the same enums, moderation fields, indexes, and `ContentPost.commentCount` / `lastCommentedAt` contract.
@@ -73,7 +79,7 @@ The live comment routes and panel now treat these fields as the source of truth:
 npx prisma format
 npx prisma validate
 npx prisma generate
-npx prisma migrate dev --name add_contentpost_comment_fields
+npx prisma migrate dev --name add-contentpost-schema-parity
 ```
 
 For hosted rollout, use your reviewed migration workflow rather than editing the hosted database manually.

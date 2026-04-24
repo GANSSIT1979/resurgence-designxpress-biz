@@ -6,6 +6,12 @@ Updated: 2026-04-24
 
 Historical planning or handoff note. Use [README.md](./README.md), [ROADMAP.md](./ROADMAP.md), [DEPLOYMENT.md](./DEPLOYMENT.md), and the rollout checklists in this folder for the current system state.
 
+Important accuracy note:
+
+- the original migration in this phase file is no longer the full deployed schema story
+- the corrective follow-up migration is `prisma/migrations/20260424083000_add_contentpost_schema_parity/migration.sql`
+- use [PRISMA_MIGRATION_ROLLOUT_CHECKLIST.md](./PRISMA_MIGRATION_ROLLOUT_CHECKLIST.md) for the current production-safe rollout path
+
 
 This document records the first reversible implementation slice for evolving Resurgence Powered by DesignXpress into a TikTok-inspired creator-commerce platform.
 
@@ -81,6 +87,12 @@ Migration file:
 
 ```txt
 prisma/migrations/20260419000000_add_creator_commerce_feed_schema/migration.sql
+```
+
+Corrective follow-up migration:
+
+```txt
+prisma/migrations/20260424083000_add_contentpost_schema_parity/migration.sql
 ```
 
 Safety characteristics:

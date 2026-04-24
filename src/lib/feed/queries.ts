@@ -1,4 +1,6 @@
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
+import { formatPrismaSchemaDrift, isPrismaSchemaDriftError } from '@/lib/prisma-schema-health';
 import { FeedResponse } from '@/lib/feed/types';
 import { serializeContentPost, serializeGalleryEventAsFeedPost } from '@/lib/feed/serializers';
 
@@ -12,9 +14,192 @@ function logFeedFallback(scope: string, error: unknown) {
   console.error(`[feed] Falling back to ${scope}.`, error);
 }
 
+function logLegacyFeedRetry(scope: string, error: unknown) {
+  console.warn(
+    `[feed] Retrying ${scope} with a legacy-safe select because the deployed database is behind the current Prisma model. ${formatPrismaSchemaDrift(
+      scope,
+      error,
+    )}`,
+  );
+}
+
 function clampLimit(limit?: number) {
   if (!Number.isFinite(limit)) return 8;
   return Math.max(1, Math.min(24, Math.floor(limit || 8)));
+}
+
+function buildPublicContentPostSelect({
+  viewerId,
+  legacyMode = false,
+}: {
+  viewerId?: string | null;
+  legacyMode?: boolean;
+}): Prisma.ContentPostSelect {
+  return {
+    id: true,
+    ...(legacyMode ? {} : { title: true, slug: true }),
+    caption: true,
+    summary: true,
+    visibility: true,
+    status: true,
+    isFeatured: true,
+    isPinned: true,
+    publishedAt: true,
+    createdAt: true,
+    updatedAt: true,
+    likeCount: true,
+    commentCount: true,
+    saveCount: true,
+    shareCount: true,
+    viewCount: true,
+    metadataJson: true,
+    authorUser: {
+      select: {
+        id: true,
+        displayName: true,
+        role: true,
+      },
+    },
+    creatorProfile: {
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        roleLabel: true,
+        imageUrl: true,
+        ...(viewerId
+          ? {
+              followers: {
+                where: { followerUserId: viewerId },
+                select: { followerUserId: true },
+              },
+            }
+          : {}),
+      },
+    },
+    mediaAssets: {
+      select: {
+        id: true,
+        mediaType: true,
+        url: true,
+        thumbnailUrl: true,
+        ...(legacyMode ? {} : { originalFileName: true }),
+        storageProvider: true,
+        storageKey: true,
+        contentType: true,
+        size: true,
+        durationSeconds: true,
+        metadataJson: true,
+        altText: true,
+        caption: true,
+        sortOrder: true,
+        createdAt: true,
+      },
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+    },
+    hashtags: {
+      select: {
+        hashtag: {
+          select: {
+            id: true,
+            label: true,
+            normalizedName: true,
+          },
+        },
+      },
+    },
+    ...(viewerId ? { likes: { where: { userId: viewerId }, select: { userId: true } } } : {}),
+    ...(viewerId ? { saves: { where: { userId: viewerId }, select: { userId: true } } } : {}),
+    productTags: {
+      select: {
+        id: true,
+        productId: true,
+        label: true,
+        ctaLabel: true,
+        sortOrder: true,
+        createdAt: true,
+        product: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            imageUrl: true,
+            price: true,
+            stock: true,
+            badgeLabel: true,
+          },
+        },
+      },
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+    },
+    sponsoredPlacements: {
+      where: { status: { in: ['APPROVED', 'ACTIVE'] } },
+      select: {
+        id: true,
+        title: true,
+        ctaLabel: true,
+        ctaHref: true,
+        placementType: true,
+        sponsor: { select: { name: true } },
+        sponsorProfile: { select: { companyName: true } },
+      },
+      orderBy: [{ createdAt: 'desc' }],
+    },
+  };
+}
+
+async function runPublicContentPostFindMany(
+  args: Omit<Prisma.ContentPostFindManyArgs, 'include' | 'select'>,
+  viewerId?: string | null,
+) {
+  try {
+    return {
+      items: await prisma.contentPost.findMany({
+        ...args,
+        select: buildPublicContentPostSelect({ viewerId }),
+      }),
+      usedLegacySelect: false,
+    };
+  } catch (error) {
+    if (!isPrismaSchemaDriftError(error)) throw error;
+
+    logLegacyFeedRetry('public content-post reads', error);
+
+    return {
+      items: await prisma.contentPost.findMany({
+        ...args,
+        select: buildPublicContentPostSelect({ viewerId, legacyMode: true }),
+      }),
+      usedLegacySelect: true,
+    };
+  }
+}
+
+async function runPublicContentPostFindUnique(
+  args: Omit<Prisma.ContentPostFindUniqueArgs, 'include' | 'select'>,
+  viewerId?: string | null,
+) {
+  try {
+    return {
+      item: await prisma.contentPost.findUnique({
+        ...args,
+        select: buildPublicContentPostSelect({ viewerId }),
+      }),
+      usedLegacySelect: false,
+    };
+  } catch (error) {
+    if (!isPrismaSchemaDriftError(error)) throw error;
+
+    logLegacyFeedRetry('public content-post detail reads', error);
+
+    return {
+      item: await prisma.contentPost.findUnique({
+        ...args,
+        select: buildPublicContentPostSelect({ viewerId, legacyMode: true }),
+      }),
+      usedLegacySelect: true,
+    };
+  }
 }
 
 export async function getGalleryFallbackFeed(limit = 8): Promise<FeedResponse> {
@@ -58,40 +243,20 @@ export async function getPublicFeed({
   const take = clampLimit(limit);
 
   try {
-    const items = await prisma.contentPost.findMany({
-      where: {
-        status: 'PUBLISHED',
-        visibility: 'PUBLIC',
-        mediaAssets: { some: { url: { not: '' } } },
-      },
-      include: {
-        authorUser: { select: { id: true, displayName: true, role: true } },
-        creatorProfile: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-            roleLabel: true,
-            imageUrl: true,
-            ...(viewerId ? { followers: { where: { followerUserId: viewerId }, select: { followerUserId: true } } } : {}),
-          },
+    const { items } = await runPublicContentPostFindMany(
+      {
+        where: {
+          status: 'PUBLISHED',
+          visibility: 'PUBLIC',
+          mediaAssets: { some: { url: { not: '' } } },
         },
-        mediaAssets: { orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] },
-        hashtags: { include: { hashtag: true } },
-        ...(viewerId ? { likes: { where: { userId: viewerId }, select: { userId: true } } } : {}),
-        ...(viewerId ? { saves: { where: { userId: viewerId }, select: { userId: true } } } : {}),
-        productTags: { include: { product: true }, orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] },
-        sponsoredPlacements: {
-          where: { status: { in: ['APPROVED', 'ACTIVE'] } },
-          include: { sponsor: true, sponsorProfile: true },
-          orderBy: [{ createdAt: 'desc' }],
-        },
+        orderBy: [{ isPinned: 'desc' }, { isFeatured: 'desc' }, { publishedAt: 'desc' }, { createdAt: 'desc' }],
+        cursor: cursor ? { id: cursor } : undefined,
+        skip: cursor ? 1 : 0,
+        take: take + 1,
       },
-      orderBy: [{ isPinned: 'desc' }, { isFeatured: 'desc' }, { publishedAt: 'desc' }, { createdAt: 'desc' }],
-      cursor: cursor ? { id: cursor } : undefined,
-      skip: cursor ? 1 : 0,
-      take: take + 1,
-    });
+      viewerId,
+    );
 
     const visibleItems = items.slice(0, take);
     if (!visibleItems.length && fallbackOnError) {
@@ -108,6 +273,27 @@ export async function getPublicFeed({
     logFeedFallback('the gallery feed after a content-post query failure', error);
     return getGalleryFallbackFeed(take);
   }
+}
+
+export async function getCreatorPublicFeedPosts({
+  creatorProfileId,
+  limit = 4,
+}: {
+  creatorProfileId: string;
+  limit?: number;
+}) {
+  return runPublicContentPostFindMany(
+    {
+      where: {
+        creatorProfileId,
+        status: 'PUBLISHED',
+        visibility: 'PUBLIC',
+      },
+      orderBy: [{ isPinned: 'desc' }, { isFeatured: 'desc' }, { publishedAt: 'desc' }],
+      take: clampLimit(limit),
+    },
+    null,
+  );
 }
 
 export async function getPromotedPlacements(limit = 4) {
@@ -129,17 +315,8 @@ export async function getPromotedPlacements(limit = 4) {
 }
 
 export async function getPostForApi(postId: string) {
-  return prisma.contentPost.findUnique({
-    where: { id: postId },
-    include: {
-      authorUser: { select: { id: true, displayName: true, role: true } },
-      creatorProfile: true,
-      mediaAssets: { orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] },
-      hashtags: { include: { hashtag: true } },
-      productTags: { include: { product: true }, orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] },
-      sponsoredPlacements: { include: { sponsor: true, sponsorProfile: true } },
-    },
-  });
+  const { item } = await runPublicContentPostFindUnique({ where: { id: postId } }, null);
+  return item;
 }
 
 export async function getPublicFeedPostMetrics(postId: string) {
