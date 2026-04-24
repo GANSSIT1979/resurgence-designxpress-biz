@@ -3,6 +3,13 @@
 Updated: 2026-04-24
 ## 2026-04-24
 
+### Feed Schema Drift Fix
+
+- added `prisma/migrations/20260424083000_add_contentpost_schema_parity/migration.sql` to align feed, comment, and analytics tables with the checked-in Prisma schema
+- updated public feed reads on `/`, `/feed`, and creator public profile surfaces to retry with a legacy-safe select during additive schema drift instead of dropping straight to the gallery fallback
+- extended `/api/health` so comment-schema drift is reported alongside feed, analytics, media, and notification drift
+- corrected the migration and troubleshooting markdown so they point at the new schema-parity rollout instead of only the original phase-one feed migration
+
 ### Documentation Accuracy Pass
 
 - normalized canonical docs so verification language reads as repeatable branch and environment checks instead of standing guarantees

@@ -5,9 +5,9 @@ import { CreatorProfileDashboard } from '@/components/creator/creator-profile-da
 import { EventMediaCarousel } from '@/components/event-media-carousel';
 import { ProductCard } from '@/components/shop/product-card';
 import { serializePublicCreatorProfile } from '@/lib/creators';
+import { getCreatorPublicFeedPosts } from '@/lib/feed/queries';
 import { serializeContentPost } from '@/lib/feed/serializers';
 import { prisma } from '@/lib/prisma';
-import { isPrismaSchemaDriftError } from '@/lib/prisma-schema-health';
 import { getCreatorBySlug } from '@/lib/site';
 
 export const dynamic = 'force-dynamic';
@@ -23,67 +23,37 @@ export default async function CreatorPublicProfilePage({ params }: { params: Pro
     const rightDate = right.eventDate ? new Date(right.eventDate).getTime() : 0;
     return rightDate - leftDate;
   });
-  let channelPosts: Awaited<ReturnType<typeof prisma.contentPost.findMany>> = [];
+  let channelPosts: Awaited<ReturnType<typeof getCreatorPublicFeedPosts>>['items'] = [];
   let taggedProducts: Awaited<ReturnType<typeof prisma.shopProduct.findMany>> = [];
   let feedDataNotice: string | null = null;
 
-  try {
-    [channelPosts, taggedProducts] = await Promise.all([
-      prisma.contentPost.findMany({
-        where: {
-          creatorProfileId: creator.id,
-          status: 'PUBLISHED',
-          visibility: 'PUBLIC',
-        },
-        include: {
-          authorUser: { select: { id: true, displayName: true, role: true } },
-          creatorProfile: {
-            select: {
-              id: true,
-              name: true,
-              slug: true,
-              roleLabel: true,
-              imageUrl: true,
-            },
-          },
-          mediaAssets: { orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] },
-          hashtags: { include: { hashtag: true } },
-          productTags: { include: { product: true }, orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] },
-          sponsoredPlacements: {
-            where: { status: { in: ['APPROVED', 'ACTIVE'] } },
-            include: { sponsor: true, sponsorProfile: true },
-            orderBy: [{ createdAt: 'desc' }],
-          },
-        },
-        orderBy: [{ isPinned: 'desc' }, { isFeatured: 'desc' }, { publishedAt: 'desc' }],
-        take: 4,
-      }),
-      prisma.shopProduct.findMany({
-        where: {
-          isActive: true,
-          postProductTags: {
-            some: {
-              post: {
-                creatorProfileId: creator.id,
-                status: 'PUBLISHED',
-                visibility: 'PUBLIC',
-              },
+  const [channelPostsResult, taggedProductsResult] = await Promise.all([
+    getCreatorPublicFeedPosts({ creatorProfileId: creator.id, limit: 4 }),
+    prisma.shopProduct.findMany({
+      where: {
+        isActive: true,
+        postProductTags: {
+          some: {
+            post: {
+              creatorProfileId: creator.id,
+              status: 'PUBLISHED',
+              visibility: 'PUBLIC',
             },
           },
         },
-        include: { category: true },
-        orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
-        take: 4,
-      }),
-    ]);
-  } catch (error) {
-    if (!isPrismaSchemaDriftError(error)) {
-      throw error;
-    }
+      },
+      include: { category: true },
+      orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
+      take: 4,
+    }),
+  ]);
 
-    console.error('[creator-profile] Falling back to creator-only public profile sections after a content schema drift.', error);
+  channelPosts = channelPostsResult.items;
+  taggedProducts = taggedProductsResult;
+
+  if (channelPostsResult.usedLegacySelect) {
     feedDataNotice =
-      'Creator feed posts and tagged merch are temporarily unavailable while the latest content-post migration is still being applied in production.';
+      'Creator feed posts are loading in compatibility mode while the latest content-post migration is still being applied in production.';
   }
 
   const serializedChannelPosts = channelPosts.map((item) => serializeContentPost(item));

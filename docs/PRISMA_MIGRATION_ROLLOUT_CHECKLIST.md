@@ -46,25 +46,67 @@ For this release, confirm the schema scope is limited to the current normalized 
 - additive `ContentPost` fields:
   - `title`
   - `slug`
+  - `lastCommentedAt`
+  - `uniqueViewCount`
+  - `watchTimeSeconds`
+  - `completedViewCount`
+  - `avgWatchTimeSeconds`
+  - `completionRate`
+  - `firstViewedAt`
+  - `lastViewedAt`
+  - `lastAnalyticsRollupAt`
 - additive `MediaAsset` field:
   - `originalFileName`
-- feed/media indexes:
+- additive `PostComment` moderation and audit fields:
+  - `bodyPlain`
+  - `status`
+  - `visibility`
+  - `isPinned`
+  - `isEdited`
+  - `likeCount`
+  - `replyCount`
+  - `sortOrder`
+  - `moderatedById`
+  - `moderatedAt`
+  - `editedAt`
+  - `deletedAt`
+  - `publishedAt`
+  - `hashtags`
+  - `mentions`
+  - `metadataJson`
+- additive enums:
+  - `ContentPostCommentStatus`
+  - `ContentPostCommentVisibility`
+  - `ContentViewSource`
+- additive analytics tables:
+  - `ContentPostAnalyticsDay`
+  - `CreatorAnalyticsDay`
+  - `ContentPostViewSession`
+- feed/media/comment indexes:
   - `MediaAsset.storageKey`
   - `MediaAsset.storageProvider + storageKey`
-- any intentionally bundled notification-column fixes such as `PlatformNotification.actorUserId`
+  - `ContentPost.commentCount`
+  - `ContentPost.lastCommentedAt`
+  - `ContentPost.lastViewedAt`
+  - `ContentPost.viewCount`
+  - `ContentPost.uniqueViewCount`
+  - `ContentPost.completedViewCount`
+  - `PostComment` moderation and visibility indexes
 - route and serializer alignment for:
+  - `/`
+  - `/feed`
+  - `/creators/[slug]`
+  - `/api/feed`
+  - `/api/feed/[postId]`
   - `/api/creator/posts/create`
   - feed mutations
   - feed serializers
+  - feed analytics
 
 ### Not required unless already intentionally bundled
 
 - a second flat `ContentPost` table
-- duplicate feed enums
-- analytics tables
-- watch-time metrics
-- topic mapping tables
-- moderation workflow redesign
+- duplicate feed enums under different names
 - unrelated dashboard schema changes
 
 Keep the migration as small as possible.
@@ -115,7 +157,7 @@ Run the migration locally before touching Vercel.
 npx prisma format
 npx prisma validate --schema prisma/schema.prisma
 npm run prisma:generate
-npm run db:migrate -- --name add-contentpost-phase1
+npm run db:migrate -- --name add-contentpost-schema-parity
 ```
 
 Equivalent direct Prisma form if needed:

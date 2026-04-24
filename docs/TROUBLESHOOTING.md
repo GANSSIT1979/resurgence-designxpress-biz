@@ -23,11 +23,19 @@ The column `ContentPost.title` does not exist in the current database.
 
 the code is ahead of the hosted PostgreSQL schema.
 
+The current corrective migration for this repo is:
+
+```text
+prisma/migrations/20260424083000_add_contentpost_schema_parity/migration.sql
+```
+
 Do this next:
 
-1. apply the reviewed migration to Preview or Production
+1. apply the reviewed migration to Preview or Production with `npm run db:migrate:deploy`
 2. verify `GET /api/health`
-3. retest `/`, `/feed`, `/creators/[slug]`, and `/creator/dashboard`
+3. retest `/`, `/feed`, `/creators/[slug]`, `/api/feed`, and `/creator/dashboard`
+
+The public feed now retries with a legacy-safe select during additive schema drift, but that is only a temporary compatibility bridge. If `/api/health` still reports schema mismatch, finish the migration rollout before trusting Production behavior.
 
 Use:
 
@@ -59,6 +67,7 @@ Check `GET /api/health`.
 The health probe checks:
 
 - additive `ContentPost` columns
+- additive `PostComment` moderation columns
 - additive `MediaAsset` columns
 - `PlatformNotification.actorUserId`
 - support readiness

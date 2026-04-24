@@ -118,6 +118,8 @@ Important fields and relationships include:
 Important accuracy note:
 
 - Cloudflare video identity is stored through `MediaAsset.storageProvider`, `MediaAsset.storageKey`, and media metadata
+- the corrective migration that aligns this schema with the deployed PostgreSQL contract is `prisma/migrations/20260424083000_add_contentpost_schema_parity/migration.sql`
+- until that migration is applied, `/api/health` should remain the source of truth for whether feed, comment, and analytics paths are safe to trust in Preview or Production
 - hashtags remain normalized through `Hashtag` and `PostHashtag`
 - likes, saves, comments, and follows use real relational tables
 - analytics prefer direct `ContentPost` fields plus `ContentPostViewSession`, with `metadataJson.analytics` retained as a rollout bridge
