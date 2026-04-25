@@ -1,95 +1,55 @@
-import { existsSync, readFileSync, writeFileSync } from 'fs';
-import { resolve } from 'path';
+import fs from 'node:fs'
+import path from 'node:path'
 
-const initialEnvKeys = new Set(Object.keys(process.env));
+const root = process.cwd()
+const schemaPath = path.join(root, 'prisma', 'schema.prisma')
+const generatedSchemaPath = path.join(root, 'prisma', 'schema.generated.prisma')
 
-function parseDotEnvValue(value) {
-  const trimmed = value.trim();
+const provider = process.env.PRISMA_DB_PROVIDER || 'postgresql'
 
-  if (
-    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
-    (trimmed.startsWith("'") && trimmed.endsWith("'"))
-  ) {
-    return trimmed.slice(1, -1);
-  }
-
-  return trimmed;
+if (!fs.existsSync(schemaPath)) {
+  throw new Error(`Missing Prisma schema at ${schemaPath}`)
 }
 
-function loadDotEnv(fileName, overrideLoadedValues = false) {
-  const filePath = resolve(process.cwd(), fileName);
-  if (!existsSync(filePath)) return;
+const allowedProviders = new Set(['postgresql', 'sqlite', 'mysql'])
 
-  for (const rawLine of readFileSync(filePath, 'utf8').split(/\r?\n/)) {
-    const line = rawLine.trim();
-    if (!line || line.startsWith('#')) continue;
-
-    const separatorIndex = line.indexOf('=');
-    if (separatorIndex <= 0) continue;
-
-    const key = line.slice(0, separatorIndex).trim();
-    if (!key || initialEnvKeys.has(key)) continue;
-    if (!overrideLoadedValues && process.env[key]) continue;
-
-    process.env[key] = parseDotEnvValue(line.slice(separatorIndex + 1));
-  }
-}
-
-function inferProviderFromDatabaseUrl(databaseUrl) {
-  const normalized = databaseUrl.trim().toLowerCase();
-  if (!normalized) return null;
-  if (normalized.startsWith('file:')) return 'sqlite';
-  if (normalized.startsWith('postgresql:') || normalized.startsWith('postgres:')) return 'postgresql';
-  return null;
-}
-
-function resolveProvider() {
-  const explicitProvider = process.env.PRISMA_DB_PROVIDER?.trim();
-  const inferredProvider = inferProviderFromDatabaseUrl(process.env.DATABASE_URL || '');
-  const isHostedRuntime = Boolean(process.env.VERCEL) || process.env.NODE_ENV === 'production';
-
-  if (explicitProvider) {
-    return { provider: explicitProvider, source: 'PRISMA_DB_PROVIDER' };
-  }
-
-  if (inferredProvider) {
-    return { provider: inferredProvider, source: 'DATABASE_URL' };
-  }
-
-  if (isHostedRuntime) {
-    throw new Error(
-      'Unable to determine the Prisma provider for a hosted build. Set PRISMA_DB_PROVIDER or a DATABASE_URL that starts with "postgresql:", "postgres:", or "file:".',
-    );
-  }
-
-  return { provider: 'sqlite', source: 'default' };
-}
-
-loadDotEnv('.env');
-loadDotEnv('.env.local', true);
-
-const supportedProviders = new Set(['sqlite', 'postgresql']);
-const { provider, source } = resolveProvider();
-
-if (!supportedProviders.has(provider)) {
+if (!allowedProviders.has(provider)) {
   throw new Error(
-    `Unsupported PRISMA_DB_PROVIDER "${provider}". Use "sqlite" for local development or "postgresql" for managed production databases.`,
-  );
+    `Invalid PRISMA_DB_PROVIDER="${provider}". Expected one of: ${Array.from(
+      allowedProviders,
+    ).join(', ')}`,
+  )
 }
 
-const schemaSourcePath = resolve(process.cwd(), 'prisma', 'schema.prisma');
-const schemaOutputPath = resolve(process.cwd(), 'prisma', 'schema.generated.prisma');
-const schemaSource = readFileSync(schemaSourcePath, 'utf8');
-const updatedSchema = schemaSource.replace(
-  /provider = "(sqlite|postgresql)"/,
-  `provider = "${provider}"`,
-);
+let schema = fs.readFileSync(schemaPath, 'utf8')
 
-if (updatedSchema === schemaSource && !schemaSource.includes(`provider = "${provider}"`)) {
-  throw new Error('Unable to update prisma/schema.prisma datasource provider.');
+const datasourceRegex = /datasource\s+db\s*\{[\s\S]*?\}/m
+
+const datasourceBlock =
+  provider === 'postgresql'
+    ? `datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}`
+    : provider === 'sqlite'
+      ? `datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}`
+      : `datasource db {
+  provider = "${provider}"
+  url      = env("DATABASE_URL")
+}`
+
+if (!datasourceRegex.test(schema)) {
+  throw new Error('Unable to find datasource db block in prisma/schema.prisma.')
 }
 
-writeFileSync(schemaOutputPath, updatedSchema, 'utf8');
-process.env.PRISMA_DB_PROVIDER = provider;
+schema = schema.replace(datasourceRegex, datasourceBlock)
 
-console.log(`[prisma:prepare] datasource provider set to ${provider} in prisma/schema.generated.prisma (${source})`);
+fs.writeFileSync(generatedSchemaPath, schema)
+
+console.log(
+  `[prisma:prepare] datasource provider set to ${provider} in prisma/schema.generated.prisma (PRISMA_DB_PROVIDER)`,
+)
