@@ -1,0 +1,65 @@
+// Additive schema draft for creator payouts.
+// Copy these enums/models into prisma/schema.prisma after affiliate-schema-addition.prisma.
+
+enum PayoutMethod {
+  GCASH
+  MAYA
+  BANK_TRANSFER
+  STRIPE
+  MANUAL
+}
+
+enum PayoutStatus {
+  REQUESTED
+  UNDER_REVIEW
+  APPROVED
+  PAID
+  REJECTED
+  CANCELLED
+}
+
+model CreatorPayoutAccount {
+  id               String       @id @default(cuid())
+  creatorProfileId String
+  method           PayoutMethod
+  accountName      String
+  accountNumber    String?
+  email            String?
+  phone            String?
+  bankName         String?
+  metadataJson     Json?
+  isDefault        Boolean      @default(false)
+  isVerified       Boolean      @default(false)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  @@index([creatorProfileId, isDefault])
+  @@index([method])
+}
+
+model CreatorPayoutRequest {
+  id               String       @id @default(cuid())
+  creatorProfileId String
+  payoutAccountId  String?
+  amountCents      Int
+  currency         String       @default("PHP")
+  status           PayoutStatus @default(REQUESTED)
+  requestedById    String?
+  reviewedById     String?
+  reviewedAt       DateTime?
+  paidAt           DateTime?
+  rejectionReason  String?
+  referenceNumber  String?
+  notes            String?
+  metadataJson     Json?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  @@index([creatorProfileId, status, createdAt])
+  @@index([status, createdAt])
+  @@index([payoutAccountId])
+}
+
+// Recommended relation additions:
+// CreatorProfile.payoutAccounts CreatorPayoutAccount[]
+// CreatorProfile.payoutRequests CreatorPayoutRequest[]
