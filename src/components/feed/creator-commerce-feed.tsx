@@ -1,13 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { Fragment, startTransition, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FeedCommentsModal } from '@/components/resurgence/FeedCommentsModal';
-import {
-  FeedToastViewport,
-  type FeedToastItem,
-  type FeedToastTone,
-} from '@/components/resurgence/FeedToastViewport';
+import {FeedToastViewport,type FeedToastItem,type FeedToastTone,} from '@/components/resurgence/FeedToastViewport';
 import CreatorAnalyticsMiniCard from '@/components/resurgence/CreatorAnalyticsMiniCard';
 import { ShareSheetModal } from '@/components/resurgence/ShareSheetModal';
 import { ShareSheetToastViewport } from '@/components/resurgence/ShareSheetToastViewport';
@@ -16,17 +12,8 @@ import { useCommentsModal } from '@/components/resurgence/useCommentsModal';
 import ViewportViewTracker from '@/components/resurgence/ViewportViewTracker';
 import { useShareSheet } from '@/components/resurgence/useShareSheet';
 import WatchTimeTracker from '@/components/resurgence/WatchTimeTracker';
-import {
-  getCloudflareStreamEmbedUrl,
-  isCloudflareStreamAsset,
-} from '@/lib/cloudflare-stream';
-import {
-  getFeedInteractionErrorMessage,
-  getFeedInteractionErrorStatus,
-  toggleCreatorFollow,
-  toggleFeedLike,
-  toggleFeedSave,
-} from '@/lib/feed-interactions/client';
+import {getCloudflareStreamEmbedUrl,isCloudflareStreamAsset,} from '@/lib/cloudflare-stream';
+import {getFeedInteractionErrorMessage,getFeedInteractionErrorStatus,toggleCreatorFollow,toggleFeedLike,toggleFeedSave,} from '@/lib/feed-interactions/client';
 import { extractAnalyticsSnapshot } from '@/lib/feed-analytics/types';
 import { FeedPost } from '@/lib/feed/types';
 import type { ShareableFeedItem } from '@/lib/share/types';
@@ -630,6 +617,31 @@ function FeedCard({
     currentTimeSeconds: 0,
     durationSeconds: post.mediaAssets[0]?.durationSeconds ?? null,
   });
+  const lastPlaybackUpdateRef = useRef(0);
+  const handlePlaybackProgress = useCallback(
+    (playback: { currentTimeSeconds: number; durationSeconds: number | null }) => {
+      const now = Date.now();
+
+      if (now - lastPlaybackUpdateRef.current < 250) {
+        return;
+      }
+
+      lastPlaybackUpdateRef.current = now;
+
+      setNativePlayback((previous) => {
+        const isSamePlayback =
+          previous.durationSeconds === playback.durationSeconds &&
+          Math.abs(previous.currentTimeSeconds - playback.currentTimeSeconds) < 0.25;
+
+        if (isSamePlayback) {
+          return previous;
+        }
+
+        return playback;
+      });
+    },
+    [],
+  );
   const media = post.mediaAssets[mediaIndex] || post.mediaAssets[0];
   const hashtags = useMemo(() => post.hashtags.slice(0, 6), [post.hashtags]);
   const primarySponsor = post.sponsorPlacements[0];
@@ -794,7 +806,7 @@ function FeedCard({
               caption={post.caption}
               media={media}
               shouldLoad={shouldLoadMedia}
-              onPlaybackProgress={(playback) => setNativePlayback(playback)}
+              onPlaybackProgress={handlePlaybackProgress}
             />
           ) : (
             <div className="feed-media-missing">No media available</div>
