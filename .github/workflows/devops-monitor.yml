@@ -1,0 +1,60 @@
+name: DevOps Monitoring
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run health gate
+        id: health
+        env:
+          PRODUCTION_SITE_URL: ${{ vars.PRODUCTION_SITE_URL || 'https://www.resurgence-dx.biz' }}
+        run: |
+          node scripts/devops-health-gate.mjs > health.json
+          cat health.json
+
+      - name: Create alert issue if failed
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs')
+            const health = JSON.parse(fs.readFileSync('health.json','utf8'))
+            const title = `🚨 Production Incident: ${health.failures.join(', ')}`
+            const body = `## Incident Detected
+
+- Site: ${health.siteUrl}
+- Time: ${health.checkedAt}
+
+### Failures
+${health.failures.map(f => `- ${f}`).join('\n')}
+
+### Warnings
+${health.warnings.map(w => `- ${w}`).join('\n')}
+
+### Raw Health
+
+\`\`\`json
+${JSON.stringify(health.health,null,2)}
+\`\`\`
+`
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              body,
+            })
