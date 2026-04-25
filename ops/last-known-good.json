@@ -1,0 +1,12 @@
+{
+  "productionSiteUrl": "https://www.resurgence-dx.biz",
+  "lastKnownGoodDeploymentUrl": "https://resurgence-designxpress-qo92fzor4.vercel.app",
+  "lastKnownGoodDeploymentId": "dpl_EMHduw5CD8eSk3NVZgCkR6tqBLWj",
+  "verifiedAt": "2026-04-25T04:54:36.000Z",
+  "verifiedBy": "curl /api/health",
+  "health": {
+    "ok": true,
+    "database": "connected",
+    "schemaStatus": "ok"
+  }
+}

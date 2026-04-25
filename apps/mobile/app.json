@@ -1,0 +1,13 @@
+{
+  "expo": {
+    "name": "Resurgence",
+    "slug": "resurgence-mobile",
+    "scheme": "resurgence",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "ios": { "supportsTablet": true, "bundleIdentifier": "biz.resurgence.dx" },
+    "android": { "package": "biz.resurgence.dx" },
+    "extra": { "apiUrl": "https://www.resurgence-dx.biz" }
+  }
+}

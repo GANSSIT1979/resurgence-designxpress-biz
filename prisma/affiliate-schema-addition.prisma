@@ -1,0 +1,92 @@
+// Additive schema draft for creator monetization and affiliate tracking.
+
+enum AffiliateEventType {
+  VIEW
+  CLICK
+  SHARE
+  PURCHASE
+}
+
+enum CommissionStatus {
+  PENDING
+  APPROVED
+  PAID
+  VOIDED
+}
+
+model AffiliateLink {
+  id               String           @id @default(cuid())
+  code             String           @unique
+  creatorProfileId String?
+  productId        String?
+  postId           String?
+  destinationUrl   String?
+  isActive         Boolean          @default(true)
+  metadataJson     Json?
+  events           AffiliateEvent[]
+  commissions      Commission[]
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@index([creatorProfileId])
+  @@index([productId])
+  @@index([postId])
+  @@index([isActive, createdAt])
+}
+
+model AffiliateEvent {
+  id               String             @id @default(cuid())
+  type             AffiliateEventType
+  affiliateLinkId  String?
+  affiliateLink    AffiliateLink?      @relation(fields: [affiliateLinkId], references: [id], onDelete: SetNull)
+  affiliateCode    String?
+  creatorProfileId String?
+  productId        String?
+  postId           String?
+  userId           String?
+  orderId          String?
+  source           String?
+  sessionKey       String?
+  ipHash           String?
+  userAgent        String?
+  amountCents      Int?
+  currency         String              @default("PHP")
+  metadataJson     Json?
+  createdAt        DateTime            @default(now())
+
+  @@index([type, createdAt])
+  @@index([affiliateCode, createdAt])
+  @@index([creatorProfileId, createdAt])
+  @@index([productId, createdAt])
+  @@index([postId, createdAt])
+  @@index([orderId])
+  @@index([sessionKey, createdAt])
+}
+
+model Commission {
+  id                String           @id @default(cuid())
+  affiliateLinkId   String?
+  affiliateLink     AffiliateLink?    @relation(fields: [affiliateLinkId], references: [id], onDelete: SetNull)
+  affiliateCode     String?
+  creatorProfileId  String?
+  productId         String?
+  postId            String?
+  orderId           String
+  currency          String           @default("PHP")
+  orderAmountCents  Int
+  commissionRateBps Int              @default(1000)
+  commissionCents   Int
+  status            CommissionStatus @default(PENDING)
+  approvedAt        DateTime?
+  paidAt            DateTime?
+  metadataJson      Json?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  @@unique([orderId, affiliateCode])
+  @@index([creatorProfileId, status, createdAt])
+  @@index([affiliateCode, status, createdAt])
+  @@index([productId, createdAt])
+  @@index([postId, createdAt])
+  @@index([status, createdAt])
+}
