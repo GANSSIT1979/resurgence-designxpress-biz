@@ -1,0 +1,40 @@
+name: Docs and Production Validation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: '*/30 * * * *'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Prisma generate (sanity)
+        run: npm run prisma:generate
+
+      - name: Docs link check
+        run: npm run docs:check
+
+      - name: Local preflight
+        run: npm run local:preflight
+
+      - name: Production health check
+        env:
+          PRODUCTION_SITE_URL: ${{ vars.PRODUCTION_SITE_URL || 'https://www.resurgence-dx.biz' }}
+        run: node scripts/generate-production-status.mjs --check
