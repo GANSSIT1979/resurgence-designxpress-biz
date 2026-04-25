@@ -2,46 +2,41 @@
 
 ## Environment
 
-Copy the root environment example file:
-
-```bash
-cp ../.env.example .env
-```
-
-When reading this document from the repository root, use:
-
-```bash
-cp .env.example .env
-```
-
-The canonical template is:
+The canonical root template is:
 
 [.env.example](../.env.example)
 
-## Local setup
+From the repository root:
+
+```bash
+cp .env.example .env
+cp .env.example .env.local
+```
+
+Then update `.env` and `.env.local` with real local or production-safe development values.
+
+Required Prisma values:
+
+```env
+PRISMA_DB_PROVIDER="postgresql"
+DATABASE_URL="postgres://USER:PASSWORD@HOST:6543/postgres?sslmode=require&pgbouncer=true"
+DIRECT_URL="postgres://USER:PASSWORD@HOST:5432/postgres?sslmode=require"
+```
+
+## Setup
 
 ```bash
 npm install
+npm run prisma:generate
 npm run local:preflight
-npm run prisma:prepare
 npm run dev
 ```
 
-## Production deployment
+## Production checks
 
 ```bash
+npm run docs:production-status
+npm run docs:production-status:check
+npm run docs:check
 npm run vercel-build
-npx vercel --prod
-```
-
-To assign the latest deployment to the production domain, replace the deployment URL with the real Vercel deployment URL:
-
-```bash
-npx vercel alias set resurgence-designxpress-qo92fzor4.vercel.app www.resurgence-dx.biz --scope resurgence-designxpress-projects
-```
-
-Do not run this placeholder literally:
-
-```bash
-npx vercel alias set resurgence-designxpress-qo92fzor4.vercel.app www.resurgence-dx.biz --scope resurgence-designxpress-projects
 ```

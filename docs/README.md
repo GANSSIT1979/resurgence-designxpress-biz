@@ -1,47 +1,31 @@
-# Updated docs files
+# Documentation
 
-## File 1
+This folder contains operational and system documentation for Resurgence Powered by DesignXpress.
 
-Copy:
+## Canonical docs
 
-```txt
-INSTALL.md
-```
+- [Production Status](./PRODUCTION_STATUS.md)
+- [Install](./INSTALL.md)
 
-To:
+## Environment
 
-```txt
-docs/INSTALL.md
-```
+The root environment template is:
 
-## Fixes included
-
-1. Fixed broken Markdown link:
-
-```md
-[.env.example](.env.example)
-```
-
-to:
-
-```md
 [.env.example](../.env.example)
-```
 
-2. Replaced unsafe placeholder command:
-
-```bash
-npx vercel alias set <deployment> www.resurgence-dx.biz
-```
-
-with:
+From the repository root, initialize local env files with:
 
 ```bash
-npx vercel alias set resurgence-designxpress-qo92fzor4.vercel.app www.resurgence-dx.biz --scope resurgence-designxpress-projects
+cp .env.example .env
+cp .env.example .env.local
 ```
 
-## Verify
+## Health checks
 
 ```bash
+curl -I https://www.resurgence-dx.biz
+curl https://www.resurgence-dx.biz/api/health
+npm run docs:production-status
+npm run docs:production-status:check
 npm run docs:check
 ```
