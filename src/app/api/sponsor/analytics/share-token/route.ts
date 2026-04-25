@@ -14,6 +14,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: auth.message }, { status: auth.status })
     }
 
+    if (!actor) {
+      return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 })
+    }
+
     const body = (await request.json()) as Partial<CreateShareTokenInput>
 
     if (!body.creatorId || !body.audience || !body.scope) {
