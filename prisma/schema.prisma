@@ -1,13 +1,11 @@
 generator client {
   provider = "prisma-client-js"
 }
-
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
-
 enum InquiryStatus {
   NEW
   UNDER_REVIEW
@@ -17,7 +15,6 @@ enum InquiryStatus {
   CLOSED
   ARCHIVED
 }
-
 enum SponsorSubmissionStatus {
   SUBMITTED
   UNDER_REVIEW
@@ -26,7 +23,6 @@ enum SponsorSubmissionStatus {
   REJECTED
   CONVERTED_TO_ACTIVE_SPONSOR
 }
-
 enum UserRole {
   SYSTEM_ADMIN
   CASHIER
@@ -38,7 +34,6 @@ enum UserRole {
   COACH
   REFEREE
 }
-
 enum InvoiceStatus {
   DRAFT
   ISSUED
@@ -47,7 +42,6 @@ enum InvoiceStatus {
   OVERDUE
   CANCELLED
 }
-
 enum PaymentMethod {
   CASH
   BANK_TRANSFER
@@ -56,13 +50,11 @@ enum PaymentMethod {
   CHECK
   OTHER
 }
-
 enum CashierTransactionKind {
   COLLECTION
   REFUND
   ADJUSTMENT
 }
-
 enum DeliverableStatus {
   PENDING
   IN_PROGRESS
@@ -71,7 +63,6 @@ enum DeliverableStatus {
   NEEDS_REVISION
   COMPLETED
 }
-
 enum PartnerCampaignStatus {
   PLANNING
   ACTIVE
@@ -79,7 +70,6 @@ enum PartnerCampaignStatus {
   COMPLETED
   CANCELLED
 }
-
 enum PartnerReferralStatus {
   NEW
   CONTACTED
@@ -87,42 +77,36 @@ enum PartnerReferralStatus {
   WON
   LOST
 }
-
 enum AgreementStatus {
   DRAFT
   ACTIVE
   EXPIRED
   TERMINATED
 }
-
 enum StaffTaskPriority {
   LOW
   NORMAL
   HIGH
   URGENT
 }
-
 enum StaffTaskStatus {
   TODO
   IN_PROGRESS
   BLOCKED
   COMPLETED
 }
-
 enum AnnouncementLevel {
   INFO
   SUCCESS
   WARNING
   URGENT
 }
-
 enum EmailAutomationStatus {
   QUEUED
   SENT
   FAILED
   SKIPPED
 }
-
 enum ContentPostStatus {
   DRAFT
   PENDING_REVIEW
@@ -131,13 +115,11 @@ enum ContentPostStatus {
   ARCHIVED
   DELETED
 }
-
 enum ContentPostVisibility {
   PUBLIC
   MEMBERS_ONLY
   PRIVATE
 }
-
 enum ContentPostMediaType {
   IMAGE
   VIDEO
@@ -145,7 +127,6 @@ enum ContentPostMediaType {
   VIMEO
   EXTERNAL
 }
-
 enum ContentPostCommentStatus {
   ACTIVE
   HIDDEN
@@ -153,13 +134,11 @@ enum ContentPostCommentStatus {
   PENDING_REVIEW
   SPAM
 }
-
 enum ContentPostCommentVisibility {
   PUBLIC
   FOLLOWERS_ONLY
   PRIVATE
 }
-
 enum ContentViewSource {
   FEED
   PROFILE
@@ -168,7 +147,6 @@ enum ContentViewSource {
   EMBED
   UNKNOWN
 }
-
 enum SponsoredPlacementStatus {
   DRAFT
   PENDING
@@ -180,6 +158,143 @@ enum SponsoredPlacementStatus {
   REJECTED
 }
 
+enum CreatorPayoutRequestStatus {
+  REQUESTED
+  UNDER_REVIEW
+  PENDING
+  APPROVED
+  REJECTED
+  PROCESSING
+  PAID
+  FAILED
+  CANCELLED
+}
+model CreatorPayoutRequest {
+  id                 String                     @id @default(cuid())
+  creatorId          String?
+  creatorProfileId   String?
+  requestedAmount    Decimal                    @default(0) @db.Decimal(12, 2)
+  amountCents        Int?
+  approvedAmount     Decimal?                   @db.Decimal(12, 2)
+  currency           String                     @default("PHP")
+  status             CreatorPayoutRequestStatus @default(PENDING)
+
+  provider           String?
+  providerAccountId  String?
+  payoutAccountId    String?
+  providerTransferId String?
+  referenceNumber    String?
+  notes              String?
+  rejectionReason    String?
+  metadata           Json?
+
+  requestedAt        DateTime                   @default(now())
+  reviewedById       String?
+  reviewedAt         DateTime?
+  approvedAt         DateTime?
+  rejectedAt         DateTime?
+  processingAt       DateTime?
+  paidAt             DateTime?
+  failedAt           DateTime?
+
+  createdAt          DateTime                   @default(now())
+  updatedAt          DateTime                   @updatedAt
+
+  @@index([creatorId])
+  @@index([creatorProfileId])
+  @@index([status])
+  @@index([requestedAt])
+  @@index([reviewedById])
+  @@index([payoutAccountId])
+  @@unique([providerTransferId])
+}
+
+enum AffiliateEventType {
+  VIEW
+  CLICK
+  SHARE
+  PURCHASE
+}
+enum CommissionStatus {
+  PENDING
+  APPROVED
+  PAID
+  VOIDED
+}
+model AffiliateLink {
+  id               String           @id @default(cuid())
+  code             String           @unique
+  creatorProfileId String?
+  productId        String?
+  postId           String?
+  destinationUrl   String?
+  isActive         Boolean          @default(true)
+  metadataJson     Json?
+  events           AffiliateEvent[]
+  commissions      Commission[]
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@index([creatorProfileId])
+  @@index([productId])
+  @@index([postId])
+  @@index([isActive, createdAt])
+}
+model AffiliateEvent {
+  id               String             @id @default(cuid())
+  type             AffiliateEventType
+  affiliateLinkId  String?
+  affiliateLink    AffiliateLink?      @relation(fields: [affiliateLinkId], references: [id], onDelete: SetNull)
+  affiliateCode    String?
+  creatorProfileId String?
+  productId        String?
+  postId           String?
+  userId           String?
+  orderId          String?
+  source           String?
+  sessionKey       String?
+  ipHash           String?
+  userAgent        String?
+  amountCents      Int?
+  currency         String              @default("PHP")
+  metadataJson     Json?
+  createdAt        DateTime            @default(now())
+
+  @@index([type, createdAt])
+  @@index([affiliateCode, createdAt])
+  @@index([creatorProfileId, createdAt])
+  @@index([productId, createdAt])
+  @@index([postId, createdAt])
+  @@index([orderId])
+  @@index([sessionKey, createdAt])
+}
+model Commission {
+  id                String           @id @default(cuid())
+  affiliateLinkId   String?
+  affiliateLink     AffiliateLink?    @relation(fields: [affiliateLinkId], references: [id], onDelete: SetNull)
+  affiliateCode     String?
+  creatorProfileId  String?
+  productId         String?
+  postId            String?
+  orderId           String
+  currency          String           @default("PHP")
+  orderAmountCents  Int
+  commissionRateBps Int              @default(1000)
+  commissionCents   Int
+  status            CommissionStatus @default(PENDING)
+  approvedAt        DateTime?
+  paidAt            DateTime?
+  metadataJson      Json?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  @@unique([orderId, affiliateCode])
+  @@index([creatorProfileId, status, createdAt])
+  @@index([affiliateCode, status, createdAt])
+  @@index([productId, createdAt])
+  @@index([postId, createdAt])
+  @@index([status, createdAt])
+}
 model User {
   id                    String                 @id @default(cuid())
   email                 String                 @unique
@@ -196,13 +311,19 @@ model User {
   termsAcceptedAt       DateTime?
   isActive              Boolean                @default(true)
   lastLoginAt           DateTime?
+
   sponsorProfile        SponsorProfile?
   staffProfile          StaffProfile?
   partnerProfile        PartnerProfile?
   creatorProfile        CreatorProfile?
+
+  activityLogs ActivityLog[] @relation("ActivityActor")
+  savedViews   SavedView[]
+
   notifications         PlatformNotification[] @relation("NotificationRecipient")
   actorNotifications    PlatformNotification[] @relation("NotificationActor")
   emails                AutomatedEmail[]       @relation("EmailRecipient")
+
   contentPosts             ContentPost[]            @relation("PostAuthor")
   contentPostAnalyticsDays ContentPostAnalyticsDay[] @relation("ContentPostAnalyticsAuthor")
   postLikes                PostLike[]               @relation("PostLikeUser")
@@ -211,8 +332,31 @@ model User {
   postSaves                PostSave[]               @relation("PostSaveUser")
   contentPostViewSessions  ContentPostViewSession[] @relation("ContentPostAnalyticsViewer")
   following                Follow[]                 @relation("CreatorFollowUser")
+
   createdAt                DateTime                 @default(now())
   updatedAt                DateTime                 @updatedAt
+}
+model ActivityLog {
+  id               String    @id @default(cuid())
+  actorId          String?
+  actor            User?     @relation("ActivityActor", fields: [actorId], references: [id], onDelete: SetNull)
+  actorEmail       String
+  actorDisplayName String?
+  actorRole        UserRole?
+  action           String
+  resource         String
+  resourceId       String?
+  targetLabel      String?
+  metadataJson     String?
+  ipAddress        String?
+  userAgent        String?
+  createdAt        DateTime  @default(now())
+
+  @@index([actorId, createdAt])
+  @@index([actorEmail, createdAt])
+  @@index([actorRole, createdAt])
+  @@index([resource, createdAt])
+  @@index([action, createdAt])
 }
 
 model VerificationCode {
@@ -230,7 +374,6 @@ model VerificationCode {
   @@index([identifier, purpose, createdAt])
   @@index([expiresAt])
 }
-
 model UploadAsset {
   id              String   @id @default(cuid())
   scope           String
@@ -245,7 +388,6 @@ model UploadAsset {
   @@index([scope, createdAt])
   @@index([uploadedByEmail])
 }
-
 model Inquiry {
   id                     String        @id @default(cuid())
   name                   String
@@ -267,7 +409,6 @@ model Inquiry {
   @@index([email])
   @@index([assignedStaffProfileId, status])
 }
-
 model Sponsor {
   id                  String               @id @default(cuid())
   name                String
@@ -286,7 +427,6 @@ model Sponsor {
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
 }
-
 model Partner {
   id               String           @id @default(cuid())
   name             String
@@ -302,7 +442,6 @@ model Partner {
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 }
-
 model PageContent {
   id        String   @id @default(cuid())
   key       String   @unique
@@ -314,7 +453,6 @@ model PageContent {
   updatedAt DateTime @updatedAt
   createdAt DateTime @default(now())
 }
-
 model SponsorProfile {
   id                  String                  @id @default(cuid())
   userId              String                  @unique
@@ -342,6 +480,57 @@ model SponsorProfile {
   @@index([companyName])
   @@index([contactEmail])
 }
+model RevenueRecord {
+  id                 String   @id @default(cuid())
+  saleDate           DateTime @default(now())
+  sourceType         String
+  title              String
+  referenceNo        String?
+  creatorProfileId   String?
+  partnerId          String?
+  creatorName        String?
+  partnerName        String?
+  sponsorName        String?
+  productCategory    String?
+  merchandiseType    String?
+  quantity           Int?
+  unitPrice          Float?
+  grossSales         Float    @default(0)
+  costAmount         Float?   @default(0)
+  netRevenue         Float?   @default(0)
+  sponsorshipPercent Float?   @default(0)
+  talentFeeAmount    Float?   @default(0)
+  franchiseAmount    Float?   @default(0)
+  companyShareAmount Float?   @default(0)
+  notes              String?
+  attachmentUrl      String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([saleDate])
+  @@index([sourceType])
+  @@index([creatorProfileId])
+  @@index([partnerId])
+  @@index([creatorName])
+  @@index([partnerName])
+}
+
+model SavedView {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scope       String
+  name        String
+  search      String?
+  status      String?
+  filtersJson String?
+  sortJson    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId, scope])
+  @@unique([userId, scope, name])
+}
 
 model SponsorSubmission {
   id                String                  @id @default(cuid())
@@ -368,7 +557,6 @@ model SponsorSubmission {
   @@index([companyName])
   @@index([sponsorProfileId, createdAt])
 }
-
 model SponsorPackageTemplate {
   id              String           @id @default(cuid())
   name            String           @unique
@@ -382,7 +570,6 @@ model SponsorPackageTemplate {
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
 }
-
 model StaffProfile {
   id                String              @id @default(cuid())
   userId            String              @unique
@@ -398,7 +585,6 @@ model StaffProfile {
 
   @@index([department])
 }
-
 model StaffTask {
   id                  String             @id @default(cuid())
   staffProfileId      String
@@ -421,7 +607,6 @@ model StaffTask {
   @@index([inquiryId])
   @@index([sponsorSubmissionId])
 }
-
 model StaffScheduleItem {
   id             String       @id @default(cuid())
   staffProfileId String
@@ -436,7 +621,6 @@ model StaffScheduleItem {
 
   @@index([staffProfileId, startAt])
 }
-
 model StaffAnnouncement {
   id             String            @id @default(cuid())
   staffProfileId String
@@ -451,7 +635,6 @@ model StaffAnnouncement {
 
   @@index([staffProfileId, isPinned, publishAt])
 }
-
 model PlatformNotification {
   id              String            @id @default(cuid())
   recipientRole   UserRole?
@@ -477,7 +660,6 @@ model PlatformNotification {
   @@index([actorUserId, createdAt])
   @@index([contentPostId, createdAt])
 }
-
 model AutomatedEmail {
   id               String                @id @default(cuid())
   recipientRole    UserRole?
@@ -504,7 +686,6 @@ model AutomatedEmail {
   @@index([toEmail, createdAt])
   @@index([eventKey, createdAt])
 }
-
 model PartnerProfile {
   id                String             @id @default(cuid())
   userId            String             @unique
@@ -530,7 +711,6 @@ model PartnerProfile {
   @@index([companyName])
   @@index([contactEmail])
 }
-
 model PartnerCampaign {
   id                String                @id @default(cuid())
   partnerProfileId  String
@@ -549,7 +729,6 @@ model PartnerCampaign {
   @@index([partnerProfileId, status])
   @@index([startDate, endDate])
 }
-
 model PartnerReferral {
   id               String                @id @default(cuid())
   partnerProfileId String
@@ -568,7 +747,6 @@ model PartnerReferral {
   @@index([email])
   @@index([companyName])
 }
-
 model PartnerAgreement {
   id               String          @id @default(cuid())
   partnerProfileId String
@@ -586,14 +764,12 @@ model PartnerAgreement {
   @@index([partnerProfileId, status])
   @@index([startDate, endDate])
 }
-
 enum GalleryMediaType {
   IMAGE
   VIDEO
   YOUTUBE
   VIMEO
 }
-
 model CreatorProfile {
   id                 String        @id @default(cuid())
   userId             String?       @unique
@@ -640,7 +816,6 @@ model CreatorProfile {
   @@index([isActive, sortOrder])
   @@index([position])
 }
-
 model MediaEvent {
   id          String          @id @default(cuid())
   title       String
@@ -657,7 +832,6 @@ model MediaEvent {
   @@index([creatorId, eventDate])
   @@index([isActive, sortOrder])
 }
-
 model GalleryMedia {
   id           String           @id @default(cuid())
   mediaEventId String
@@ -672,7 +846,6 @@ model GalleryMedia {
 
   @@index([mediaEventId, sortOrder])
 }
-
 model ContentPost {
   id                  String                 @id @default(cuid())
   authorUserId        String?
@@ -730,7 +903,6 @@ model ContentPost {
   @@index([uniqueViewCount])
   @@index([completedViewCount])
 }
-
 model ContentPostAnalyticsDay {
   id                  String         @id @default(cuid())
   contentPostId       String
@@ -759,7 +931,6 @@ model ContentPostAnalyticsDay {
   @@index([date])
   @@index([creatorProfileId, date, viewCount])
 }
-
 model CreatorAnalyticsDay {
   id                  String         @id @default(cuid())
   creatorProfileId    String
@@ -785,7 +956,6 @@ model CreatorAnalyticsDay {
   @@index([creatorProfileId, date])
   @@index([creatorProfileId, viewCount])
 }
-
 model ContentPostViewSession {
   id                 String           @id @default(cuid())
   contentPostId      String
@@ -818,7 +988,6 @@ model ContentPostViewSession {
   @@index([contentPostId, viewerSessionKey])
   @@index([contentPostId, deviceHash])
 }
-
 model MediaAsset {
   id               String               @id @default(cuid())
   postId           String
@@ -846,7 +1015,6 @@ model MediaAsset {
   @@index([storageKey])
   @@index([storageProvider, storageKey])
 }
-
 model Hashtag {
   id             String        @id @default(cuid())
   label          String
@@ -857,7 +1025,6 @@ model Hashtag {
 
   @@index([label])
 }
-
 model PostHashtag {
   postId    String
   hashtagId String
@@ -868,7 +1035,6 @@ model PostHashtag {
   @@id([postId, hashtagId])
   @@index([hashtagId])
 }
-
 model PostLike {
   id        String      @id @default(cuid())
   postId    String
@@ -880,7 +1046,6 @@ model PostLike {
   @@unique([postId, userId])
   @@index([userId, createdAt])
 }
-
 model PostComment {
   id               String                       @id @default(cuid())
   postId           String
@@ -925,7 +1090,6 @@ model PostComment {
   @@index([deletedAt])
   @@index([isPinned, createdAt])
 }
-
 model PostSave {
   id        String      @id @default(cuid())
   postId    String
@@ -937,7 +1101,6 @@ model PostSave {
   @@unique([postId, userId])
   @@index([userId, createdAt])
 }
-
 model Follow {
   id               String         @id @default(cuid())
   followerUserId   String
@@ -950,7 +1113,6 @@ model Follow {
   @@index([creatorProfileId, createdAt])
   @@index([followerUserId, createdAt])
 }
-
 model SponsoredPlacement {
   id               String                   @id @default(cuid())
   postId           String?
@@ -982,7 +1144,6 @@ model SponsoredPlacement {
   @@index([sponsorProfileId, status])
   @@index([productId, status])
 }
-
 model PostProductTag {
   id        String       @id @default(cuid())
   postId    String
@@ -999,7 +1160,6 @@ model PostProductTag {
   @@index([postId, sortOrder])
   @@index([productId])
 }
-
 model SponsorInventoryCategory {
   id          String   @id @default(cuid())
   name        String   @unique
@@ -1010,7 +1170,6 @@ model SponsorInventoryCategory {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
-
 model SponsorDeliverable {
   id               String            @id @default(cuid())
   sponsorProfileId String
@@ -1028,7 +1187,6 @@ model SponsorDeliverable {
   @@index([sponsorProfileId, status])
   @@index([category])
 }
-
 model Invoice {
   id            String               @id @default(cuid())
   invoiceNumber String               @unique
@@ -1054,7 +1212,6 @@ model Invoice {
   @@index([companyName])
   @@index([sponsorId, issueDate])
 }
-
 model CashierTransaction {
   id                String                 @id @default(cuid())
   transactionNumber String                 @unique
@@ -1076,7 +1233,6 @@ model CashierTransaction {
   @@index([kind, transactionDate])
   @@index([companyName])
 }
-
 model Receipt {
   id            String              @id @default(cuid())
   receiptNumber String              @unique
@@ -1097,7 +1253,6 @@ model Receipt {
   @@index([transactionId])
   @@index([companyName])
 }
-
 model ProductService {
   id          String   @id @default(cuid())
   name        String
@@ -1113,7 +1268,6 @@ model ProductService {
   @@index([category, sortOrder])
   @@index([isActive, sortOrder])
 }
-
 model AdminReport {
   id               String   @id @default(cuid())
   title            String
@@ -1126,7 +1280,6 @@ model AdminReport {
 
   @@index([reportType, createdAt])
 }
-
 model AppSetting {
   id        String   @id @default(cuid())
   key       String   @unique
@@ -1138,7 +1291,6 @@ model AppSetting {
 
   @@index([group])
 }
-
 enum ShopOrderStatus {
   PENDING
   AWAITING_PAYMENT
@@ -1150,14 +1302,12 @@ enum ShopOrderStatus {
   CANCELLED
   REFUNDED
 }
-
 enum ShopPaymentStatus {
   PENDING
   PAID
   FAILED
   REFUNDED
 }
-
 enum ShopPaymentMethod {
   COD
   GCASH_MANUAL
@@ -1166,7 +1316,6 @@ enum ShopPaymentMethod {
   CARD_MANUAL
   CASH
 }
-
 model ShopCategory {
   id          String        @id @default(cuid())
   name        String
@@ -1180,7 +1329,6 @@ model ShopCategory {
 
   @@index([isActive, sortOrder])
 }
-
 model ShopProduct {
   id                  String               @id @default(cuid())
   name                String
@@ -1214,7 +1362,6 @@ model ShopProduct {
   @@index([isOfficialMerch, isActive, sortOrder])
   @@index([categoryId, sortOrder])
 }
-
 model ShopOrder {
   id            String            @id @default(cuid())
   orderNumber   String            @unique
@@ -1241,7 +1388,6 @@ model ShopOrder {
   @@index([status, createdAt])
   @@index([paymentStatus, createdAt])
 }
-
 model ShopOrderItem {
   id           String       @id @default(cuid())
   orderId      String
