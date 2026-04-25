@@ -2,7 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
   "installCommand": "npm install",
-  "buildCommand": "npm run build",
+  "buildCommand": "npm run vercel-build",
   "outputDirectory": ".next",
   "regions": ["sin1"],
   "redirects": [
@@ -14,7 +14,7 @@
           "value": "shop.resurgence-dx.biz"
         }
       ],
-      "destination": "https://resurgence-dx.biz/shop/product/:path*",
+      "destination": "https://www.resurgence-dx.biz/shop/product/:path*",
       "permanent": true
     },
     {
@@ -25,7 +25,7 @@
           "value": "partnership.resurgence-dx.biz"
         }
       ],
-      "destination": "https://resurgence-dx.biz/partnerships",
+      "destination": "https://www.resurgence-dx.biz/partnerships",
       "permanent": true
     },
     {
@@ -36,7 +36,7 @@
           "value": "support.resurgence-dx.biz"
         }
       ],
-      "destination": "https://resurgence-dx.biz/support",
+      "destination": "https://www.resurgence-dx.biz/support",
       "permanent": true
     },
     {
@@ -47,7 +47,7 @@
           "value": "shop.resurgence-dx.biz"
         }
       ],
-      "destination": "https://resurgence-dx.biz/shop",
+      "destination": "https://www.resurgence-dx.biz/shop",
       "permanent": true
     }
   ],
