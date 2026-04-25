@@ -1,0 +1,29 @@
+name: Deploy Gate
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - run: npm install
+
+      - name: Validate build
+        run: npm run vercel-build
+
+      - name: Validate docs
+        run: npm run docs:check
+
+      - name: Validate production health baseline
+        env:
+          PRODUCTION_SITE_URL: ${{ vars.PRODUCTION_SITE_URL || 'https://www.resurgence-dx.biz' }}
+        run: node scripts/devops-health-gate.mjs
