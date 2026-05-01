@@ -70,7 +70,14 @@ export const appSettingDefaults: PublicSettings = {
 
 let appSettingsMapPromise: Promise<Map<string, string>> | null = null;
 
+function hasUsableDatabaseUrl() {
+  const databaseUrl = process.env.DATABASE_URL || '';
+  return Boolean(databaseUrl && !databaseUrl.includes('@HOST:') && !databaseUrl.includes('HOST:6543'));
+}
+
 async function hasAppSettingsTable() {
+  if (!hasUsableDatabaseUrl()) return false;
+
   const provider = (process.env.PRISMA_DB_PROVIDER || 'sqlite').trim();
 
   if (provider === 'postgresql') {
@@ -96,6 +103,10 @@ async function hasAppSettingsTable() {
 
 export async function getAppSettingsMap() {
   try {
+    if (!hasUsableDatabaseUrl()) {
+      return new Map<string, string>();
+    }
+
     if (appSettingsMapPromise) {
       return await appSettingsMapPromise;
     }
