@@ -10,6 +10,11 @@ export function isMissingFeedTableError(error: unknown) {
   return code === 'P2021' || /does not exist|no such table|ContentPost|MediaAsset/i.test(message);
 }
 
+function hasUsableDatabaseUrl() {
+  const databaseUrl = process.env.DATABASE_URL || '';
+  return Boolean(databaseUrl && !databaseUrl.includes('@HOST:') && !databaseUrl.includes('HOST:6543'));
+}
+
 export function isPrismaDatabaseUnavailableError(error: unknown) {
   const name = (error as { name?: string })?.name ?? '';
   const message = error instanceof Error ? error.message : String(error || '');
@@ -163,6 +168,8 @@ async function runPublicContentPostFindMany(
   args: Omit<Prisma.ContentPostFindManyArgs, 'include' | 'select'>,
   viewerId?: string | null,
 ) {
+  if (!hasUsableDatabaseUrl()) return { items: [], usedLegacySelect: false };
+
   try {
     return {
       items: await prisma.contentPost.findMany({
@@ -190,6 +197,8 @@ async function runPublicContentPostFindUnique(
   args: Omit<Prisma.ContentPostFindUniqueArgs, 'include' | 'select'>,
   viewerId?: string | null,
 ) {
+  if (!hasUsableDatabaseUrl()) return { item: null, usedLegacySelect: false };
+
   try {
     return {
       item: await prisma.contentPost.findUnique({
@@ -214,6 +223,14 @@ async function runPublicContentPostFindUnique(
 }
 
 export async function getGalleryFallbackFeed(limit = 8): Promise<FeedResponse> {
+  if (!hasUsableDatabaseUrl()) {
+    return {
+      items: [],
+      nextCursor: null,
+      source: 'gallery-fallback',
+    };
+  }
+
   try {
     const events = await prisma.mediaEvent.findMany({
       where: { isActive: true },
@@ -252,6 +269,14 @@ export async function getPublicFeed({
   fallbackOnError?: boolean;
 } = {}): Promise<FeedResponse> {
   const take = clampLimit(limit);
+
+  if (!hasUsableDatabaseUrl()) {
+    return {
+      items: [],
+      nextCursor: null,
+      source: 'content-post',
+    };
+  }
 
   try {
     const { items } = await runPublicContentPostFindMany(
@@ -315,6 +340,8 @@ export async function getCreatorPublicFeedPosts({
 }
 
 export async function getPromotedPlacements(limit = 4) {
+  if (!hasUsableDatabaseUrl()) return [];
+
   try {
     return await prisma.sponsoredPlacement.findMany({
       where: {
@@ -338,6 +365,8 @@ export async function getPostForApi(postId: string) {
 }
 
 export async function getPublicFeedPostMetrics(postId: string) {
+  if (!hasUsableDatabaseUrl()) return null;
+
   const item = await prisma.contentPost.findFirst({
     where: {
       id: postId,
