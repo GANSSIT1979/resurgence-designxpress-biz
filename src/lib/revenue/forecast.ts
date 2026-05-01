@@ -13,8 +13,9 @@ export function buildRevenueForecast(input: RevenueForecastInput) {
   const conservativePipeline = input.outstandingRevenue * 0.35;
   const realisticPipeline = input.outstandingRevenue * 0.55;
   const aggressivePipeline = input.outstandingRevenue * 0.75;
-  const totalInvoices = input.paidInvoiceCount + input.unpaidInvoiceCount;
-  const invoiceConversionRate = totalInvoices > 0 ? input.paidInvoiceCount / totalInvoices : 0;
+  const invoiceConversionRate = input.paidInvoiceCount + input.unpaidInvoiceCount > 0
+    ? input.paidInvoiceCount / (input.paidInvoiceCount + input.unpaidInvoiceCount)
+    : 0;
 
   return {
     dailyAverage,
@@ -23,11 +24,6 @@ export function buildRevenueForecast(input: RevenueForecastInput) {
     realisticPipeline,
     aggressivePipeline,
     invoiceConversionRate,
-    recoveryPriority:
-      input.outstandingRevenue > input.paidRevenue * 0.5
-        ? 'high'
-        : input.outstandingRevenue > input.paidRevenue * 0.2
-          ? 'medium'
-          : 'normal',
+    recoveryPriority: input.outstandingRevenue > input.paidRevenue * 0.5 ? 'high' : input.outstandingRevenue > input.paidRevenue * 0.2 ? 'medium' : 'normal',
   };
 }
