@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 
-export default function PaymentSuccessPage() {
+function PaymentSuccessContent() {
   const params = useSearchParams();
   const orderId = params.get('token'); // PayPal returns orderId as token
   const submissionId = params.get('submissionId');
@@ -50,5 +50,22 @@ export default function PaymentSuccessPage() {
       <h1>{status === 'success' ? 'Payment Successful' : status === 'error' ? 'Payment Error' : 'Processing Payment'}</h1>
       <p>{message}</p>
     </main>
+  );
+}
+
+function PaymentSuccessFallback() {
+  return (
+    <main style={{ maxWidth: 640, margin: '80px auto', padding: 20, textAlign: 'center' }}>
+      <h1>Processing Payment</h1>
+      <p>Preparing payment confirmation...</p>
+    </main>
+  );
+}
+
+export default function PaymentSuccessPage() {
+  return (
+    <Suspense fallback={<PaymentSuccessFallback />}>
+      <PaymentSuccessContent />
+    </Suspense>
   );
 }
