@@ -16,9 +16,19 @@ function generateInvoiceNumber() {
   return `DX-${y}${m}${d}-${suffix}`;
 }
 
-function normalizeItems(items: any[]) {
+type NormalizedInvoiceItem = {
+  name: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  currency: string;
+  total: number;
+};
+
+function normalizeItems(items: any[]): NormalizedInvoiceItem[] {
   return items.map((item) => ({
     name: String(item.name || '').trim(),
+    description: String(item.description || '').trim(),
     quantity: Number(item.quantity || 0),
     unitPrice: Number(item.unitPrice || 0),
     currency: item.currency || 'PHP',
