@@ -1,151 +1,79 @@
-import Link from 'next/link';
+'use client';
 
-import { AdminShell } from '@/components/admin-shell';
-import { prisma } from '@/lib/prisma';
+import { useEffect, useMemo, useState } from 'react';
 
-export const dynamic = 'force-dynamic';
+const STAGES = ['LEAD', 'CONTACTED', 'NEGOTIATING', 'INVOICE_SENT', 'PAID', 'ACTIVE'] as const;
 
-const pipelineStatuses = [
-  'SUBMITTED',
-  'UNDER_REVIEW',
-  'NEEDS_REVISION',
-  'APPROVED',
-  'REJECTED',
-  'CONVERTED_TO_ACTIVE_SPONSOR',
-] as const;
+type SponsorLead = {
+  id: string;
+  name: string;
+  email?: string | null;
+  company?: string | null;
+  amount?: number | null;
+  stage: string;
+  status?: string | null;
+};
 
-function extractManualReference(notes?: string | null) {
-  if (!notes) return '—';
-  const match = notes.match(/GCash Ref:\s*([^\n]+)/i);
-  return match?.[1]?.trim() || '—';
-}
+export default function SponsorCrmPage() {
+  const [items, setItems] = useState<SponsorLead[]>([]);
+  const [loading, setLoading] = useState(true);
 
-export default async function AdminSponsorCrmPage() {
-  const [submissions, packageTemplates] = await Promise.all([
-    prisma.sponsorSubmission.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 100,
-    }),
-    prisma.sponsorPackageTemplate.findMany({
-      where: { isActive: true },
-      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
-    }),
-  ]);
+  useEffect(() => {
+    fetch('/api/sponsor/list', { cache: 'no-store' })
+      .then((res) => res.json())
+      .then((json) => setItems(json.data || []))
+      .finally(() => setLoading(false));
+  }, []);
 
-  const stats = [
-    { label: 'Total Leads', value: submissions.length },
-    { label: 'New Applications', value: submissions.filter((item) => item.status === 'SUBMITTED').length },
-    { label: 'Under Review', value: submissions.filter((item) => item.status === 'UNDER_REVIEW').length },
-    { label: 'Approved', value: submissions.filter((item) => item.status === 'APPROVED').length },
-    { label: 'Converted', value: submissions.filter((item) => item.status === 'CONVERTED_TO_ACTIVE_SPONSOR').length },
-    { label: 'GCash Refs', value: submissions.filter((item) => item.internalNotes?.includes('GCash Ref:')).length },
-  ];
+  async function moveLead(id: string, stage: string) {
+    const previous = items;
+    setItems((current) => current.map((item) => (item.id === id ? { ...item, stage } : item)));
+
+    const res = await fetch('/api/sponsor/update-stage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, stage, triggerFollowUp: ['CONTACTED', 'NEGOTIATING', 'INVOICE_SENT'].includes(stage) }),
+    });
+
+    if (!res.ok) setItems(previous);
+  }
+
+  const totalPipeline = useMemo(
+    () => items.reduce((sum, item) => sum + Number(item.amount || 0), 0),
+    [items],
+  );
+
+  if (loading) return <main style={{ padding: 24 }}>Loading Sponsor CRM...</main>;
 
   return (
-    <main>
-      <AdminShell
-        title="Sponsor CRM"
-        description="Review DAYO Series sponsor leads, monitor package interest, verify GCash references, and move sponsors through the pipeline."
-        currentPath="/admin/sponsor-crm"
-      >
-        <section className="card-grid grid-3">
-          {stats.map((stat) => (
-            <article className="card" key={stat.label}>
-              <div className="section-kicker">{stat.label}</div>
-              <h2 style={{ margin: '8px 0 0' }}>{stat.value}</h2>
-            </article>
-          ))}
-        </section>
+    <main style={{ padding: 24, maxWidth: 1440, margin: '0 auto' }}>
+      <p style={{ margin: 0, color: '#666', textTransform: 'uppercase', letterSpacing: 2, fontSize: 12 }}>Admin / Sponsor CRM</p>
+      <h1 style={{ marginTop: 6, fontSize: 36 }}>Sponsor CRM Pipeline</h1>
+      <p style={{ color: '#555' }}>Pipeline value: PHP {totalPipeline.toLocaleString('en-PH')}</p>
 
-        <section className="card" style={{ marginTop: 24 }}>
-          <div className="section-kicker">Active Sponsor Packages</div>
-          <div className="card-grid grid-3" style={{ marginTop: 16 }}>
-            {packageTemplates.map((pkg) => (
-              <div className="panel" key={pkg.id}>
-                <strong>{pkg.name}</strong>
-                <p className="helper">{pkg.tier} · {pkg.rangeLabel}</p>
-                <p className="section-copy">{pkg.summary}</p>
-              </div>
-            ))}
-            {packageTemplates.length === 0 ? <p className="helper">No active package templates yet.</p> : null}
-          </div>
-        </section>
-
-        <section className="card" style={{ marginTop: 24 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
-            <div>
-              <div className="section-kicker">Sponsor Pipeline</div>
-              <h2 style={{ marginTop: 6 }}>Latest Applications</h2>
-            </div>
-            <Link className="button" href="/dayo-series-ofw-all-star" target="_blank">
-              Open DAYO Landing
-            </Link>
-          </div>
-
-          <div style={{ overflowX: 'auto', marginTop: 16 }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 980 }}>
-              <thead>
-                <tr>
-                  {['Company', 'Contact', 'Package', 'Status', 'GCash Ref', 'Submitted', 'Actions'].map((heading) => (
-                    <th key={heading} style={{ textAlign: 'left', padding: '12px 10px', borderBottom: '1px solid rgba(148,163,184,0.25)' }}>
-                      {heading}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {submissions.map((item) => (
-                  <tr key={item.id}>
-                    <td style={{ padding: '12px 10px', borderBottom: '1px solid rgba(148,163,184,0.15)' }}>
-                      <strong>{item.companyName}</strong>
-                      <div className="helper">{item.category}</div>
-                    </td>
-                    <td style={{ padding: '12px 10px', borderBottom: '1px solid rgba(148,163,184,0.15)' }}>
-                      <strong>{item.contactName}</strong>
-                      <div className="helper">{item.email}</div>
-                      {item.phone ? <div className="helper">{item.phone}</div> : null}
-                    </td>
-                    <td style={{ padding: '12px 10px', borderBottom: '1px solid rgba(148,163,184,0.15)' }}>
-                      {item.interestedPackage}
-                      <div className="helper">{item.budgetRange}</div>
-                    </td>
-                    <td style={{ padding: '12px 10px', borderBottom: '1px solid rgba(148,163,184,0.15)' }}>
-                      <span className="status-pill">{item.status.replaceAll('_', ' ')}</span>
-                    </td>
-                    <td style={{ padding: '12px 10px', borderBottom: '1px solid rgba(148,163,184,0.15)' }}>
-                      {extractManualReference(item.internalNotes)}
-                    </td>
-                    <td style={{ padding: '12px 10px', borderBottom: '1px solid rgba(148,163,184,0.15)' }}>
-                      {item.createdAt.toLocaleDateString()}
-                    </td>
-                    <td style={{ padding: '12px 10px', borderBottom: '1px solid rgba(148,163,184,0.15)' }}>
-                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                        {pipelineStatuses.map((status) => (
-                          <Link
-                            key={status}
-                            href={`/api/admin/sponsor-crm/${item.id}/status?status=${status}`}
-                            className="button secondary"
-                            style={{ fontSize: 12, padding: '6px 8px' }}
-                          >
-                            {status.replaceAll('_', ' ')}
-                          </Link>
-                        ))}
-                      </div>
-                    </td>
-                  </tr>
+      <section style={{ display: 'grid', gridTemplateColumns: `repeat(${STAGES.length}, minmax(220px, 1fr))`, gap: 14, overflowX: 'auto' }}>
+        {STAGES.map((stage) => {
+          const columnItems = items.filter((item) => item.stage === stage || (!item.stage && stage === 'LEAD'));
+          return (
+            <div key={stage} style={{ border: '1px solid #e5e7eb', borderRadius: 16, padding: 14, background: '#fafafa', minHeight: 360 }}>
+              <h2 style={{ fontSize: 15, marginTop: 0 }}>{stage}</h2>
+              <strong>{columnItems.length} leads</strong>
+              <div style={{ display: 'grid', gap: 10, marginTop: 12 }}>
+                {columnItems.map((item) => (
+                  <article key={item.id} style={{ border: '1px solid #ddd', borderRadius: 12, padding: 12, background: '#fff' }}>
+                    <strong>{item.company || item.name}</strong>
+                    <p style={{ margin: '4px 0', color: '#555' }}>{item.email || 'No email'}</p>
+                    <p style={{ margin: '4px 0' }}>PHP {Number(item.amount || 0).toLocaleString('en-PH')}</p>
+                    <select value={item.stage || 'LEAD'} onChange={(event) => moveLead(item.id, event.target.value)} style={{ width: '100%', padding: 8 }}>
+                      {STAGES.map((targetStage) => <option key={targetStage} value={targetStage}>{targetStage}</option>)}
+                    </select>
+                  </article>
                 ))}
-                {submissions.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} style={{ padding: 20 }}>
-                      No sponsor leads yet. Share the DAYO landing page to start capturing applications.
-                    </td>
-                  </tr>
-                ) : null}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      </AdminShell>
+              </div>
+            </div>
+          );
+        })}
+      </section>
     </main>
   );
 }

@@ -1,0 +1,18 @@
+model SponsorLead {
+  id        String   @id @default(cuid())
+  name      String
+  email     String?
+  company   String?
+  phone     String?
+  amount    Float?
+  packageName String?
+  stage     String   @default("LEAD")
+  status    String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([stage, updatedAt])
+  @@index([email])
+  @@index([company])
+}

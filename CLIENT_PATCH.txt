@@ -1,0 +1,14 @@
+Replace your current success block with something like:
+
+const json = await res.json();
+if (!res.ok) throw new Error(json?.error || "Unable to send message.");
+
+if (json.conversationId && json.conversationId !== conversationId) {
+  setConversationId(json.conversationId);
+  window.localStorage.setItem("resurgence_conversation_id", json.conversationId);
+}
+
+setMessages((current) => {
+  const withoutOptimistic = current.filter((item) => item.id !== optimisticUser.id);
+  return [...withoutOptimistic, json.userMessage, json.assistantMessage];
+});

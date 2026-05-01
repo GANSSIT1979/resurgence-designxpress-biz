@@ -1,4 +1,5 @@
 import { Prisma } from "@prisma/client";
+import { randomUUID } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 
 import {
@@ -21,8 +22,8 @@ type ConversationMessage = {
 type PersistedMessageRow = {
   id: string;
   conversationId: string;
-  senderId: string | null;
-  role: string;
+  userId: string;
+  role: "user" | "assistant" | "system" | string;
   content: string;
   createdAt: Date | string;
 };
@@ -34,6 +35,21 @@ type UiMessage = {
   createdAt: string;
   routeLabel?: string;
 };
+
+type Actor = {
+  session: {
+    email: string;
+    role: string;
+    displayName?: string;
+  };
+  authUserId: string;
+  email: string;
+  role: string;
+};
+
+function isUuid(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
 
 function hasBusinessIntent(message: string) {
   return /(proposal|quotation|quote|pricing|price|budget|meeting|callback|call me|formal follow-up|proceed|interested in partnering|order number|payment reference|delivery issue|urgent)/i.test(
@@ -115,58 +131,100 @@ function toUiMessage(row: PersistedMessageRow, routeLabel?: string): UiMessage {
   };
 }
 
-async function resolveActor(request: NextRequest) {
+async function resolveActor(request: NextRequest): Promise<Actor | null> {
   const token = request.cookies.get(COOKIE_NAME)?.value;
   const session = await verifySession(token);
 
-  if (!session) {
-    return {
-      session: null,
-      userId: null as string | null,
-      email: null as string | null,
-      role: null as string | null,
-    };
-  }
+  if (!session) return null;
 
-  const user = await db.user.findUnique({
-    where: { email: session.email },
-    select: { id: true, email: true, role: true },
-  });
+  const rows = await db.$queryRaw<Array<{ id: string; email: string | null }>>(Prisma.sql`
+    select id::text as id, email
+    from auth.users
+    where email = ${session.email}
+    limit 1
+  `);
+
+  const authUser = rows[0];
+  if (!authUser?.id) return null;
 
   return {
     session,
-    userId: user?.id ?? null,
-    email: user?.email ?? session.email,
-    role: user?.role ?? session.role,
+    authUserId: authUser.id,
+    email: authUser.email || session.email,
+    role: session.role,
   };
+}
+
+async function getConversationAccess(
+  tx: Prisma.TransactionClient,
+  args: { conversationId: string; authUserId: string }
+) {
+  const rows = await tx.$queryRaw<
+    Array<{
+      exists: boolean;
+      isParticipant: boolean;
+    }>
+  >(Prisma.sql`
+    select
+      exists (
+        select 1
+        from public.conversations c
+        where c.id = ${args.conversationId}::uuid
+      ) as "exists",
+      exists (
+        select 1
+        from public.conversation_participants cp
+        where cp.conversation_id = ${args.conversationId}::uuid
+          and cp.user_id = ${args.authUserId}::uuid
+      ) as "isParticipant"
+  `);
+
+  return rows[0] || { exists: false, isParticipant: false };
+}
+
+async function createConversationIfMissing(
+  tx: Prisma.TransactionClient,
+  args: { conversationId: string; authUserId: string }
+) {
+  await tx.$executeRaw(Prisma.sql`
+    insert into public.conversations (id, user_id)
+    values (${args.conversationId}::uuid, ${args.authUserId}::uuid)
+    on conflict (id) do nothing
+  `);
+
+  await tx.$executeRaw(Prisma.sql`
+    insert into public.conversation_participants (conversation_id, user_id)
+    values (${args.conversationId}::uuid, ${args.authUserId}::uuid)
+    on conflict (conversation_id, user_id) do nothing
+  `);
 }
 
 async function insertMessage(
   tx: Prisma.TransactionClient,
   args: {
     conversationId: string;
-    senderId: string | null;
-    role: "user" | "assistant";
+    authUserId: string;
+    role: "user" | "assistant" | "system";
     content: string;
   }
 ) {
   const rows = await tx.$queryRaw<PersistedMessageRow[]>(Prisma.sql`
     insert into public.messages (
       conversation_id,
-      sender_id,
+      user_id,
       role,
       content
     )
     values (
-      ${args.conversationId},
-      ${args.senderId},
+      ${args.conversationId}::uuid,
+      ${args.authUserId}::uuid,
       ${args.role},
       ${args.content}
     )
     returning
-      id,
-      conversation_id as "conversationId",
-      sender_id as "senderId",
+      id::text as id,
+      conversation_id::text as "conversationId",
+      user_id::text as "userId",
       role,
       content,
       created_at as "createdAt"
@@ -183,35 +241,31 @@ async function insertMessage(
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
-    const conversationId = String(body?.conversationId || "").trim();
+    const requestedConversationId = String(body?.conversationId || "").trim();
     const message = String(body?.message || "").trim();
     const history = parseHistory(body?.history);
 
-    if (!conversationId || !message) {
+    if (!message) {
       return NextResponse.json(
-        { ok: false, error: "Missing conversationId or message." },
+        { ok: false, error: "Missing message." },
         { status: 400 }
       );
     }
 
     const actor = await resolveActor(req);
+    if (!actor) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: "Unauthorized. A valid app session mapped to auth.users is required.",
+        },
+        { status: 401 }
+      );
+    }
 
-if (!actor.session || !actor.userId) {
-  return NextResponse.json({ ok: false, error: "Unauthorized." }, { status: 401 });
-}
-
-const canAccess = await db.$queryRaw<Array<{ exists: boolean }>>(Prisma.sql`
-  select exists (
-    select 1
-    from public.conversation_participants cp
-    where cp.conversation_id = ${conversationId}
-      and cp.user_id = ${actor.userId}
-  ) as "exists"
-`);
-
-if (!canAccess?.[0]?.exists) {
-  return NextResponse.json({ ok: false, error: "Forbidden." }, { status: 403 });
-}
+    const conversationId = isUuid(requestedConversationId)
+      ? requestedConversationId
+      : randomUUID();
 
     const routeKey = inferSupportCategory(message);
     const route = getSupportCategory(routeKey);
@@ -240,48 +294,65 @@ if (!canAccess?.[0]?.exists) {
       output = buildSupportReply(message, route.key, settings);
     }
 
-    const { userMessage, assistantMessage } = await db.$transaction(async (tx) => {
-      const persistedUserMessage = await insertMessage(tx, {
+    const result = await db.$transaction(async (tx) => {
+      const access = await getConversationAccess(tx, {
         conversationId,
-        senderId: actor.userId,
+        authUserId: actor.authUserId,
+      });
+
+      if (!access.exists) {
+        await createConversationIfMissing(tx, {
+          conversationId,
+          authUserId: actor.authUserId,
+        });
+      } else if (!access.isParticipant) {
+        throw new Error("FORBIDDEN_CONVERSATION_ACCESS");
+      }
+
+      const userMessage = await insertMessage(tx, {
+        conversationId,
+        authUserId: actor.authUserId,
         role: "user",
         content: message,
       });
 
-      const persistedAssistantMessage = await insertMessage(tx, {
+      const assistantMessage = await insertMessage(tx, {
         conversationId,
-        senderId: null,
+        authUserId: actor.authUserId,
         role: "assistant",
         content: output as string,
       });
 
-      return {
-        userMessage: persistedUserMessage,
-        assistantMessage: persistedAssistantMessage,
-      };
+      return { userMessage, assistantMessage };
     });
 
     return NextResponse.json({
       ok: true,
       aiEnabled,
+      conversationId,
       output,
-      userMessage: toUiMessage(userMessage),
-      assistantMessage: toUiMessage(assistantMessage, route.label),
+      userMessage: toUiMessage(result.userMessage),
+      assistantMessage: toUiMessage(result.assistantMessage, route.label),
       requiresLeadDetails: hasBusinessIntent(message),
       leadCaptured: false,
       routeKey: route.key,
       routeLabel: route.label,
       routeSummary: route.summary,
       supportMode: aiEnabled ? "ai" : "local-fallback",
-      actor: actor.session
-        ? {
-            email: actor.email,
-            role: actor.role,
-            userId: actor.userId,
-          }
-        : null,
+      actor: {
+        email: actor.email,
+        role: actor.role,
+        authUserId: actor.authUserId,
+      },
     });
   } catch (error) {
+    if (error instanceof Error && error.message === "FORBIDDEN_CONVERSATION_ACCESS") {
+      return NextResponse.json(
+        { ok: false, error: "Forbidden." },
+        { status: 403 }
+      );
+    }
+
     console.error("Chatkit message route error:", error);
 
     return NextResponse.json(
