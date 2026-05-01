@@ -1,6 +1,10 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
+import { prisma } from '@/lib/prisma';
+
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'DAYO Series OFW All-Star 2026 | RESURGENCE',
   description:
@@ -19,43 +23,45 @@ const objectives = [
   'Build a repeatable sports activation model for RESURGENCE partners.',
 ];
 
-const sponsorshipTiers = [
+const fallbackPackages = [
   {
+    id: 'title-partner',
     name: 'Title Partner',
-    tagline: 'Premier naming-rights visibility',
-    border: '#D4AF37',
-    benefits: [
-      'Primary event naming and headline placement',
-      'Dominant jersey, court, and social content visibility',
-      'VIP recognition during opening and awarding moments',
-      'Priority inclusion in recap videos and sponsor reports',
-    ],
+    tier: 'Premier',
+    rangeLabel: 'Naming-rights visibility',
+    summary: 'Primary event naming, dominant jersey/court placement, VIP recognition, and priority recap exposure.',
+    benefits:
+      'Primary event naming and headline placement\nDominant jersey, court, and social content visibility\nVIP recognition during opening and awarding moments\nPriority inclusion in recap videos and sponsor reports',
   },
   {
+    id: 'gold-sponsor',
     name: 'Gold Sponsor',
-    tagline: 'High-impact brand exposure',
-    border: '#F1F1F1',
-    benefits: [
-      'Logo placement on digital posters and event materials',
-      'Featured brand mentions across promotional content',
-      'Booth or activation area subject to venue layout',
-      'Post-event performance and exposure summary',
-    ],
+    tier: 'Gold',
+    rangeLabel: 'High-impact brand exposure',
+    summary: 'Logo placement, featured mentions, activation opportunities, and post-event exposure reporting.',
+    benefits:
+      'Logo placement on digital posters and event materials\nFeatured brand mentions across promotional content\nBooth or activation area subject to venue layout\nPost-event performance and exposure summary',
   },
   {
+    id: 'community-sponsor',
     name: 'Community Sponsor',
-    tagline: 'Grassroots support package',
-    border: '#E63946',
-    benefits: [
-      'Supporting sponsor recognition',
-      'Inclusion in partner thank-you posts',
-      'Community goodwill positioning with OFW athletes',
-      'Optional product or voucher contribution mechanics',
-    ],
+    tier: 'Community',
+    rangeLabel: 'Grassroots support package',
+    summary: 'Supporting sponsor visibility for brands that want strong community goodwill positioning.',
+    benefits:
+      'Supporting sponsor recognition\nInclusion in partner thank-you posts\nCommunity goodwill positioning with OFW athletes\nOptional product or voucher contribution mechanics',
   },
 ];
 
-export default function DayoSeriesOfwAllStarPage() {
+const tierBorders = ['#D4AF37', '#F1F1F1', '#E63946', '#4CC9F0'];
+
+export default async function DayoSeriesOfwAllStarPage() {
+  const livePackages = await prisma.sponsorPackageTemplate.findMany({
+    where: { isActive: true },
+    orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+  });
+  const sponsorshipPackages = livePackages.length > 0 ? livePackages : fallbackPackages;
+
   return (
     <main style={{ background: '#0B0E14', color: '#F1F1F1', minHeight: '100vh' }}>
       <section
@@ -103,6 +109,14 @@ export default function DayoSeriesOfwAllStarPage() {
               </div>
             ))}
           </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 34 }}>
+            <Link href="/dayo-series-ofw-all-star/apply" style={{ color: '#0B0E14', background: '#D4AF37', padding: '14px 20px', borderRadius: 999, fontWeight: 900, textDecoration: 'none' }}>
+              Apply as Sponsor
+            </Link>
+            <Link href="#sponsorship-packages" style={{ color: '#F1F1F1', border: '1px solid #D4AF37', padding: '14px 20px', borderRadius: 999, fontWeight: 800, textDecoration: 'none' }}>
+              View Packages
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -130,34 +144,38 @@ export default function DayoSeriesOfwAllStarPage() {
         </div>
       </section>
 
-      <section style={{ maxWidth: 1180, margin: '0 auto', padding: '24px 24px 72px' }}>
+      <section id="sponsorship-packages" style={{ maxWidth: 1180, margin: '0 auto', padding: '24px 24px 72px' }}>
         <div style={{ borderLeft: '6px solid #E63946', paddingLeft: 20, marginBottom: 28 }}>
           <h2 style={{ color: '#D4AF37', fontSize: 44, margin: 0, textTransform: 'uppercase' }}>
-            Sponsorship Tiers
+            Sponsorship Packages
           </h2>
-          <p style={{ letterSpacing: 3, textTransform: 'uppercase', fontSize: 13 }}>Packages designed for visibility and conversion</p>
+          <p style={{ letterSpacing: 3, textTransform: 'uppercase', fontSize: 13 }}>Live package templates designed for visibility and conversion</p>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20 }}>
-          {sponsorshipTiers.map((tier) => (
+          {sponsorshipPackages.map((tier, index) => (
             <article
-              key={tier.name}
+              key={tier.id}
               style={{
                 background: '#1A1F2B',
                 borderRadius: 16,
-                borderTop: `5px solid ${tier.border}`,
+                borderTop: `5px solid ${tierBorders[index % tierBorders.length]}`,
                 padding: 24,
                 boxShadow: '0 18px 44px rgba(0,0,0,0.28)',
               }}
             >
-              <h3 style={{ fontSize: 30, margin: 0, color: '#F1F1F1' }}>{tier.name}</h3>
-              <p style={{ color: '#D4AF37', textTransform: 'uppercase', letterSpacing: 1, fontSize: 12 }}>
-                {tier.tagline}
+              <p style={{ color: '#D4AF37', textTransform: 'uppercase', letterSpacing: 1, fontSize: 12, marginTop: 0 }}>
+                {tier.tier} · {tier.rangeLabel}
               </p>
+              <h3 style={{ fontSize: 30, margin: 0, color: '#F1F1F1' }}>{tier.name}</h3>
+              <p style={{ lineHeight: 1.65 }}>{tier.summary}</p>
               <ul style={{ lineHeight: 1.8, paddingLeft: 20 }}>
-                {tier.benefits.map((benefit) => (
+                {tier.benefits.split('\n').filter(Boolean).map((benefit) => (
                   <li key={benefit}>{benefit}</li>
                 ))}
               </ul>
+              <Link href={`/dayo-series-ofw-all-star/apply?package=${encodeURIComponent(tier.name)}`} style={{ display: 'inline-block', marginTop: 10, color: '#0B0E14', background: '#D4AF37', padding: '11px 16px', borderRadius: 999, fontWeight: 800, textDecoration: 'none' }}>
+                Select Package
+              </Link>
             </article>
           ))}
         </div>
@@ -173,11 +191,11 @@ export default function DayoSeriesOfwAllStarPage() {
         >
           <strong style={{ fontSize: 24 }}>Ready for sponsor onboarding and proposal conversion.</strong>
           <p style={{ color: '#D4AF37', marginBottom: 0 }}>
-            Connect this page to sponsor applications, checkout packages, and partner deliverables inside RESURGENCE.
+            Apply now, then continue to sponsor dashboard onboarding, billing, and deliverables.
           </p>
           <div style={{ marginTop: 18 }}>
-            <Link href="/sponsor/packages" style={{ color: '#0B0E14', background: '#D4AF37', padding: '12px 18px', borderRadius: 999, fontWeight: 800, textDecoration: 'none' }}>
-              View Sponsor Packages
+            <Link href="/dayo-series-ofw-all-star/apply" style={{ color: '#0B0E14', background: '#D4AF37', padding: '12px 18px', borderRadius: 999, fontWeight: 800, textDecoration: 'none' }}>
+              Start Sponsor Application
             </Link>
           </div>
         </div>
