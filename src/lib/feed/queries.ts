@@ -10,6 +10,17 @@ export function isMissingFeedTableError(error: unknown) {
   return code === 'P2021' || /does not exist|no such table|ContentPost|MediaAsset/i.test(message);
 }
 
+export function isPrismaDatabaseUnavailableError(error: unknown) {
+  const name = (error as { name?: string })?.name ?? '';
+  const message = error instanceof Error ? error.message : String(error || '');
+
+  return (
+    error instanceof Prisma.PrismaClientInitializationError ||
+    name === 'PrismaClientInitializationError' ||
+    /Can't reach database server|database server is running|ECONNREFUSED|ENOTFOUND|ETIMEDOUT|P1001|HOST:6543/i.test(message)
+  );
+}
+
 function logFeedFallback(scope: string, error: unknown) {
   console.error(`[feed] Falling back to ${scope}.`, error);
 }
@@ -271,6 +282,13 @@ export async function getPublicFeed({
   } catch (error) {
     if (!fallbackOnError) throw error;
     logFeedFallback('the gallery feed after a content-post query failure', error);
+    if (isPrismaDatabaseUnavailableError(error)) {
+      return {
+        items: [],
+        nextCursor: null,
+        source: 'content-post',
+      };
+    }
     return getGalleryFallbackFeed(take);
   }
 }
