@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 type SubmissionResult = {
@@ -9,7 +9,7 @@ type SubmissionResult = {
   interestedPackage: string;
 };
 
-export default function SponsorApplyPage() {
+function SponsorApplyForm() {
   const params = useSearchParams();
   const preselectedPackage = params.get('package') || '';
 
@@ -147,5 +147,22 @@ export default function SponsorApplyPage() {
         </button>
       </form>
     </main>
+  );
+}
+
+function SponsorApplyFallback() {
+  return (
+    <main style={{ maxWidth: 600, margin: '40px auto', padding: 20 }}>
+      <h1>Sponsor Application</h1>
+      <p>Loading application form...</p>
+    </main>
+  );
+}
+
+export default function SponsorApplyPage() {
+  return (
+    <Suspense fallback={<SponsorApplyFallback />}>
+      <SponsorApplyForm />
+    </Suspense>
   );
 }
