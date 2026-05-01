@@ -1407,25 +1407,77 @@ model ShopOrderItem {
   @@index([orderId])
   @@index([productId])
 }
-model PaymentEvent {
-  id         String   @id @default(cuid())
-  provider   String
-  eventId    String
-  eventType  String
-  resourceId String?
-  amount     Float?
-  createdAt  DateTime @default(now())
 
-  @@unique([provider, eventId])
+model ObservabilityLog {
+  id           String   @id @default(cuid())
+  level        String
+  event        String
+  requestId    String?
+  route        String?
+  method       String?
+  status       Int?
+  durationMs   Int?
+  actorId      String?
+  actorRole    String?
+  resourceType String?
+  resourceId   String?
+  provider     String?
+  metadataJson Json?
+  createdAt    DateTime @default(now())
+  @@index([event, createdAt])
+  @@index([requestId])
+  @@index([route, createdAt])
 }
-
+model ObservabilityMetric {
+  id        String   @id @default(cuid())
+  name      String
+  value     Float?
+  tagsJson  Json?
+  createdAt DateTime @default(now())
+  @@index([name, createdAt])
+}
+model ObservabilityAlert {
+  id           String   @id @default(cuid())
+  severity     String
+  title        String
+  message      String
+  requestId    String?
+  route        String?
+  provider     String?
+  resourceType String?
+  resourceId   String?
+  metadataJson Json?
+  createdAt    DateTime @default(now())
+  @@index([severity, createdAt])
+}
+model PaymentEvent {
+  id           String   @id @default(cuid())
+  provider     String
+  eventId      String
+  eventType    String
+  resourceType String?
+  resourceId   String?
+  amount       Float?
+  currency     String?  @default("PHP")
+  status       String?  @default("PROCESSED")
+  metadataJson Json?
+  createdAt    DateTime @default(now())
+  @@unique([provider, eventId])
+  @@index([provider, eventType, createdAt])
+}
 model FinanceAuditLog {
-  id         String   @id @default(cuid())
-  actorId    String?
-  action     String
-  provider   String
-  resourceId String?
-  amount     Float?
-  status     String?
-  createdAt  DateTime @default(now())
+  id           String   @id @default(cuid())
+  actorId      String?
+  actorRole    String?
+  action       String
+  provider     String
+  resourceType String?
+  resourceId   String?
+  amount       Float?
+  currency     String?  @default("PHP")
+  status       String?
+  metadataJson Json?
+  createdAt    DateTime @default(now())
+  @@index([action, createdAt])
+  @@index([resourceType, resourceId])
 }

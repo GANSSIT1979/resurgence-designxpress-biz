@@ -1,42 +1,42 @@
-import { existsSync, rmSync, renameSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
+import path from 'node:path';
+import process from 'node:process';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const projectRoot = join(__dirname, '..');
-const mobileAppDir = join(projectRoot, 'apps', 'mobile', 'app');
-const hiddenMobileAppDir = join(projectRoot, 'apps', 'mobile', '.app.web-build-hidden');
-const nextBin = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+const isWindows = process.platform === 'win32';
 
-let movedMobileApp = false;
+const nextBin = path.join(
+  process.cwd(),
+  'node_modules',
+  'next',
+  'dist',
+  'bin',
+  'next'
+);
 
-try {
-  if (existsSync(hiddenMobileAppDir)) {
-    rmSync(hiddenMobileAppDir, { recursive: true, force: true });
-  }
-
-  if (existsSync(mobileAppDir)) {
-    renameSync(mobileAppDir, hiddenMobileAppDir);
-    movedMobileApp = true;
-  }
-
-  const result = spawnSync(nextBin, ['next', 'build'], {
-    cwd: projectRoot,
-    env: process.env,
-    stdio: 'inherit',
-  });
-
-  if (result.error) {
-    throw result.error;
-  }
-
-  process.exitCode = result.status ?? 1;
-} finally {
-  if (movedMobileApp && existsSync(hiddenMobileAppDir)) {
-    if (existsSync(mobileAppDir)) {
-      rmSync(mobileAppDir, { recursive: true, force: true });
-    }
-    renameSync(hiddenMobileAppDir, mobileAppDir);
-  }
+if (!existsSync(nextBin)) {
+  console.error('[build-web-only] Next.js binary not found.');
+  console.error('[build-web-only] Run npm install first.');
+  process.exit(1);
 }
+
+const result = spawnSync(
+  process.execPath,
+  [nextBin, 'build'],
+  {
+    stdio: 'inherit',
+    shell: false,
+    env: {
+      ...process.env,
+      NEXT_TELEMETRY_DISABLED: process.env.NEXT_TELEMETRY_DISABLED || '1',
+    },
+    windowsHide: true,
+  }
+);
+
+if (result.error) {
+  console.error('[build-web-only] Build failed to start:', result.error);
+  process.exit(1);
+}
+
+process.exit(result.status ?? 0);

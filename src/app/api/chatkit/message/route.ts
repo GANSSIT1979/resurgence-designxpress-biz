@@ -1,16 +1,44 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { generateSupportResponse, getSupportCategory, getSupportRouteStatus, inferSupportCategory } from '@/lib/openai-support';
-import { getPublicSettings, type PublicSettings } from '@/lib/settings';
+import { Prisma } from "@prisma/client";
+import { NextRequest, NextResponse } from "next/server";
 
-export const runtime = 'nodejs';
+import {
+  generateSupportResponse,
+  getSupportCategory,
+  getSupportRouteStatus,
+  inferSupportCategory,
+} from "@/lib/openai-support";
+import { getPublicSettings, type PublicSettings } from "@/lib/settings";
+import { COOKIE_NAME, verifySession } from "@/lib/auth";
+import { db } from "@/lib/db";
+
+export const runtime = "nodejs";
 
 type ConversationMessage = {
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   content: string;
 };
 
+type PersistedMessageRow = {
+  id: string;
+  conversationId: string;
+  senderId: string | null;
+  role: string;
+  content: string;
+  createdAt: Date | string;
+};
+
+type UiMessage = {
+  id: string;
+  role: "user" | "assistant" | string;
+  content: string;
+  createdAt: string;
+  routeLabel?: string;
+};
+
 function hasBusinessIntent(message: string) {
-  return /(proposal|quotation|quote|pricing|price|budget|meeting|callback|call me|formal follow-up|proceed|interested in partnering|order number|payment reference|delivery issue|urgent)/i.test(message);
+  return /(proposal|quotation|quote|pricing|price|budget|meeting|callback|call me|formal follow-up|proceed|interested in partnering|order number|payment reference|delivery issue|urgent)/i.test(
+    message
+  );
 }
 
 function buildSupportReply(message: string, routeKey: string, settings: PublicSettings) {
@@ -19,37 +47,37 @@ function buildSupportReply(message: string, routeKey: string, settings: PublicSe
   const primaryContactLine = `${settings.contactEmail} / ${settings.contactPhone}`;
   const supportContactLine = `${settings.supportEmail} / ${settings.supportPhone}`;
 
-  if (routeKey === 'orders') {
+  if (routeKey === "orders") {
     return askForLeadDetails
       ? `We can help route order, product availability, checkout, and shipping concerns for ${settings.brandName}.\n\nPlease share your full name, email address, mobile number, order number if available, product name, and the delivery or checkout concern. Our support team can follow up through ${supportContactLine} during ${settings.businessHours}.\n\nShipping coverage: ${settings.shippingArea}.`
       : `For order and shipping support, please tell us whether this is about product availability, checkout, an existing order, or delivery.\n\nIf you already placed an order, include the order number if available, the customer email used at checkout, and the product name. Shipping coverage is ${settings.shippingArea}.`;
   }
 
-  if (routeKey === 'payments') {
+  if (routeKey === "payments") {
     return askForLeadDetails
       ? `${settings.brandName} accepts these configured payment methods: ${settings.paymentMethods}.\n\nFor payment confirmation, please share your full name, email address, mobile number, order or invoice reference if available, payment method, amount, payment date, and reference number. Do not send card numbers or sensitive financial credentials here.\n\nSupport contact: ${supportContactLine}.`
       : `Configured payment methods are: ${settings.paymentMethods}. Currency is ${settings.currency}.\n\nFor payment help, tell us if you need available methods, payment confirmation, receipt support, billing reference help, or refund routing. Please do not share card numbers or sensitive account credentials.`;
   }
 
-  if (routeKey === 'events') {
+  if (routeKey === "events") {
     return askForLeadDetails
       ? `We can help with event booking, league support, and on-ground activation planning.\n\nPlease share your full name, organization, email address, mobile number, and the event date, venue, and audience size so our team can route this for formal follow-up.\n\nYou can also leave the details in the form on this page or contact ${supportContactLine} during ${settings.businessHours}.`
       : `We support basketball events, leagues, activations, and venue-side coordination.\n\nThe fastest next step is to share the event type, date, venue, target audience, and the kind of support you need so we can point you to the right workflow.`;
   }
 
-  if (routeKey === 'custom-apparel') {
+  if (routeKey === "custom-apparel") {
     return askForLeadDetails
       ? `We can route custom jersey, uniform, and apparel requests.\n\nPlease send your full name, organization, email address, mobile number, item type, required quantity, sizing range, target timeline, and any design or branding notes so our team can follow up with accurate production details.\n\nYou can also submit those details through the support form on this page or contact ${supportContactLine}.`
       : `We can help with custom jerseys, uniforms, and apparel production requests.\n\nTo prepare an accurate handoff, we usually need item type, quantity, sizing range, target timeline, logo/design files, and preferred payment or delivery arrangement.`;
   }
 
-  if (routeKey === 'partnerships') {
+  if (routeKey === "partnerships") {
     return askForLeadDetails
       ? `${settings.brandName} is open to media, brand, and creator collaboration discussions.\n\nPlease share your full name, organization, email address, mobile number, and a short summary of the partnership you want to explore so ${settings.contactName} (${settings.contactRole}) can route this for review.\n\nDirect contact: ${primaryContactLine}.`
       : `We handle media partnerships, brand collaborations, and creator-led opportunities.\n\nA useful next step is to tell us whether you're looking for media support, co-branding, creator collaboration, or a longer-term commercial partnership.`;
   }
 
-  if (lower.includes('price') || lower.includes('cost') || lower.includes('rate')) {
+  if (lower.includes("price") || lower.includes("cost") || lower.includes("rate")) {
     return `Package and commercial pricing depend on scope, inventory, and activation requirements.\n\nIf you want a formal estimate, please share your full name, organization, email address, mobile number, and what you need help with so ${settings.contactName} can route it for follow-up. Direct contact: ${primaryContactLine}.`;
   }
 
@@ -59,46 +87,137 @@ function buildSupportReply(message: string, routeKey: string, settings: PublicSe
 }
 
 function parseHistory(value: unknown): ConversationMessage[] {
-  if (!Array.isArray(value)) {
-    return [];
-  }
+  if (!Array.isArray(value)) return [];
 
   return value
     .flatMap((item) => {
-      if (!item || typeof item !== 'object') {
-        return [];
-      }
+      if (!item || typeof item !== "object") return [];
 
-      const role = item.role === 'user' || item.role === 'assistant' ? item.role : null;
-      const content = typeof item.content === 'string' ? item.content.trim() : '';
+      const role = item.role === "user" || item.role === "assistant" ? item.role : null;
+      const content = typeof item.content === "string" ? item.content.trim() : "";
 
-      if (!role || !content) {
-        return [];
-      }
-
+      if (!role || !content) return [];
       return [{ role, content }];
     })
     .slice(-10);
 }
 
+function toUiMessage(row: PersistedMessageRow, routeLabel?: string): UiMessage {
+  return {
+    id: row.id,
+    role: row.role,
+    content: row.content,
+    createdAt:
+      row.createdAt instanceof Date
+        ? row.createdAt.toISOString()
+        : new Date(row.createdAt).toISOString(),
+    ...(routeLabel ? { routeLabel } : {}),
+  };
+}
+
+async function resolveActor(request: NextRequest) {
+  const token = request.cookies.get(COOKIE_NAME)?.value;
+  const session = await verifySession(token);
+
+  if (!session) {
+    return {
+      session: null,
+      userId: null as string | null,
+      email: null as string | null,
+      role: null as string | null,
+    };
+  }
+
+  const user = await db.user.findUnique({
+    where: { email: session.email },
+    select: { id: true, email: true, role: true },
+  });
+
+  return {
+    session,
+    userId: user?.id ?? null,
+    email: user?.email ?? session.email,
+    role: user?.role ?? session.role,
+  };
+}
+
+async function insertMessage(
+  tx: Prisma.TransactionClient,
+  args: {
+    conversationId: string;
+    senderId: string | null;
+    role: "user" | "assistant";
+    content: string;
+  }
+) {
+  const rows = await tx.$queryRaw<PersistedMessageRow[]>(Prisma.sql`
+    insert into public.messages (
+      conversation_id,
+      sender_id,
+      role,
+      content
+    )
+    values (
+      ${args.conversationId},
+      ${args.senderId},
+      ${args.role},
+      ${args.content}
+    )
+    returning
+      id,
+      conversation_id as "conversationId",
+      sender_id as "senderId",
+      role,
+      content,
+      created_at as "createdAt"
+  `);
+
+  const row = rows[0];
+  if (!row) {
+    throw new Error("Insert into public.messages returned no row.");
+  }
+
+  return row;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
-    const conversationId = String(body?.conversationId || '').trim();
-    const message = String(body?.message || '').trim();
+    const conversationId = String(body?.conversationId || "").trim();
+    const message = String(body?.message || "").trim();
     const history = parseHistory(body?.history);
 
     if (!conversationId || !message) {
       return NextResponse.json(
-        { ok: false, error: 'Missing conversationId or message.' },
+        { ok: false, error: "Missing conversationId or message." },
         { status: 400 }
       );
     }
+
+    const actor = await resolveActor(req);
+
+if (!actor.session || !actor.userId) {
+  return NextResponse.json({ ok: false, error: "Unauthorized." }, { status: 401 });
+}
+
+const canAccess = await db.$queryRaw<Array<{ exists: boolean }>>(Prisma.sql`
+  select exists (
+    select 1
+    from public.conversation_participants cp
+    where cp.conversation_id = ${conversationId}
+      and cp.user_id = ${actor.userId}
+  ) as "exists"
+`);
+
+if (!canAccess?.[0]?.exists) {
+  return NextResponse.json({ ok: false, error: "Forbidden." }, { status: 403 });
+}
 
     const routeKey = inferSupportCategory(message);
     const route = getSupportCategory(routeKey);
     const settings = await getPublicSettings();
     const supportStatus = getSupportRouteStatus();
+
     let aiEnabled = false;
     let output: string | null = null;
 
@@ -113,7 +232,7 @@ export async function POST(req: NextRequest) {
         });
         aiEnabled = Boolean(output);
       } catch (error) {
-        console.error('OpenAI support reply failed, falling back to local routing:', error);
+        console.error("OpenAI support reply failed, falling back to local routing:", error);
       }
     }
 
@@ -121,24 +240,54 @@ export async function POST(req: NextRequest) {
       output = buildSupportReply(message, route.key, settings);
     }
 
+    const { userMessage, assistantMessage } = await db.$transaction(async (tx) => {
+      const persistedUserMessage = await insertMessage(tx, {
+        conversationId,
+        senderId: actor.userId,
+        role: "user",
+        content: message,
+      });
+
+      const persistedAssistantMessage = await insertMessage(tx, {
+        conversationId,
+        senderId: null,
+        role: "assistant",
+        content: output as string,
+      });
+
+      return {
+        userMessage: persistedUserMessage,
+        assistantMessage: persistedAssistantMessage,
+      };
+    });
+
     return NextResponse.json({
       ok: true,
       aiEnabled,
       output,
+      userMessage: toUiMessage(userMessage),
+      assistantMessage: toUiMessage(assistantMessage, route.label),
       requiresLeadDetails: hasBusinessIntent(message),
       leadCaptured: false,
       routeKey: route.key,
       routeLabel: route.label,
       routeSummary: route.summary,
-      supportMode: aiEnabled ? 'ai' : 'local-fallback',
+      supportMode: aiEnabled ? "ai" : "local-fallback",
+      actor: actor.session
+        ? {
+            email: actor.email,
+            role: actor.role,
+            userId: actor.userId,
+          }
+        : null,
     });
   } catch (error) {
-    console.error('Chatkit message route error:', error);
+    console.error("Chatkit message route error:", error);
 
     return NextResponse.json(
       {
         ok: false,
-        error: 'Unable to process support message right now.',
+        error: error instanceof Error ? error.message : "Unable to process support message right now.",
       },
       { status: 500 }
     );
