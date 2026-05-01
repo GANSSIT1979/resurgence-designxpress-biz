@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import Stripe from 'stripe';
 import { prisma } from '@/lib/prisma';
 
 function hasUsableDatabaseUrl() {
@@ -16,16 +15,35 @@ function getBaseUrl() {
   );
 }
 
-function getStripeClient() {
-  const secretKey = process.env.STRIPE_SECRET_KEY;
+function getPayPalBaseUrl() {
+  return process.env.PAYPAL_ENV === 'live' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com';
+}
 
-  if (!secretKey) {
-    throw new Error('STRIPE_SECRET_KEY is not configured');
+async function getPayPalAccessToken() {
+  const clientId = process.env.PAYPAL_CLIENT_ID;
+  const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
+
+  if (!clientId || !clientSecret) {
+    throw new Error('PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET are required');
   }
 
-  return new Stripe(secretKey, {
-    apiVersion: '2025-02-24.acacia',
+  const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+  const response = await fetch(`${getPayPalBaseUrl()}/v1/oauth2/token`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Basic ${auth}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: 'grant_type=client_credentials',
   });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`PayPal token request failed: ${errorText}`);
+  }
+
+  const data = await response.json();
+  return data.access_token as string;
 }
 
 export async function POST(req: Request) {
@@ -54,33 +72,61 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Submission not found' }, { status: 404 });
     }
 
-    if (paymentMethod === 'STRIPE') {
-      const stripe = getStripeClient();
+    if (paymentMethod === 'PAYPAL') {
+      const accessToken = await getPayPalAccessToken();
       const baseUrl = getBaseUrl();
+      const amount = process.env.PAYPAL_SPONSOR_AMOUNT || '1000.00';
+      const currency = process.env.PAYPAL_CURRENCY || 'PHP';
 
-      const session = await stripe.checkout.sessions.create({
-        payment_method_types: ['card'],
-        mode: 'payment',
-        line_items: [
-          {
-            price_data: {
-              currency: 'php',
-              product_data: {
-                name: `Sponsorship: ${submission.interestedPackage || 'DAYO Series Package'}`,
-              },
-              unit_amount: 100000,
-            },
-            quantity: 1,
-          },
-        ],
-        metadata: {
-          submissionId,
+      const response = await fetch(`${getPayPalBaseUrl()}/v2/checkout/orders`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
         },
-        success_url: `${baseUrl}/payment/success`,
-        cancel_url: `${baseUrl}/payment/cancel`,
+        body: JSON.stringify({
+          intent: 'CAPTURE',
+          purchase_units: [
+            {
+              reference_id: submissionId,
+              description: `Sponsorship: ${submission.interestedPackage || 'DAYO Series Package'}`,
+              custom_id: submissionId,
+              amount: {
+                currency_code: currency,
+                value: amount,
+              },
+            },
+          ],
+          application_context: {
+            brand_name: 'RESURGENCE x DesignXpress',
+            landing_page: 'BILLING',
+            user_action: 'PAY_NOW',
+            return_url: `${baseUrl}/payment/success?provider=paypal&submissionId=${encodeURIComponent(submissionId)}`,
+            cancel_url: `${baseUrl}/payment/cancel?provider=paypal&submissionId=${encodeURIComponent(submissionId)}`,
+          },
+        }),
       });
 
-      return NextResponse.json({ url: session.url });
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error('[paypal-checkout] Order creation failed.', data);
+        return NextResponse.json({ error: 'PayPal order creation failed' }, { status: 502 });
+      }
+
+      const approveLink = Array.isArray(data.links)
+        ? data.links.find((link: { rel?: string; href?: string }) => link.rel === 'approve')?.href
+        : null;
+
+      await prisma.sponsorSubmission.update({
+        where: { id: submissionId },
+        data: {
+          status: 'UNDER_REVIEW',
+          internalNotes: [`PayPal Order: ${data.id}`, submission.internalNotes].filter(Boolean).join('\n\n'),
+        },
+      });
+
+      return NextResponse.json({ orderId: data.id, url: approveLink });
     }
 
     if (paymentMethod === 'GCASH') {
