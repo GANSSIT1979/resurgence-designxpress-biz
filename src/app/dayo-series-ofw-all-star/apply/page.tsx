@@ -3,6 +3,12 @@
 import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 
+type SubmissionResult = {
+  id: string;
+  companyName: string;
+  interestedPackage: string;
+};
+
 export default function SponsorApplyPage() {
   const params = useSearchParams();
   const preselectedPackage = params.get('package') || '';
@@ -17,9 +23,12 @@ export default function SponsorApplyPage() {
   });
 
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [paying, setPaying] = useState(false);
+  const [manualReference, setManualReference] = useState('');
+  const [manualStatus, setManualStatus] = useState('');
+  const [submission, setSubmission] = useState<SubmissionResult | null>(null);
 
-  async function handleSubmit(e: any) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
 
@@ -29,9 +38,14 @@ export default function SponsorApplyPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       });
+      const data = await res.json();
 
-      if (res.ok) {
-        setSuccess(true);
+      if (res.ok && data?.id) {
+        setSubmission({
+          id: data.id,
+          companyName: form.companyName,
+          interestedPackage: form.interestedPackage || 'Custom Sponsorship',
+        });
       }
     } catch (err) {
       console.error(err);
@@ -40,11 +54,78 @@ export default function SponsorApplyPage() {
     }
   }
 
-  if (success) {
+  async function startStripeCheckout() {
+    if (!submission) return;
+    setPaying(true);
+
+    try {
+      const res = await fetch('/api/sponsor/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ submissionId: submission.id, paymentMethod: 'STRIPE' }),
+      });
+      const data = await res.json();
+
+      if (data?.url) {
+        window.location.href = data.url;
+      }
+    } finally {
+      setPaying(false);
+    }
+  }
+
+  async function submitManualPayment() {
+    if (!submission || !manualReference.trim()) return;
+    setPaying(true);
+
+    try {
+      const res = await fetch('/api/sponsor/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          submissionId: submission.id,
+          paymentMethod: 'GCASH',
+          referenceNumber: manualReference,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data?.success) {
+        setManualStatus('GCash payment reference received. Your sponsorship slot is pending manual verification.');
+      }
+    } finally {
+      setPaying(false);
+    }
+  }
+
+  if (submission) {
     return (
-      <main style={{ padding: 40, textAlign: 'center' }}>
+      <main style={{ maxWidth: 760, margin: '40px auto', padding: 20 }}>
         <h1>Application Submitted</h1>
-        <p>Our team will contact you shortly.</p>
+        <p>Thank you, {submission.companyName}. Continue with your preferred payment option for {submission.interestedPackage}.</p>
+
+        <section style={{ border: '1px solid #ddd', borderRadius: 16, padding: 20, marginTop: 24 }}>
+          <h2>Pay Online</h2>
+          <p>Proceed to secure card checkout via Stripe.</p>
+          <button disabled={paying} onClick={startStripeCheckout} type="button">
+            {paying ? 'Preparing checkout...' : 'Pay with Stripe'}
+          </button>
+        </section>
+
+        <section style={{ border: '1px solid #ddd', borderRadius: 16, padding: 20, marginTop: 24 }}>
+          <h2>GCash / Manual Payment</h2>
+          <p>Send payment to the official RESURGENCE/DesignXpress GCash account, then enter the reference number below.</p>
+          <p><strong>GCash Account:</strong> Configure official account details in your public payment instructions.</p>
+          <input
+            value={manualReference}
+            placeholder="GCash reference number"
+            onChange={(e) => setManualReference(e.target.value)}
+            style={{ display: 'block', width: '100%', marginBottom: 12 }}
+          />
+          <button disabled={paying || !manualReference.trim()} onClick={submitManualPayment} type="button">
+            Submit GCash Reference
+          </button>
+          {manualStatus ? <p>{manualStatus}</p> : null}
+        </section>
       </main>
     );
   }
