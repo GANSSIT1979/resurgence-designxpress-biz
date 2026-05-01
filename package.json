@@ -7,8 +7,8 @@
     "prisma:generate": "npm run prisma:prepare && prisma generate --schema prisma/schema.generated.prisma",
     "dev": "npm run prisma:prepare && next dev",
     "dev:https": "npm run prisma:prepare && next dev --experimental-https --experimental-https-key certificates/localhost-key.pem --experimental-https-cert certificates/localhost.pem",
-    "build": "npm run prisma:generate && next build",
-    "vercel-build": "npm run prisma:generate && next build",
+    "build": "npm run prisma:generate && node scripts/build-web-only.mjs",
+    "vercel-build": "npm run prisma:generate && node scripts/build-web-only.mjs",
     "start": "next start",
     "db:push": "node scripts/push-prisma-schema.mjs",
     "db:seed": "npm run prisma:prepare && tsx prisma/seed.ts",
@@ -38,6 +38,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "recharts": "^3.8.1",
+    "stripe": "^17.7.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {

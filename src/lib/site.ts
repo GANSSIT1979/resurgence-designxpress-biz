@@ -126,6 +126,11 @@ const contentFallbacks: Record<string, ContentFallback> = {
   },
 };
 
+function hasUsableDatabaseUrl() {
+  const databaseUrl = process.env.DATABASE_URL || '';
+  return Boolean(databaseUrl && !databaseUrl.includes('@HOST:') && !databaseUrl.includes('HOST:6543'));
+}
+
 function logPublicSiteFallback(scope: string, error: unknown) {
   console.error(`[site] Falling back to static ${scope}.`, error);
 }
@@ -208,6 +213,8 @@ function buildFallbackStats(inquiryCount = 0) {
 }
 
 export async function getContentMap() {
+  if (!hasUsableDatabaseUrl()) return buildFallbackContentMap();
+
   try {
     const entries = await prisma.pageContent.findMany();
     const map = new Map(entries.map((entry: any) => [entry.key, entry] as const));
@@ -235,6 +242,19 @@ export async function getContentMap() {
 }
 
 export async function getHomeData() {
+  if (!hasUsableDatabaseUrl()) {
+    return {
+      contentMap: buildFallbackContentMap(),
+      sponsors: [],
+      partners: [],
+      packageTemplates: [],
+      galleryEvents: galleryFallbackEvents,
+      creators: buildFallbackCreators(),
+      inventoryCategories: buildFallbackInventoryCategories(),
+      stats: buildFallbackStats(),
+    };
+  }
+
   try {
     const [contentMap, sponsors, partners, inquiryCount, creators, inventoryCategories, packageTemplates, galleryEvents] = await Promise.all([
       getContentMap(),
@@ -273,6 +293,10 @@ export async function getHomeData() {
 }
 
 export async function getCreators({ activeOnly = true }: { activeOnly?: boolean } = {}) {
+  if (!hasUsableDatabaseUrl()) {
+    return buildFallbackCreators().map((item) => serializePublicCreatorProfile(item));
+  }
+
   try {
     const creators = await prisma.creatorProfile.findMany({
       where: activeOnly ? { isActive: true } : {},
@@ -292,6 +316,8 @@ export async function getCreators({ activeOnly = true }: { activeOnly?: boolean 
 
 
 export async function getGalleryEvents() {
+  if (!hasUsableDatabaseUrl()) return galleryFallbackEvents;
+
   try {
     const events = await prisma.mediaEvent.findMany({
       where: { isActive: true },
@@ -310,6 +336,15 @@ export async function getGalleryEvents() {
 }
 
 export async function getCreatorBySlug(slug: string) {
+  if (!hasUsableDatabaseUrl()) {
+    const fallback = creatorFallbacks.find((item) => item.slug === slug);
+    if (!fallback) return null;
+    return {
+      ...buildFallbackCreatorRecord(fallback, creatorFallbacks.findIndex((item) => item.slug === slug)),
+      mediaEvents: [],
+    };
+  }
+
   try {
     return await prisma.creatorProfile.findUnique({
       where: { slug },
@@ -335,17 +370,22 @@ export async function getCreatorBySlug(slug: string) {
 
 
 export async function getProductServices() {
+  const fallbackServices = serviceFallbacks.map((item, index) => ({ id: String(index + 1), ...item, createdAt: new Date(), updatedAt: new Date(), isActive: true }));
+  if (!hasUsableDatabaseUrl()) return fallbackServices;
+
   try {
     const services = await prisma.productService.findMany({ where: { isActive: true }, orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] });
-    return services.length ? services : serviceFallbacks.map((item, index) => ({ id: String(index + 1), ...item, createdAt: new Date(), updatedAt: new Date(), isActive: true }));
+    return services.length ? services : fallbackServices;
   } catch (error) {
     logPublicSiteFallback('product services', error);
-    return serviceFallbacks.map((item, index) => ({ id: String(index + 1), ...item, createdAt: new Date(), updatedAt: new Date(), isActive: true }));
+    return fallbackServices;
   }
 }
 
 
 export async function getFeaturedShopProducts(limit = 4) {
+  if (!hasUsableDatabaseUrl()) return [];
+
   try {
     return await prisma.shopProduct.findMany({
       where: { isActive: true },
