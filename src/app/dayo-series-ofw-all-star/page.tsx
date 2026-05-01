@@ -25,42 +25,64 @@ const objectives = [
 
 const fallbackPackages = [
   {
-    id: 'title-partner',
-    name: 'Title Partner',
-    tier: 'Premier',
-    rangeLabel: 'Naming-rights visibility',
-    summary: 'Primary event naming, dominant jersey/court placement, VIP recognition, and priority recap exposure.',
+    id: 'supporting-sponsor',
+    name: 'Supporting Sponsor',
+    tier: 'Supporting Sponsor',
+    rangeLabel: 'PHP 15,000-50,000',
+    summary: 'Entry sponsorship tier designed for visibility, community support, and targeted activation value.',
     benefits:
-      'Primary event naming and headline placement\nDominant jersey, court, and social content visibility\nVIP recognition during opening and awarding moments\nPriority inclusion in recap videos and sponsor reports',
+      'Logo placement on selected event and digital assets\nInclusion in sponsor recognition materials\nVisibility across select social and event mentions\nAccess to structured grassroots brand exposure',
   },
   {
-    id: 'gold-sponsor',
-    name: 'Gold Sponsor',
-    tier: 'Gold',
-    rangeLabel: 'High-impact brand exposure',
-    summary: 'Logo placement, featured mentions, activation opportunities, and post-event exposure reporting.',
+    id: 'official-brand-partner',
+    name: 'Official Brand Partner',
+    tier: 'Official Brand Partner',
+    rangeLabel: 'PHP 75,000-95,000',
+    summary: 'Mid-tier brand partnership with stronger digital integration and broader sponsorship positioning.',
     benefits:
-      'Logo placement on digital posters and event materials\nFeatured brand mentions across promotional content\nBooth or activation area subject to venue layout\nPost-event performance and exposure summary',
+      'Enhanced brand placement across sponsor-facing materials\nDigital integration across creator and campaign assets\nExpanded event visibility and partner callouts\nPriority inclusion in activation planning',
   },
   {
-    id: 'community-sponsor',
-    name: 'Community Sponsor',
-    tier: 'Community',
-    rangeLabel: 'Grassroots support package',
-    summary: 'Supporting sponsor visibility for brands that want strong community goodwill positioning.',
+    id: 'major-partner',
+    name: 'Major Partner',
+    tier: 'Major Partner',
+    rangeLabel: 'PHP 120,000-150,000',
+    summary: 'High-impact partnership tier for brands seeking premium integration and strong commercial presence.',
     benefits:
-      'Supporting sponsor recognition\nInclusion in partner thank-you posts\nCommunity goodwill positioning with OFW athletes\nOptional product or voucher contribution mechanics',
+      'Premium logo placement and sponsor positioning\nExpanded creator-network integration\nOn-ground activation prioritization\nHigh-visibility commercial support and packaged deliverables',
+  },
+  {
+    id: 'event-presenting',
+    name: 'Event Presenting',
+    tier: 'Event Presenting',
+    rangeLabel: 'Custom Proposal',
+    summary: 'Custom presenting package for lead brands seeking headline integration and tailored sponsorship rights.',
+    benefits:
+      'Custom proposal structure based on event or campaign scale\nPresenting-level brand integration\nPriority negotiation on activations and deck placement\nTailored deliverables, branding, and commercial support',
   },
 ];
+
+function hasUsableDatabaseUrl() {
+  const databaseUrl = process.env.DATABASE_URL || '';
+  return Boolean(databaseUrl && !databaseUrl.includes('@HOST:') && !databaseUrl.includes('HOST:6543'));
+}
 
 const tierBorders = ['#D4AF37', '#F1F1F1', '#E63946', '#4CC9F0'];
 
 export default async function DayoSeriesOfwAllStarPage() {
-  const livePackages = await prisma.sponsorPackageTemplate.findMany({
-    where: { isActive: true },
-    orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
-  });
-  const sponsorshipPackages = livePackages.length > 0 ? livePackages : fallbackPackages;
+  let sponsorshipPackages = fallbackPackages;
+
+  if (hasUsableDatabaseUrl()) {
+    try {
+      const livePackages = await prisma.sponsorPackageTemplate.findMany({
+        where: { isActive: true },
+        orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+      });
+      sponsorshipPackages = livePackages.length > 0 ? livePackages : fallbackPackages;
+    } catch (error) {
+      console.error('[dayo-series] Falling back to static sponsorship packages.', error);
+    }
+  }
 
   return (
     <main style={{ background: '#0B0E14', color: '#F1F1F1', minHeight: '100vh' }}>
@@ -149,7 +171,7 @@ export default async function DayoSeriesOfwAllStarPage() {
           <h2 style={{ color: '#D4AF37', fontSize: 44, margin: 0, textTransform: 'uppercase' }}>
             Sponsorship Packages
           </h2>
-          <p style={{ letterSpacing: 3, textTransform: 'uppercase', fontSize: 13 }}>Live package templates designed for visibility and conversion</p>
+          <p style={{ letterSpacing: 3, textTransform: 'uppercase', fontSize: 13 }}>Indicative packages designed for visibility and conversion</p>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20 }}>
           {sponsorshipPackages.map((tier, index) => (
@@ -164,9 +186,10 @@ export default async function DayoSeriesOfwAllStarPage() {
               }}
             >
               <p style={{ color: '#D4AF37', textTransform: 'uppercase', letterSpacing: 1, fontSize: 12, marginTop: 0 }}>
-                {tier.tier} · {tier.rangeLabel}
+                Indicative package value
               </p>
               <h3 style={{ fontSize: 30, margin: 0, color: '#F1F1F1' }}>{tier.name}</h3>
+              <p style={{ color: '#D4AF37', fontWeight: 800 }}>{tier.rangeLabel}</p>
               <p style={{ lineHeight: 1.65 }}>{tier.summary}</p>
               <ul style={{ lineHeight: 1.8, paddingLeft: 20 }}>
                 {tier.benefits.split('\n').filter(Boolean).map((benefit) => (
@@ -178,26 +201,6 @@ export default async function DayoSeriesOfwAllStarPage() {
               </Link>
             </article>
           ))}
-        </div>
-        <div
-          style={{
-            marginTop: 28,
-            padding: 22,
-            border: '1px dashed #E63946',
-            background: 'rgba(230,57,70,0.10)',
-            borderRadius: 16,
-            textAlign: 'center',
-          }}
-        >
-          <strong style={{ fontSize: 24 }}>Ready for sponsor onboarding and proposal conversion.</strong>
-          <p style={{ color: '#D4AF37', marginBottom: 0 }}>
-            Apply now, then continue to sponsor dashboard onboarding, billing, and deliverables.
-          </p>
-          <div style={{ marginTop: 18 }}>
-            <Link href="/dayo-series-ofw-all-star/apply" style={{ color: '#0B0E14', background: '#D4AF37', padding: '12px 18px', borderRadius: 999, fontWeight: 800, textDecoration: 'none' }}>
-              Start Sponsor Application
-            </Link>
-          </div>
         </div>
       </section>
     </main>
