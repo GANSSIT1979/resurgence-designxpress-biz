@@ -2,15 +2,49 @@ import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { prisma } from '@/lib/prisma';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-06-20',
-});
+function hasUsableDatabaseUrl() {
+  const databaseUrl = process.env.DATABASE_URL || '';
+  return Boolean(databaseUrl && !databaseUrl.includes('@HOST:') && !databaseUrl.includes('HOST:6543'));
+}
+
+function getBaseUrl() {
+  return (
+    process.env.NEXT_PUBLIC_BASE_URL ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` :
+    'https://www.resurgence-dx.biz'
+  );
+}
+
+function getStripeClient() {
+  const secretKey = process.env.STRIPE_SECRET_KEY;
+
+  if (!secretKey) {
+    throw new Error('STRIPE_SECRET_KEY is not configured');
+  }
+
+  return new Stripe(secretKey, {
+    apiVersion: '2024-06-20',
+  });
+}
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    if (!hasUsableDatabaseUrl()) {
+      return NextResponse.json(
+        { error: 'Database is not configured. Please set a valid DATABASE_URL before accepting payments.' },
+        { status: 503 },
+      );
+    }
 
-    const { submissionId, paymentMethod, referenceNumber } = body;
+    const body = await req.json();
+    const submissionId = typeof body.submissionId === 'string' ? body.submissionId.trim() : '';
+    const paymentMethod = typeof body.paymentMethod === 'string' ? body.paymentMethod.trim().toUpperCase() : '';
+    const referenceNumber = typeof body.referenceNumber === 'string' ? body.referenceNumber.trim() : '';
+
+    if (!submissionId) {
+      return NextResponse.json({ error: 'submissionId is required' }, { status: 400 });
+    }
 
     const submission = await prisma.sponsorSubmission.findUnique({
       where: { id: submissionId },
@@ -20,8 +54,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Submission not found' }, { status: 404 });
     }
 
-    // STRIPE FLOW
     if (paymentMethod === 'STRIPE') {
+      const stripe = getStripeClient();
+      const baseUrl = getBaseUrl();
+
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
         mode: 'payment',
@@ -30,9 +66,9 @@ export async function POST(req: Request) {
             price_data: {
               currency: 'php',
               product_data: {
-                name: `Sponsorship: ${submission.interestedPackage}`,
+                name: `Sponsorship: ${submission.interestedPackage || 'DAYO Series Package'}`,
               },
-              unit_amount: 100000, // TODO: dynamic pricing later
+              unit_amount: 100000,
             },
             quantity: 1,
           },
@@ -40,15 +76,18 @@ export async function POST(req: Request) {
         metadata: {
           submissionId,
         },
-        success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment/success`,
-        cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment/cancel`,
+        success_url: `${baseUrl}/payment/success`,
+        cancel_url: `${baseUrl}/payment/cancel`,
       });
 
       return NextResponse.json({ url: session.url });
     }
 
-    // GCASH / MANUAL
     if (paymentMethod === 'GCASH') {
+      if (!referenceNumber) {
+        return NextResponse.json({ error: 'referenceNumber is required for GCash payments' }, { status: 400 });
+      }
+
       await prisma.sponsorSubmission.update({
         where: { id: submissionId },
         data: {
@@ -61,8 +100,8 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ error: 'Invalid payment method' }, { status: 400 });
-  } catch (err) {
-    console.error(err);
+  } catch (error) {
+    console.error('[sponsor-checkout] Checkout failed.', error);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }
