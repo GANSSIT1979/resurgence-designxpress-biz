@@ -1407,3 +1407,25 @@ model ShopOrderItem {
   @@index([orderId])
   @@index([productId])
 }
+model PaymentEvent {
+  id         String   @id @default(cuid())
+  provider   String
+  eventId    String
+  eventType  String
+  resourceId String?
+  amount     Float?
+  createdAt  DateTime @default(now())
+
+  @@unique([provider, eventId])
+}
+
+model FinanceAuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  action     String
+  provider   String
+  resourceId String?
+  amount     Float?
+  status     String?
+  createdAt  DateTime @default(now())
+}
