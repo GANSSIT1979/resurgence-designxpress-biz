@@ -54,7 +54,7 @@ function SponsorApplyForm() {
     }
   }
 
-  async function startStripeCheckout() {
+  async function startPayPalCheckout() {
     if (!submission) return;
     setPaying(true);
 
@@ -62,7 +62,7 @@ function SponsorApplyForm() {
       const res = await fetch('/api/sponsor/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ submissionId: submission.id, paymentMethod: 'STRIPE' }),
+        body: JSON.stringify({ submissionId: submission.id, paymentMethod: 'PAYPAL' }),
       });
       const data = await res.json();
 
@@ -105,16 +105,15 @@ function SponsorApplyForm() {
 
         <section style={{ border: '1px solid #ddd', borderRadius: 16, padding: 20, marginTop: 24 }}>
           <h2>Pay Online</h2>
-          <p>Proceed to secure card checkout via Stripe.</p>
-          <button disabled={paying} onClick={startStripeCheckout} type="button">
-            {paying ? 'Preparing checkout...' : 'Pay with Stripe'}
+          <p>Proceed to secure checkout via PayPal.</p>
+          <button disabled={paying} onClick={startPayPalCheckout} type="button">
+            {paying ? 'Redirecting to PayPal...' : 'Pay with PayPal'}
           </button>
         </section>
 
         <section style={{ border: '1px solid #ddd', borderRadius: 16, padding: 20, marginTop: 24 }}>
           <h2>GCash / Manual Payment</h2>
           <p>Send payment to the official RESURGENCE/DesignXpress GCash account, then enter the reference number below.</p>
-          <p><strong>GCash Account:</strong> Configure official account details in your public payment instructions.</p>
           <input
             value={manualReference}
             placeholder="GCash reference number"
