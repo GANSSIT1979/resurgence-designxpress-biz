@@ -1,88 +1,198 @@
-# TROUBLESHOOTING
+# Troubleshooting Runbook
 
-Updated: 2026-04-24
-## Prisma Client Or Provider Looks Wrong
+Known issues and exact fixes for RESURGENCE Powered by DesignXpress.
 
-Run:
+## Prisma EPERM on Windows
+
+Error:
+
+```txt
+EPERM: operation not permitted, rename query_engine-windows.dll.node.tmp -> query_engine-windows.dll.node
+```
+
+Cause:
+
+A Node process, Next.js dev server, VS Code TypeScript server, or antivirus is holding the Prisma engine file open.
+
+Fix:
 
 ```bash
+taskkill //F //IM node.exe
+taskkill //F //IM next.exe 2>/dev/null || true
+rm -rf node_modules/.prisma
 npm run prisma:generate
+npm run vercel-build
 ```
 
-Then restart the dev server or rebuild. This is especially important after changing `PRISMA_DB_PROVIDER` or `DATABASE_URL`.
+If needed, close VS Code and retry.
 
-If the environment still looks wrong, verify that you did not set only `POSTGRES_URL`, `POSTGRES_PRISMA_URL`, or `POSTGRES_URL_NON_POOLING` without also setting `DATABASE_URL`.
+## `migrate dev` shadow database failure
 
-## Hosted Build Fails With A ContentPost Column Error
+Error:
 
-If you see an error like:
-
-```text
-The column `ContentPost.title` does not exist in the current database.
+```txt
+P3006
+P1014
+The underlying table for model `PlatformNotification` does not exist.
 ```
 
-the code is ahead of the hosted PostgreSQL schema.
+Fix:
 
-The current corrective migration for this repo is:
-
-```text
-prisma/migrations/20260424083000_add_contentpost_schema_parity/migration.sql
-```
-
-Do this next:
-
-1. apply the reviewed migration to Preview or Production with `npm run db:migrate:deploy`
-2. verify `GET /api/health`
-3. retest `/`, `/feed`, `/creators/[slug]`, `/api/feed`, and `/creator/dashboard`
-
-The public feed now retries with a legacy-safe select during additive schema drift, but that is only a temporary compatibility bridge. If `/api/health` still reports schema mismatch, finish the migration rollout before trusting Production behavior.
+Do not use `migrate dev` for the current production database.
 
 Use:
 
-- `docs/PRISMA_MIGRATION_ROLLOUT_CHECKLIST.md`
-- `docs/PREVIEW_RELEASE_SMOKE_TEST.md`
-
-## Windows Prisma `EPERM` Rename Error
-
-If Prisma fails with an error like:
-
-```text
-EPERM: operation not permitted, rename ...query_engine-windows.dll.node
+```bash
+npm run db:push
+npm run prisma:generate
 ```
 
-stop any local `node.exe` or `next` processes that still have the Prisma engine open, then rerun the build or generate step.
+See `DATABASE_MIGRATION_RUNBOOK.md`.
 
-## Support Verifier Returns `ECONNREFUSED`
+## Missing database table at runtime
 
-The verifier does not start the app for you. Start the dev or production server first, then run:
+Error:
+
+```txt
+The table `public.Partner` does not exist in the current database.
+```
+
+Fix:
 
 ```bash
-npm run support:verify -- --base-url=http://localhost:3000
+npm run db:push
+npm run prisma:generate
 ```
 
-## Health Endpoint Reports Schema Drift
+Verify:
 
-Check `GET /api/health`.
+```bash
+node - <<'NODE'
+const { PrismaClient } = require('@prisma/client')
+const prisma = new PrismaClient()
 
-The health probe checks:
+async function main() {
+  const rows = await prisma.$queryRaw`
+    SELECT
+      to_regclass('public."Partner"')::text AS partner_table,
+      to_regclass('public."Sponsor"')::text AS sponsor_table,
+      to_regclass('public."CreatorProfile"')::text AS creator_profile_table;
+  `
+  console.log(JSON.stringify(rows, null, 2))
+}
 
-- additive `ContentPost` columns
-- additive `PostComment` moderation columns
-- additive `MediaAsset` columns
-- `PlatformNotification.actorUserId`
-- support readiness
+main().finally(async () => prisma.$disconnect())
+NODE
+```
 
-If `/api/health` reports schema mismatch, do not trust Preview or Production route behavior until the database is aligned.
+## Prisma cannot deserialize `regclass`
 
-## Upload Or Cloudflare Video Flow Fails
+Error:
 
-Check:
+```txt
+Failed to deserialize column of type 'regclass'
+```
 
-- the creator account has the correct role and linked profile
-- Cloudflare Stream environment variables exist in the current environment
-- allowed origins include the active Preview or Production domain
-- the save route receives the expected Cloudflare UID
+Fix:
 
-## Session Or Login Looks Stale
+Cast to text:
 
-Clear the `resurgence_admin_session` cookie for the local or hosted domain, then sign in again.
+```sql
+to_regclass('public."Partner"')::text
+```
+
+## `DATABASE_URL` missing on Vercel
+
+Runtime log:
+
+```txt
+Environment variable not found: DATABASE_URL.
+```
+
+Fix:
+
+Set Vercel production env values:
+
+```bash
+npx vercel env add DATABASE_URL production
+npx vercel env add DIRECT_URL production
+npx vercel env add PRISMA_DB_PROVIDER production
+```
+
+Use proper shell input. Do not type raw URLs as commands.
+
+## Git Bash command mistakes
+
+Wrong:
+
+```bash
+PREVIEW_SITE_URL
+STAGING_SITE_URL
+/api/health
+```
+
+Correct:
+
+```bash
+echo "$PREVIEW_SITE_URL"
+echo "$STAGING_SITE_URL"
+curl https://www.resurgence-dx.biz/api/health
+```
+
+## Wrong alias command
+
+Wrong:
+
+```bash
+npx vercel alias set <deployment> www.resurgence-dx.biz
+```
+
+Correct:
+
+```bash
+npx vercel alias set resurgence-designxpress-r3k648gsb.vercel.app www.resurgence-dx.biz --scope resurgence-designxpress-projects
+```
+
+## Expo mobile type errors in web build
+
+Error:
+
+```txt
+Cannot find module 'expo-router'
+```
+
+Cause:
+
+Next.js web TypeScript build scanned `apps/mobile`.
+
+Fix:
+
+Ensure root `tsconfig.json` excludes:
+
+```json
+"exclude": [
+  "node_modules",
+  ".next",
+  "out",
+  "dist",
+  "build",
+  "coverage",
+  "apps/mobile"
+]
+```
+
+## Empty migration generated
+
+If migration diff produces:
+
+```sql
+-- This is an empty migration.
+```
+
+Delete the folder:
+
+```bash
+rm -rf prisma/migrations/<empty-migration-folder>
+```
+
+Do not commit empty migrations.

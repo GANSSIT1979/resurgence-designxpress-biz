@@ -1,42 +1,124 @@
-# Install
+# Installation Guide
 
-## Environment
+Local setup for RESURGENCE Powered by DesignXpress.
 
-The canonical root template is:
+## Requirements
 
-[.env.example](../.env.example)
+Recommended runtime:
 
-From the repository root:
+- Node.js 20.x for Vercel compatibility
+- npm 10+
+- PostgreSQL/Supabase database
+- Vercel CLI
+- Git Bash or PowerShell on Windows
+
+Check versions:
 
 ```bash
-cp .env.example .env
-cp .env.example .env.local
+node -v
+npm -v
 ```
 
-Then update `.env` and `.env.local` with real local or production-safe development values.
+## Clone and install
 
-Required Prisma values:
+```bash
+git clone https://github.com/GANSSIT1979/resurgence-designxpress-biz.git
+cd resurgence-designxpress-biz
+npm install
+```
+
+## Environment files
+
+Required local files:
+
+```txt
+.env
+.env.local
+```
+
+Required database variables:
 
 ```env
+DATABASE_URL="postgres://..."
+DIRECT_URL="postgres://..."
 PRISMA_DB_PROVIDER="postgresql"
-DATABASE_URL="postgres://USER:PASSWORD@HOST:6543/postgres?sslmode=require&pgbouncer=true"
-DIRECT_URL="postgres://USER:PASSWORD@HOST:5432/postgres?sslmode=require"
 ```
 
-## Setup
+Use pooled connection for app runtime and direct/non-pooling connection for schema operations when possible.
+
+## Prisma setup
+
+Prepare the generated schema:
 
 ```bash
-npm install
+npm run prisma:prepare
+```
+
+Generate Prisma Client:
+
+```bash
 npm run prisma:generate
-npm run local:preflight
-npm run dev
 ```
 
-## Production checks
+Validate generated schema:
 
 ```bash
-npm run docs:production-status
-npm run docs:production-status:check
-npm run docs:check
+npx prisma validate --schema prisma/schema.generated.prisma
+```
+
+## Local build
+
+```bash
 npm run vercel-build
 ```
+
+Expected success:
+
+```txt
+✓ Compiled successfully
+✓ Linting and checking validity of types
+✓ Collecting page data
+✓ Generating static pages
+✓ Finalizing page optimization
+```
+
+## Local checks
+
+```bash
+npm run docs:check
+npm run local:preflight
+node scripts/devops-health-gate.mjs
+```
+
+## Common Windows Prisma EPERM fix
+
+If Prisma fails with:
+
+```txt
+EPERM: operation not permitted, rename query_engine-windows.dll.node
+```
+
+Stop running Node processes:
+
+```bash
+taskkill //F //IM node.exe
+taskkill //F //IM next.exe 2>/dev/null || true
+```
+
+Then regenerate:
+
+```bash
+rm -rf node_modules/.prisma
+npm run prisma:generate
+npm run vercel-build
+```
+
+## Expo mobile app note
+
+The Expo app lives under:
+
+```txt
+apps/mobile
+```
+
+The root Next.js TypeScript build excludes `apps/mobile` so web deployment does not require Expo dependencies.
