@@ -1,17 +1,21 @@
 # USER GUIDE
 
-Updated: 2026-04-24
+Updated: 2026-05-01
+
 ## What This Platform Is
 
-RESURGENCE Powered by DesignXpress is a basketball-focused platform that combines:
+RESURGENCE Powered by DesignXpress is a basketball-focused creator, commerce, sponsorship, and billing platform that combines:
 
 - public brand and service pages
 - creators and community content
 - support and contact flows
 - sponsorship and partnership inquiry paths
+- DAYO Series and event sponsorship packages
 - Official Resurgence Merch commerce
+- PayPal-first sponsor payments and invoice billing
 - free public role registration
 - protected role-based workspaces
+- admin dashboards for invoices, sponsor activity, and revenue visibility
 
 ## Public Visitors
 
@@ -23,6 +27,8 @@ Without signing in, you can:
 - add items to `/cart` and complete `/checkout`
 - look up orders on `/account/orders` using the checkout email
 - submit sponsor applications on `/sponsor/apply`
+- review DAYO Series OFW All-Star sponsorship packages on `/dayo-series-ofw-all-star`
+- apply for DAYO sponsorship through `/dayo-series-ofw-all-star/apply`
 - reach out through `/contact`, `/support`, or `/quotation`
 
 ## Create A Free Account
@@ -99,6 +105,21 @@ Sponsor users can access:
 - `/sponsor/billing`
 - `/sponsor/profile`
 
+Sponsors can also use the DAYO sponsorship funnel:
+
+- open `/dayo-series-ofw-all-star`
+- select a package
+- submit the sponsor application form
+- pay online with PayPal when enabled
+- submit a GCash reference for manual verification when using manual payment
+
+Current DAYO sponsorship packages include:
+
+- Supporting Sponsor: PHP 15,000-50,000
+- Official Brand Partner: PHP 75,000-95,000
+- Major Partner: PHP 120,000-150,000
+- Event Presenting: custom proposal
+
 ### Partner
 
 Partner users can access:
@@ -118,6 +139,11 @@ Internal role areas include:
 - `/staff`
 - `/cashier`
 - `/admin`
+
+Admin billing and revenue areas include:
+
+- `/admin/invoices` for invoice listing, invoice totals, customer visibility, paid revenue, and outstanding balances
+- `/admin/revenue` for PayPal revenue analytics, invoice conversion, sponsor conversion, unpaid invoice alerts, and recent paid invoice visibility
 
 ## Community Feed
 
@@ -144,10 +170,36 @@ The merch flow supports:
 - product browsing on `/shop`
 - product detail pages with stock, material, fit, care, size, and color options
 - cart lines that preserve selected variants
-- checkout payment choices for COD, GCash, Maya, bank transfer, card, and cash
+- checkout payment choices for COD, GCash, Maya, bank transfer, PayPal, card where enabled, and cash
 - email-based order lookup on `/account/orders`
 
 Even if you are signed in as a member, merch order lookup is still keyed to the checkout email, not a separate customer-account order system.
+
+## PayPal Payments And Invoices
+
+The platform is PayPal-first for online sponsor payments and invoice billing.
+
+Main PayPal-supported flows:
+
+- sponsor checkout creates a PayPal order and redirects the sponsor to PayPal
+- PayPal return flow captures approved sponsor payments through `/payment/success`
+- saved invoices can be sent through PayPal invoicing
+- PayPal webhook events update local invoice payment status when payment is completed
+- admin revenue dashboards use local invoice and sponsor data to show paid revenue, outstanding balances, and conversion metrics
+
+Useful billing paths:
+
+- `/admin/invoices`
+- `/admin/revenue`
+- `/payment/success`
+- `/payment/cancel`
+
+Payment status behavior:
+
+- sponsor PayPal payment capture can approve a sponsor submission
+- GCash payment references are manual and usually require review
+- PayPal invoice payment webhooks can mark local invoices as `PAID`
+- invoices may appear as `DRAFT`, `SENT`, `PAID`, or another operational status depending on workflow state
 
 ## Support And Quotation Help
 
@@ -156,11 +208,12 @@ Use `/support` for guided help with:
 - sponsorships
 - orders
 - payments
+- PayPal invoices
 - events
 - custom apparel
 - partnerships
 
-Use `/quotation` or the support/contact flows when you have serious business intent such as custom uniforms, large apparel orders, sponsorships, or partnership requests.
+Use `/quotation` or the support/contact flows when you have serious business intent such as custom uniforms, large apparel orders, sponsorships, invoice requests, or partnership requests.
 
 ## If Something Looks Missing
 
@@ -170,6 +223,8 @@ This usually means one of these:
 - required data has not been created yet
 - your role has a lightweight shell today and a deeper workflow is planned later
 - the current environment is behind on additive Prisma migrations
+- PayPal or webhook environment variables are not configured for the current deployment
+- invoice or sponsor records exist in another environment such as Preview instead of Production
 - the relevant feature needs a human team member to confirm next steps
 
 When in doubt, contact the admin or support team.
@@ -182,3 +237,11 @@ Some older URLs remain as compatibility redirects:
 - `/admin/revenue-monitoring` redirects to `/admin/reports`
 - `/cashier/revenue-monitoring` redirects to `/cashier/reports`
 - nested sponsor dashboard subpages redirect to the top-level sponsor routes
+
+## Operational Notes For Admins
+
+- Treat PayPal as the primary online billing provider unless a multi-provider strategy is deliberately reintroduced.
+- Keep GCash as manual/reference-based unless automated verification is added later.
+- Do not paste real secrets into tickets, markdown, screenshots, or chat logs.
+- After payment, Prisma, or environment-variable updates, redeploy on Vercel with Build Cache OFF.
+- Use the PayPal sandbox until sponsor checkout, invoice send, invoice payment, webhook sync, and dashboards are verified end to end.
