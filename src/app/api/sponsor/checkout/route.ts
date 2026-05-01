@@ -11,7 +11,7 @@ function getBaseUrl() {
   return (
     process.env.NEXT_PUBLIC_BASE_URL ||
     process.env.NEXT_PUBLIC_SITE_URL ||
-    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` :
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '') ||
     'https://www.resurgence-dx.biz'
   );
 }
@@ -24,7 +24,7 @@ function getStripeClient() {
   }
 
   return new Stripe(secretKey, {
-    apiVersion: '2024-06-20',
+    apiVersion: '2025-02-24.acacia',
   });
 }
 
