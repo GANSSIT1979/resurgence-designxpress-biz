@@ -1,31 +1,67 @@
-# Documentation
+# Documentation Index
 
-This folder contains operational and system documentation for Resurgence Powered by DesignXpress.
+This folder contains production, deployment, database, and feature runbooks for RESURGENCE Powered by DesignXpress.
 
-## Canonical docs
+## Core documents
 
-- [Production Status](./PRODUCTION_STATUS.md)
-- [Install](./INSTALL.md)
+| File | Purpose |
+|---|---|
+| `INSTALL.md` | Local setup and development commands |
+| `DEPLOYMENT.md` | Vercel deployment, domain, and smoke testing |
+| `DATABASE_MIGRATION_RUNBOOK.md` | Prisma/Supabase schema workflow |
+| `TROUBLESHOOTING.md` | Known errors and exact fixes |
+| `CREATOR_EARNINGS_PAYOUT_SYSTEM.md` | Creator earnings, affiliate, and payout system |
+| `PRODUCTION_STATUS.md` | Current production health snapshot |
 
-## Environment
+## Production URLs
 
-The root environment template is:
+- Website: https://www.resurgence-dx.biz
+- Health endpoint: https://www.resurgence-dx.biz/api/health
 
-[.env.example](../.env.example)
+## Standard verification flow
 
-From the repository root, initialize local env files with:
+Run locally:
 
 ```bash
-cp .env.example .env
-cp .env.example .env.local
+npm run docs:check
+npm run local:preflight
+npm run vercel-build
 ```
 
-## Health checks
+Deploy:
+
+```bash
+npx vercel --prod
+```
+
+Verify production:
 
 ```bash
 curl -I https://www.resurgence-dx.biz
 curl https://www.resurgence-dx.biz/api/health
-npm run docs:production-status
-npm run docs:production-status:check
+```
+
+## Database workflow
+
+For the current existing Supabase/PostgreSQL database, use:
+
+```bash
+npm run db:push
+npm run prisma:generate
+```
+
+Avoid:
+
+```bash
+npx prisma migrate dev --schema prisma/schema.generated.prisma
+```
+
+Reason: historical migrations do not replay cleanly into a shadow database. See `DATABASE_MIGRATION_RUNBOOK.md`.
+
+## Documentation integrity
+
+Check Markdown links:
+
+```bash
 npm run docs:check
 ```

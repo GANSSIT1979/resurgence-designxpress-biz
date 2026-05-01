@@ -1,20 +1,29 @@
 # Production Status
 
-Last updated: 2026-05-01T02:52:44.341Z
+Last verified: 2026-04-25
 
-## Canonical Production URL
+## Production URLs
 
-- https://www.resurgence-dx.biz
+- Website: https://www.resurgence-dx.biz
+- Health endpoint: https://www.resurgence-dx.biz/api/health
 
-## Health Check
+## Latest confirmed deployment
 
-Endpoint:
+Latest confirmed deployment observed:
 
 ```txt
-https://www.resurgence-dx.biz/api/health
+dpl_F44gDR8MgE5R8VM8qd3xVgc8RKJv
 ```
 
-Latest response:
+Production deployment URL:
+
+```txt
+https://resurgence-designxpress-72i8flxo1.vercel.app
+```
+
+## Health check
+
+Latest health response:
 
 ```json
 {
@@ -38,42 +47,74 @@ Latest response:
     "issues": []
   },
   "counts": {
-    "users": 16,
+    "users": 15,
     "sponsors": 4,
     "packages": 4
   }
 }
 ```
 
-## Current Status
+## Confirmed table checks
 
-| Area | Status |
-|---|---|
-| App | OK |
-| Database | connected |
-| Prisma schema | ok |
-| AI configured | yes |
-| ChatKit ready | yes |
-| Webhook ready | yes |
+Required tables confirmed:
 
-## Counts
+```json
+[
+  {
+    "partner_table": ""Partner"",
+    "sponsor_table": ""Sponsor"",
+    "creator_profile_table": ""CreatorProfile""
+  }
+]
+```
 
-| Resource | Count |
-|---|---:|
-| Users | 16 |
-| Sponsors | 4 |
-| Packages | 4 |
+## Confirmed build status
 
-## Verification Commands
+Latest local build passed:
+
+```txt
+✓ Compiled successfully
+✓ Linting and checking validity of types
+✓ Collecting page data
+✓ Generating static pages (87/87)
+✓ Collecting build traces
+✓ Finalizing page optimization
+```
+
+## Confirmed payout routes
+
+```txt
+/admin/payouts
+/api/admin/payouts
+/api/admin/payouts/approve
+/api/admin/payouts/mark-paid
+/api/creator/earnings
+/api/creator/payouts/request
+/creator/earnings
+```
+
+## Standard smoke test
 
 ```bash
 curl -I https://www.resurgence-dx.biz
 curl https://www.resurgence-dx.biz/api/health
-npm run docs:check
 ```
 
-## Notes
+Expected:
 
-- Old Vercel log entries can reference previous deployment IDs. Verify against the active deployment before treating historical errors as current.
-- Unsigned or manually posted requests to `/api/openai/webhook` may return `400` by design.
-- Production runtime requires `DATABASE_URL`, `DIRECT_URL`, and `PRISMA_DB_PROVIDER=postgresql`.
+```txt
+HTTP/1.1 200 OK
+```
+
+and:
+
+```json
+{
+  "ok": true,
+  "database": "connected",
+  "schema": {
+    "status": "ok",
+    "issues": []
+  }
+}
+```
