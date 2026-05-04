@@ -162,6 +162,36 @@ function normalizeSearch(value: string) {
   return value.trim().toLowerCase();
 }
 
+function getCtaHrefType(href?: string | null) {
+  const value = href?.trim();
+
+  if (!value) return { label: 'No CTA', status: 'empty', isOpenable: false } as const;
+  if (value.startsWith('/')) return { label: 'Internal route', status: 'valid', isOpenable: true } as const;
+  if (value.startsWith('mailto:')) return { label: 'Email link', status: 'valid', isOpenable: true } as const;
+  if (value.startsWith('https://') || value.startsWith('http://')) {
+    return { label: 'External URL', status: 'valid', isOpenable: true } as const;
+  }
+
+  return { label: 'Check CTA href', status: 'warning', isOpenable: false } as const;
+}
+
+function getContentHealth(item: ContentItem) {
+  const issues: string[] = [];
+
+  if (!item.key.trim()) issues.push('Missing key');
+  if (!item.title.trim()) issues.push('Missing title');
+  if (!item.body.trim()) issues.push('Missing body');
+
+  const cta = getCtaHrefType(item.ctaHref);
+  if (cta.status === 'warning') issues.push('CTA href should start with /, mailto:, http://, or https://');
+
+  return {
+    status: issues.length ? 'warning' : 'ready',
+    label: issues.length ? `${issues.length} issue${issues.length === 1 ? '' : 's'}` : 'Ready',
+    issues,
+  };
+}
+
 export function ContentManager({ initialContent }: { initialContent: ContentItem[] }) {
   const [items, setItems] = useState(initialContent);
   const [activeGroup, setActiveGroup] = useState<ContentGroupKey>('all');
@@ -505,6 +535,8 @@ function EditableContentCard({
 }) {
   const [local, setLocal] = useState(item);
   const group = getContentGroup(local.key);
+  const ctaHrefType = getCtaHrefType(local.ctaHref);
+  const health = getContentHealth(local);
 
   return (
     <section className="card content-cms-entry-card">
@@ -513,19 +545,39 @@ function EditableContentCard({
           <div className="section-kicker">Entry {String(index + 1).padStart(2, '0')}</div>
           <h3>{local.key || 'Untitled key'}</h3>
         </div>
-        <span className={`content-cms-group-pill content-cms-group-${group}`}>{getGroupLabel(local.key)}</span>
+
+        <div className="content-cms-entry-badges">
+          <span className={`content-cms-group-pill content-cms-group-${group}`}>{getGroupLabel(local.key)}</span>
+          <span className={`content-cms-status-pill content-cms-status-${health.status}`}>{health.label}</span>
+        </div>
       </div>
 
       <div className="content-cms-preview">
         <strong>{local.title || 'Untitled section'}</strong>
         {local.subtitle ? <span>{local.subtitle}</span> : null}
         <p>{local.body || 'No body copy yet.'}</p>
-        {local.ctaLabel || local.ctaHref ? (
+        <div className="content-cms-cta-preview">
           <small>
             CTA: {local.ctaLabel || 'Untitled'} → {local.ctaHref || '#'}
           </small>
-        ) : null}
+          <span className={`content-cms-cta-type content-cms-cta-${ctaHrefType.status}`}>
+            {ctaHrefType.label}
+          </span>
+          {ctaHrefType.isOpenable && local.ctaHref ? (
+            <a href={local.ctaHref} target="_blank" rel="noreferrer">
+              Open CTA
+            </a>
+          ) : null}
+        </div>
       </div>
+
+      {health.issues.length ? (
+        <div className="content-cms-issue-list">
+          {health.issues.map((issue) => (
+            <span key={issue}>{issue}</span>
+          ))}
+        </div>
+      ) : null}
 
       <div className="form-grid content-cms-edit-grid">
         <label className="content-cms-field">
