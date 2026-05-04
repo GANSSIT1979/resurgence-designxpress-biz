@@ -6674,4 +6674,130 @@ th {
     padding: 8px;
   }
 }
+/* -------------------------------------------------------------------------- */
+/* Home + Feed TikTok visual consistency */
+/* -------------------------------------------------------------------------- */
+
+.tiktok-action,
+.tiktok-open-button,
+.feed-action-rail button,
+.feed-action-rail a {
+  min-height: 58px;
+  min-width: 58px;
+}
+
+.tiktok-action,
+.tiktok-open-button {
+  height: 58px;
+  width: 58px;
+}
+
+.feed-action-rail {
+  gap: 10px;
+}
+
+.feed-action-rail button,
+.feed-action-rail a {
+  align-items: center;
+  border-radius: 999px;
+  display: grid;
+  gap: 3px;
+  justify-items: center;
+  padding: 9px;
+}
+
+.tiktok-action span,
+.feed-action-rail span {
+  font-size: 0.58rem;
+  font-weight: 950;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.tiktok-action strong,
+.feed-action-rail strong {
+  font-size: 0.72rem;
+  line-height: 1;
+}
+
+.tiktok-open-button,
+.feed-action-rail a {
+  background: #e63946;
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  font-size: 0.62rem;
+  font-weight: 950;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tiktok-reel-card,
+.feed-phone-frame {
+  border-radius: 34px;
+}
+
+.tiktok-cta-row,
+.feed-product-actions,
+.feed-cta-row,
+.feed-cart-actions {
+  gap: 8px;
+}
+
+.tiktok-cta-row a,
+.feed-product-actions a,
+.feed-cart-actions a,
+.feed-follow-button {
+  min-height: 40px;
+}
+
+@media (min-width: 1181px) {
+  .tiktok-action-rail {
+    right: 18px;
+  }
+
+  .feed-action-rail {
+    width: 72px;
+  }
+}
+
+@media (max-width: 720px) {
+  .tiktok-reel-card,
+  .feed-phone-frame {
+    border-radius: 0;
+  }
+
+  .tiktok-action-rail {
+    bottom: 86px;
+    right: 10px;
+  }
+
+  .tiktok-action,
+  .tiktok-open-button,
+  .feed-action-rail button,
+  .feed-action-rail a {
+    min-height: 54px;
+    min-width: 54px;
+  }
+
+  .tiktok-action,
+  .tiktok-open-button {
+    height: 54px;
+    width: 54px;
+  }
+
+  .feed-action-rail {
+    align-items: center;
+    border-radius: 24px;
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin: 0 10px;
+    padding: 8px;
+  }
+
+  .tiktok-reel-copy,
+  .feed-story-overlay {
+    padding-bottom: 22px;
+  }
+}
 }
