@@ -1,25 +1,47 @@
-# RESURGENCE Backend Utility Library Batch 4
+# RESURGENCE Components Update Batch 2
 
-Copy this package into the repository root to update backend utility modules.
+This package contains uploaded React/Next.js UI components for admin moderation, creator earnings, creator-commerce feed, CMS managers, gallery manager, creator profile manager, and inquiry form.
 
 ## Included files
 
-- src/lib/revenue-monitoring.ts
-- src/lib/session-server.ts
-- src/lib/settings.ts
-- src/lib/shop.ts
-- src/lib/shop-payment.ts
-- src/lib/signup-roles.ts
-- src/lib/site.ts
-- src/lib/slug.ts
-- src/lib/sponsor.ts
-- src/lib/sponsor-placements.ts
+- src/components/admin/feed-moderation-manager.tsx
+- src/components/admin/admin-reports-manager.tsx
+- src/components/admin/content-manager.tsx
+- src/components/admin/gallery-event-manager.tsx
+- src/components/admin/creator-profile-manager.tsx
+- src/components/creator/earnings/EarningsCards.tsx
+- src/components/creator/earnings/EarningsCharts.tsx
+- src/components/creator/earnings/PayoutRequestForm.tsx
+- src/components/feed/creator-commerce-feed.tsx
+- src/components/inquiry-form.tsx
 
 ## Apply
 
+Copy this package content into the repo root, then run:
+
 ```bash
 npm run build
-git add src/lib/revenue-monitoring.ts src/lib/session-server.ts src/lib/settings.ts src/lib/shop.ts src/lib/shop-payment.ts src/lib/signup-roles.ts src/lib/site.ts src/lib/slug.ts src/lib/sponsor.ts src/lib/sponsor-placements.ts
-git commit -m "Update backend utility library batch 4"
+```
+
+If build succeeds:
+
+```bash
+git add src/components/admin/feed-moderation-manager.tsx src/components/admin/admin-reports-manager.tsx src/components/admin/content-manager.tsx src/components/admin/gallery-event-manager.tsx src/components/admin/creator-profile-manager.tsx src/components/creator/earnings/EarningsCards.tsx src/components/creator/earnings/EarningsCharts.tsx src/components/creator/earnings/PayoutRequestForm.tsx src/components/feed/creator-commerce-feed.tsx src/components/inquiry-form.tsx
+git commit -m "Update admin creator feed and earnings components"
 git push origin main
 ```
+
+## Notes
+
+Some files depend on existing project modules/components such as:
+
+- @/components/resurgence/*
+- @/components/image-upload-field
+- @/components/filter-chip-row
+- @/components/metric-bar-chart
+- @/components/kpi-stat-card
+- @/lib/feed/*
+- @/lib/shop/cart-storage
+- recharts
+
+If build reports missing imports, add those modules before deployment.
