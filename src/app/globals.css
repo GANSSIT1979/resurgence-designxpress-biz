@@ -7226,4 +7226,51 @@ th {
 .content-cms-usage-preview a:hover {
   background: rgba(77, 192, 255, 0.12);
 }
+/* -------------------------------------------------------------------------- */
+/* Admin Content CMS CTA validation */
+/* -------------------------------------------------------------------------- */
+
+.content-cms-cta-validation-row {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.content-cms-cta-validation {
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 950;
+  padding: 7px 10px;
+  text-transform: uppercase;
+}
+
+.content-cms-cta-valid {
+  background: rgba(34, 197, 94, 0.14);
+  color: #bbf7d0;
+}
+
+.content-cms-cta-warning {
+  background: rgba(245, 158, 11, 0.16);
+  color: #ffe0a3;
+}
+
+.content-cms-cta-empty {
+  background: rgba(148, 163, 184, 0.15);
+  color: #e2e8f0;
+}
+
+.content-cms-cta-validation-row a {
+  border: 1px solid rgba(77, 192, 255, 0.28);
+  border-radius: 999px;
+  color: #cfeeff;
+  font-size: 0.74rem;
+  font-weight: 900;
+  padding: 7px 10px;
+  text-decoration: none;
+}
+
+.content-cms-cta-validation-row a:hover {
+  background: rgba(77, 192, 255, 0.12);
+}
 }

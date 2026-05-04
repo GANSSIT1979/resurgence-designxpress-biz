@@ -44,6 +44,48 @@ function normalizeSearch(value: string) {
   return value.trim().toLowerCase();
 }
 
+function getCtaHrefValidation(href?: string | null) {
+  const value = href?.trim();
+
+  if (!value) {
+    return {
+      label: 'No CTA',
+      status: 'empty',
+      isOpenable: false,
+    } as const;
+  }
+
+  if (value.startsWith('/')) {
+    return {
+      label: 'Internal route',
+      status: 'valid',
+      isOpenable: true,
+    } as const;
+  }
+
+  if (value.startsWith('mailto:')) {
+    return {
+      label: 'Email link',
+      status: 'valid',
+      isOpenable: true,
+    } as const;
+  }
+
+  if (value.startsWith('https://') || value.startsWith('http://')) {
+    return {
+      label: 'External URL',
+      status: 'valid',
+      isOpenable: true,
+    } as const;
+  }
+
+  return {
+    label: 'Invalid CTA href',
+    status: 'warning',
+    isOpenable: false,
+  } as const;
+}
+
 export function ContentManager({ initialContent }: { initialContent: ContentItem[] }) {
   const [items, setItems] = useState(initialContent);
   const [activeGroup, setActiveGroup] = useState<ContentGroupKey>('all');
@@ -318,8 +360,9 @@ function EditableContentCard({
   onSave: (item: ContentItem) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
 }) {
-  const [local, setLocal] = useState(item);
-  const group = getContentGroup(local.key);
+const [local, setLocal] = useState(item);
+const group = getContentGroup(local.key);
+const ctaValidation = getCtaHrefValidation(local.ctaHref);
 
   return (
     <section className="card content-cms-entry-card">
@@ -337,11 +380,21 @@ function EditableContentCard({
         <strong>{local.title || 'Untitled section'}</strong>
         {local.subtitle ? <span>{local.subtitle}</span> : null}
         <p>{local.body || 'No body copy yet.'}</p>
-        {local.ctaLabel || local.ctaHref ? (
-          <small>
-            CTA: {local.ctaLabel || 'Untitled'} - {local.ctaHref || '#'}
-          </small>
-        ) : null}
+        <div className="content-cms-cta-validation-row">
+  <small>
+    CTA: {local.ctaLabel || 'Untitled'} - {local.ctaHref || '#'}
+  </small>
+
+  <span className={`content-cms-cta-validation content-cms-cta-${ctaValidation.status}`}>
+    {ctaValidation.label}
+  </span>
+
+  {ctaValidation.isOpenable && local.ctaHref ? (
+    <a href={local.ctaHref} target="_blank" rel="noreferrer">
+      Open CTA
+    </a>
+  ) : null}
+</div>
       </div>
 
       <div className="form-grid content-cms-edit-grid">
