@@ -405,6 +405,13 @@ const group = getContentGroup(local.key);
 const ctaValidation = getCtaHrefValidation(local.ctaHref);
 const usage = getPublicUsage(local.key);
 const publishSafety = getPublishSafety(local);
+const hasUnsavedChanges =
+  local.key !== item.key ||
+  local.title !== item.title ||
+  (local.subtitle ?? '') !== (item.subtitle ?? '') ||
+  local.body !== item.body ||
+  (local.ctaLabel ?? '') !== (item.ctaLabel ?? '') ||
+  (local.ctaHref ?? '') !== (item.ctaHref ?? '');
 function getPublishSafety(item: ContentItem) {
   const hasTitle = Boolean(item.title.trim());
   const hasBody = Boolean(item.body.trim());
@@ -442,10 +449,12 @@ function getPublishSafety(item: ContentItem) {
 
   <div className="content-cms-entry-badges">
     <span className={`content-cms-group-pill content-cms-group-${group}`}>
+<span className={`content-cms-dirty-pill ${hasUnsavedChanges ? 'is-dirty' : 'is-saved'}`}>
+  {hasUnsavedChanges ? 'Unsaved changes' : 'Saved'}
+</span>
       {GROUPS.find((entry) => entry.key === group)?.label ?? 'Other'}
     </span>
-    <span
-      className={`content-cms-publish-pill content-cms-publish-${publishSafety.status}`}
+    <span className={`content-cms-publish-pill content-cms-publish-${publishSafety.status}`}
       title={publishSafety.detail}
     >
       {publishSafety.label}
