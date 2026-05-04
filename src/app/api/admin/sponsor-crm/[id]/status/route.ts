@@ -1,14 +1,19 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import type { SponsorSubmissionStatus } from '@prisma/client';
 
-const allowedStatuses = new Set([
+const allowedStatuses: readonly SponsorSubmissionStatus[] = [
   'SUBMITTED',
   'UNDER_REVIEW',
   'NEEDS_REVISION',
   'APPROVED',
   'REJECTED',
   'CONVERTED_TO_ACTIVE_SPONSOR',
-]);
+];
+
+function isSponsorSubmissionStatus(status: string): status is SponsorSubmissionStatus {
+  return allowedStatuses.includes(status as SponsorSubmissionStatus);
+}
 
 function hasUsableDatabaseUrl() {
   const databaseUrl = process.env.DATABASE_URL || '';
@@ -20,7 +25,7 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
   const { searchParams } = new URL(req.url);
   const status = searchParams.get('status') || '';
 
-  if (!allowedStatuses.has(status)) {
+  if (!isSponsorSubmissionStatus(status)) {
     return NextResponse.json({ error: 'Invalid status' }, { status: 400 });
   }
 
@@ -31,7 +36,7 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
   try {
     await prisma.sponsorSubmission.update({
       where: { id },
-      data: { status: status as any },
+      data: { status },
     });
 
     return NextResponse.redirect(new URL('/admin/sponsor-crm', req.url));
