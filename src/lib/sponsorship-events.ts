@@ -1,3 +1,10 @@
+export type SponsorshipEventScheduleItem = {
+  label: string;
+  date?: string;
+  time?: string;
+  location?: string;
+};
+
 export type SponsorshipEventConfig = {
   slug: string;
   title: string;
@@ -5,6 +12,8 @@ export type SponsorshipEventConfig = {
   organizer: string;
   market: string;
   eventDate: string;
+  scheduleStatus: 'COMING_SOON' | 'CONFIRMED' | 'MULTI_DATE';
+  schedule: SponsorshipEventScheduleItem[];
   category: string;
   heroKicker: string;
   heroSubtitle: string;
@@ -20,6 +29,8 @@ const dayoEvent: SponsorshipEventConfig = {
   organizer: 'AMMOS 2014 Hong Kong',
   market: 'Hong Kong & Macau',
   eventDate: '',
+  scheduleStatus: 'COMING_SOON',
+  schedule: [],
   category: 'DAYO Series',
   heroKicker: 'AMMOS 2014 Hong Kong Presents',
   heroSubtitle: 'Comprehensive sponsorship and team presentation for one court, one dream, and one champion.',
@@ -41,4 +52,14 @@ export function getSponsorshipEvent(slug: string) {
 
 export function getDefaultSponsorshipEvent() {
   return dayoEvent;
+}
+
+export function getEventScheduleLabel(event: SponsorshipEventConfig) {
+  if (event.scheduleStatus === 'COMING_SOON') return 'Coming Soon';
+  if (event.scheduleStatus === 'MULTI_DATE') return 'Multiple Dates';
+  return event.eventDate || 'Coming Soon';
+}
+
+export function getEventMetaParts(event: SponsorshipEventConfig) {
+  return [event.market, event.eventDate, event.organizer].filter(Boolean);
 }
