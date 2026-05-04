@@ -1,18 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { COOKIE_NAME, getLoginRedirect, isPathAllowedForRole, verifySession } from '@/lib/auth';
-import { getRequiredPermission } from '@/lib/permissions';
 
 const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'resurgence-dx.biz';
 
-const localHttpsHosts = new Set([
-  'localhost',
-  '127.0.0.1',
-  '0.0.0.0',
-  '::1',
-  '[::1]',
-]);
-
-const SUBDOMAIN_MODULES: Record<string, string> = {
+const SUBDOMAIN_PATHS: Record<string, string> = {
   admin: '/admin',
   crm: '/crm',
   login: '/login',
@@ -23,143 +13,82 @@ const SUBDOMAIN_MODULES: Record<string, string> = {
   support: '/support',
 };
 
-function shouldRedirectToHttps(request: NextRequest) {
-  if (process.env.FORCE_HTTPS !== 'true') return false;
+const AUTH_SUBDOMAINS = new Set(['admin', 'crm']);
+const AUTH_COOKIE_NAMES = ['resurgence_session', 'session', 'auth_token', 'admin_session'];
 
-  const hostname = request.nextUrl.hostname;
-  if (localHttpsHosts.has(hostname)) return false;
-
-  const forwardedProto = request.headers.get('x-forwarded-proto')?.split(',')[0]?.trim();
-  const protocol = forwardedProto || request.nextUrl.protocol.replace(':', '');
-
-  return protocol === 'http';
+function normalizeHost(host: string) {
+  return host.split(':')[0].toLowerCase();
 }
 
-function normalizeHostname(request: NextRequest) {
-  return request.nextUrl.hostname.toLowerCase();
+function hasAuthCookie(req: NextRequest) {
+  return AUTH_COOKIE_NAMES.some((name) => Boolean(req.cookies.get(name)?.value));
 }
 
-function stripDuplicateModulePath(pathname: string, modulePath: string) {
-  if (pathname === modulePath) return '/';
-
-  if (pathname.startsWith(`${modulePath}/`)) {
-    return pathname.replace(modulePath, '') || '/';
-  }
-
-  return pathname;
+function isAssetPath(pathname: string) {
+  return (
+    pathname.startsWith('/api') ||
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/assets') ||
+    pathname.startsWith('/branding') ||
+    pathname === '/favicon.ico' ||
+    pathname === '/robots.txt' ||
+    pathname === '/sitemap.xml' ||
+    pathname === '/icon.png'
+  );
 }
 
-function getSubdomainRewriteUrl(request: NextRequest) {
-  const hostname = normalizeHostname(request);
-  const url = request.nextUrl.clone();
-
-  if (hostname === ROOT_DOMAIN || hostname === `www.${ROOT_DOMAIN}`) {
-    return null;
-  }
-
-  if (!hostname.endsWith(`.${ROOT_DOMAIN}`)) {
-    return null;
-  }
-
-  const subdomain = hostname.replace(`.${ROOT_DOMAIN}`, '');
-  const modulePath = SUBDOMAIN_MODULES[subdomain];
-
-  if (!modulePath) {
-    return null;
-  }
-
-  const cleanPathname = stripDuplicateModulePath(url.pathname, modulePath);
-
-  url.pathname = cleanPathname === '/'
-    ? modulePath
-    : `${modulePath}${cleanPathname}`;
-
-  return url;
+function alreadyPrefixed(pathname: string, basePath: string) {
+  return pathname === basePath || pathname.startsWith(`${basePath}/`);
 }
 
-function getRootRedirectUrl(request: NextRequest) {
-  const hostname = normalizeHostname(request);
+export function middleware(req: NextRequest) {
+  const host = req.headers.get('host') || '';
+  const hostname = normalizeHost(host);
+  const pathname = req.nextUrl.pathname;
 
-  if (hostname !== ROOT_DOMAIN) {
-    return null;
+  if (isAssetPath(pathname)) return NextResponse.next();
+
+  if (hostname === ROOT_DOMAIN) {
+    const url = req.nextUrl.clone();
+    url.hostname = `www.${ROOT_DOMAIN}`;
+    return NextResponse.redirect(url);
   }
 
-  const url = request.nextUrl.clone();
-  url.hostname = `www.${ROOT_DOMAIN}`;
-  url.protocol = 'https:';
-
-  return url;
-}
-
-export async function middleware(request: NextRequest) {
-  const { pathname, search } = request.nextUrl;
-  const token = request.cookies.get(COOKIE_NAME)?.value;
-
-  if (shouldRedirectToHttps(request)) {
-    const httpsUrl = request.nextUrl.clone();
-    httpsUrl.protocol = 'https:';
-    return NextResponse.redirect(httpsUrl, 308);
-  }
-
-  const rootRedirectUrl = getRootRedirectUrl(request);
-  if (rootRedirectUrl) {
-    return NextResponse.redirect(rootRedirectUrl, 308);
-  }
-
-  const subdomainRewriteUrl = getSubdomainRewriteUrl(request);
-  const effectivePathname = subdomainRewriteUrl?.pathname || pathname;
-
-  if (effectivePathname === '/login') {
-    if (request.method !== 'GET' && request.method !== 'HEAD') {
-      return NextResponse.redirect(new URL('/login', request.url), 303);
-    }
-
-    const payload = await verifySession(token);
-    if (payload) {
-      return NextResponse.redirect(new URL(getLoginRedirect(payload.role), request.url));
-    }
-
-    if (subdomainRewriteUrl) {
-      return NextResponse.rewrite(subdomainRewriteUrl);
-    }
-
+  if (hostname === `www.${ROOT_DOMAIN}`) {
     return NextResponse.next();
   }
 
-  const requiredPermission = getRequiredPermission(effectivePathname, request.method);
+  if (!hostname.endsWith(`.${ROOT_DOMAIN}`)) {
+    return NextResponse.next();
+  }
 
-  if (requiredPermission) {
-    const payload = await verifySession(token);
+  const subdomain = hostname.replace(`.${ROOT_DOMAIN}`, '');
+  const basePath = SUBDOMAIN_PATHS[subdomain];
 
-    if (!payload) {
-      if (effectivePathname.startsWith('/api/')) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      }
+  if (!basePath) return NextResponse.next();
 
-      const loginUrl = new URL('/login', request.url);
-      loginUrl.searchParams.set('next', `${effectivePathname}${search}`);
+  if (AUTH_SUBDOMAINS.has(subdomain)) {
+    const isLoginPath = pathname === '/login' || pathname.startsWith('/login/');
+    const isAdminLoginPath = pathname === '/admin/login' || pathname.startsWith('/admin/login/');
 
+    if (!hasAuthCookie(req) && !isLoginPath && !isAdminLoginPath) {
+      const loginUrl = req.nextUrl.clone();
+      loginUrl.hostname = `login.${ROOT_DOMAIN}`;
+      loginUrl.pathname = '/login';
+      loginUrl.searchParams.set('next', `https://${hostname}${pathname}${req.nextUrl.search}`);
       return NextResponse.redirect(loginUrl);
     }
-
-    if (!isPathAllowedForRole(effectivePathname, payload.role, request.method)) {
-      if (effectivePathname.startsWith('/api/')) {
-        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-      }
-
-      return NextResponse.redirect(new URL(getLoginRedirect(payload.role), request.url));
-    }
   }
 
-  if (subdomainRewriteUrl) {
-    return NextResponse.rewrite(subdomainRewriteUrl);
+  if (alreadyPrefixed(pathname, basePath)) {
+    return NextResponse.next();
   }
 
-  return NextResponse.next();
+  const url = req.nextUrl.clone();
+  url.pathname = `${basePath}${pathname === '/' ? '' : pathname}`;
+  return NextResponse.rewrite(url);
 }
 
 export const config = {
-  matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|assets|uploads).*)',
-  ],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|icon.png).*)'],
 };
