@@ -6158,7 +6158,11 @@ th {
     min-height: 52px;
     width: 100%;
   }
-  .tiktok-discovery-shell {
+  /* -------------------------------------------------------------------------- */
+/* TikTok-style home discovery shell */
+/* -------------------------------------------------------------------------- */
+
+.tiktok-discovery-shell {
   background:
     radial-gradient(circle at 20% 20%, rgba(230, 57, 70, 0.24), transparent 32%),
     radial-gradient(circle at 80% 10%, rgba(212, 175, 55, 0.2), transparent 28%),
@@ -6451,5 +6455,4 @@ th {
   .tiktok-reel-card {
     min-height: 680px;
   }
-}
 }
