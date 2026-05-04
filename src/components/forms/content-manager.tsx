@@ -55,7 +55,38 @@ function getCtaHrefValidation(href?: string | null) {
     } as const;
   }
 
-  function getPublicUsage(key: string) {
+  if (value.startsWith('/')) {
+    return {
+      label: 'Internal route',
+      status: 'valid',
+      isOpenable: true,
+    } as const;
+  }
+
+  if (value.startsWith('mailto:')) {
+    return {
+      label: 'Email link',
+      status: 'valid',
+      isOpenable: true,
+    } as const;
+  }
+
+  if (value.startsWith('https://') || value.startsWith('http://')) {
+    return {
+      label: 'External URL',
+      status: 'valid',
+      isOpenable: true,
+    } as const;
+  }
+
+  return {
+    label: 'Invalid CTA href',
+    status: 'warning',
+    isOpenable: false,
+  } as const;
+}
+
+function getPublicUsage(key: string) {
   if (key.startsWith('home.')) {
     return {
       label: 'Home',
@@ -387,32 +418,35 @@ const usage = getPublicUsage(local.key);
       </div>
 
       <div className="content-cms-preview">
-<span>Used on: {usage.label}</span>
-  <small>{usage.description}</small>
-  {usage.href ? (
-    <a href={usage.href} target="_blank" rel="noreferrer">
-      Open {usage.label}
-    </a>
-  ) : null}
-</div>
         <strong>{local.title || 'Untitled section'}</strong>
         {local.subtitle ? <span>{local.subtitle}</span> : null}
         <p>{local.body || 'No body copy yet.'}</p>
+
         <div className="content-cms-cta-validation-row">
-  <small>
-    CTA: {local.ctaLabel || 'Untitled'} - {local.ctaHref || '#'}
-  </small>
+          <small>
+            CTA: {local.ctaLabel || 'Untitled'} - {local.ctaHref || '#'}
+          </small>
 
-  <span className={`content-cms-cta-validation content-cms-cta-${ctaValidation.status}`}>
-    {ctaValidation.label}
-  </span>
+          <span className={`content-cms-cta-validation content-cms-cta-${ctaValidation.status}`}>
+            {ctaValidation.label}
+          </span>
 
-  {ctaValidation.isOpenable && local.ctaHref ? (
-    <a href={local.ctaHref} target="_blank" rel="noreferrer">
-      Open CTA
-    </a>
-  ) : null}
-</div>
+          {ctaValidation.isOpenable && local.ctaHref ? (
+            <a href={local.ctaHref} target="_blank" rel="noreferrer">
+              Open CTA
+            </a>
+          ) : null}
+        </div>
+
+        <div className="content-cms-usage-preview">
+          <span>Used on: {usage.label}</span>
+          <small>{usage.description}</small>
+          {usage.href ? (
+            <a href={usage.href} target="_blank" rel="noreferrer">
+              Open {usage.label}
+            </a>
+          ) : null}
+        </div>
       </div>
 
       <div className="form-grid content-cms-edit-grid">
