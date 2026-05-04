@@ -324,7 +324,15 @@ function EditableContentCard({
   onDelete: (id: string) => Promise<void>;
 }) {
   const [local, setLocal] = useState(item);
-  const group = getContentGroup(local.key);
+const group = getContentGroup(local.key);
+
+const hasUnsavedChanges =
+  local.key !== item.key ||
+  local.title !== item.title ||
+  (local.subtitle ?? '') !== (item.subtitle ?? '') ||
+  local.body !== item.body ||
+  (local.ctaLabel ?? '') !== (item.ctaLabel ?? '') ||
+  (local.ctaHref ?? '') !== (item.ctaHref ?? '');
 
   return (
     <section className="card content-cms-entry-card">
@@ -333,7 +341,16 @@ function EditableContentCard({
           <div className="section-kicker">Entry {String(index + 1).padStart(2, '0')}</div>
           <h3>{local.key || 'Untitled key'}</h3>
         </div>
-        <span className={`content-cms-group-pill content-cms-group-${group}`}>{getGroupLabel(local.key)}</span>
+
+        <div className="content-cms-entry-badges">
+          <span className={`content-cms-group-pill content-cms-group-${group}`}>
+            {getGroupLabel(local.key)}
+          </span>
+
+          <span className={`content-cms-dirty-pill ${hasUnsavedChanges ? 'is-dirty' : 'is-saved'}`}>
+            {hasUnsavedChanges ? 'Unsaved changes' : 'Saved'}
+          </span>
+        </div>
       </div>
 
       <div className="content-cms-preview">
