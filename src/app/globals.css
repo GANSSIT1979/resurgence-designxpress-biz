@@ -7184,4 +7184,46 @@ th {
   font-weight: 800;
   padding: 7px 10px;
 }
+/* -------------------------------------------------------------------------- */
+/* Admin Content CMS public usage preview */
+/* -------------------------------------------------------------------------- */
+
+.content-cms-usage-preview {
+  align-items: center;
+  background: rgba(77, 192, 255, 0.075);
+  border: 1px solid rgba(77, 192, 255, 0.16);
+  border-radius: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 12px;
+}
+
+.content-cms-usage-preview span {
+  color: #cfeeff;
+  font-size: 0.76rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.content-cms-usage-preview small {
+  color: var(--muted);
+  flex: 1;
+  line-height: 1.4;
+  min-width: 180px;
+}
+
+.content-cms-usage-preview a {
+  border: 1px solid rgba(77, 192, 255, 0.28);
+  border-radius: 999px;
+  color: #cfeeff;
+  font-size: 0.74rem;
+  font-weight: 900;
+  padding: 7px 10px;
+  text-decoration: none;
+}
+
+.content-cms-usage-preview a:hover {
+  background: rgba(77, 192, 255, 0.12);
+}
 }

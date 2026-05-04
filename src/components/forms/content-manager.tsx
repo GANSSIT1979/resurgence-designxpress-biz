@@ -32,119 +32,6 @@ const EMPTY_FORM = {
   ctaHref: '',
 };
 
-const RECOMMENDED_CONTENT_KEYS = [
-  {
-    key: 'home.discovery.resurgence',
-    group: 'home',
-    title: 'Creator commerce, sponsor activations, and basketball culture in one feed.',
-    subtitle: 'FOR YOU',
-    body:
-      'A mobile-first RESURGENCE experience for creators, merch drops, sponsors, basketball events, and community stories.',
-    ctaLabel: 'Open Feed',
-    ctaHref: '/feed',
-  },
-  {
-    key: 'home.discovery.event',
-    group: 'home',
-    title: 'DAYO Series OFW All-Star 2026',
-    subtitle: 'EVENT DROP',
-    body:
-      'Sponsor-ready basketball activation connecting OFW communities, brand partners, creator media, and event-day visibility.',
-    ctaLabel: 'Open Event',
-    ctaHref: '/events/dayo-series-ofw-all-star',
-  },
-  {
-    key: 'home.discovery.creator',
-    group: 'home',
-    title: 'Creator-led commerce built for real community reach.',
-    subtitle: 'CREATOR NETWORK',
-    body:
-      'Feature athletes, creators, coaches, sponsors, and community storytellers in one mobile-first discovery feed.',
-    ctaLabel: 'View Creators',
-    ctaHref: '/creators',
-  },
-  {
-    key: 'home.discovery.shop',
-    group: 'home',
-    title: 'Merch, uniforms, apparel, and branded team gear.',
-    subtitle: 'SHOP DROP',
-    body:
-      'Browse official drops and route custom apparel needs into DesignXpress production workflows.',
-    ctaLabel: 'Open Shop',
-    ctaHref: '/shop',
-  },
-  {
-    key: 'events.hero',
-    group: 'events',
-    title: 'Sponsorship-ready events, community activations, and creator moments.',
-    subtitle: 'RESURGENCE Events',
-    body:
-      'Explore official RESURGENCE event pages, review sponsorship opportunities, and apply for packages connected to each activation.',
-    ctaLabel: 'View Sponsor Packages',
-    ctaHref: '/sponsors',
-  },
-  {
-    key: 'events.overview',
-    group: 'events',
-    title: 'Choose an event to open its sponsor landing page.',
-    subtitle: 'Active Event Catalog',
-    body:
-      'Official RESURGENCE event pages connect sponsors, creators, basketball communities, team operations, media visibility, and activation opportunities.',
-    ctaLabel: 'Open Events',
-    ctaHref: '/events',
-  },
-  {
-    key: 'partnerships.hero',
-    group: 'partnerships',
-    title: 'Build partnerships that connect brands, creators, merch, and community sports.',
-    subtitle: 'Partnerships',
-    body:
-      'RESURGENCE Powered by DesignXpress gives sponsors, partners, affiliates, creators, merchants, and community organizers a structured business entry point for collaborations.',
-    ctaLabel: 'Start Partnership Inquiry',
-    ctaHref: '/contact',
-  },
-  {
-    key: 'partnerships.paths',
-    group: 'partnerships',
-    title: 'Choose the partnership route that fits your business goal.',
-    subtitle: 'Partnership Paths',
-    body:
-      'Route sponsorships, referrals, branded apparel programs, creator collaborations, media partnerships, and larger commercial opportunities into the right workflow.',
-    ctaLabel: 'View Sponsor Packages',
-    ctaHref: '/sponsors',
-  },
-  {
-    key: 'support.hero',
-    group: 'support',
-    title: 'Live support desk for RESURGENCE customers, sponsors, creators, and partners.',
-    subtitle: 'Support Desk',
-    body:
-      'Get help with sponsorships, shop orders, payments, basketball events, custom apparel, creator activity, partnerships, and human follow-up.',
-    ctaLabel: 'Email Support',
-    ctaHref: 'mailto:support@resurgence-dx.biz',
-  },
-  {
-    key: 'support.routing',
-    group: 'support',
-    title: 'Comprehensive help topics with accurate handoff rules.',
-    subtitle: 'Support Routing',
-    body:
-      'Support routes visitors into the right workflow for sponsorships, shop orders, payments, events, custom apparel, creator questions, partnership inquiries, and general platform help.',
-    ctaLabel: 'Open Support Desk',
-    ctaHref: '/support',
-  },
-  {
-    key: 'support.rules',
-    group: 'support',
-    title: 'Accurate answers, safe routing, and clear next steps.',
-    subtitle: 'Support Rules',
-    body:
-      'RESURGENCE support should use only confirmed business information, avoid inventing prices or commitments, protect payment privacy, and collect complete contact details when a request needs review.',
-    ctaLabel: 'Contact Support',
-    ctaHref: '/contact',
-  },
-] as const;
-
 function getContentGroup(key: string): ContentGroupKey {
   if (key.startsWith('home.')) return 'home';
   if (key.startsWith('events.')) return 'events';
@@ -153,43 +40,8 @@ function getContentGroup(key: string): ContentGroupKey {
   return 'other';
 }
 
-function getGroupLabel(key: string) {
-  const group = GROUPS.find((item) => item.key === getContentGroup(key));
-  return group?.label ?? 'Other';
-}
-
 function normalizeSearch(value: string) {
   return value.trim().toLowerCase();
-}
-
-function getCtaHrefType(href?: string | null) {
-  const value = href?.trim();
-
-  if (!value) return { label: 'No CTA', status: 'empty', isOpenable: false } as const;
-  if (value.startsWith('/')) return { label: 'Internal route', status: 'valid', isOpenable: true } as const;
-  if (value.startsWith('mailto:')) return { label: 'Email link', status: 'valid', isOpenable: true } as const;
-  if (value.startsWith('https://') || value.startsWith('http://')) {
-    return { label: 'External URL', status: 'valid', isOpenable: true } as const;
-  }
-
-  return { label: 'Check CTA href', status: 'warning', isOpenable: false } as const;
-}
-
-function getContentHealth(item: ContentItem) {
-  const issues: string[] = [];
-
-  if (!item.key.trim()) issues.push('Missing key');
-  if (!item.title.trim()) issues.push('Missing title');
-  if (!item.body.trim()) issues.push('Missing body');
-
-  const cta = getCtaHrefType(item.ctaHref);
-  if (cta.status === 'warning') issues.push('CTA href should start with /, mailto:, http://, or https://');
-
-  return {
-    status: issues.length ? 'warning' : 'ready',
-    label: issues.length ? `${issues.length} issue${issues.length === 1 ? '' : 's'}` : 'Ready',
-    issues,
-  };
 }
 
 export function ContentManager({ initialContent }: { initialContent: ContentItem[] }) {
@@ -199,13 +51,6 @@ export function ContentManager({ initialContent }: { initialContent: ContentItem
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [newItem, setNewItem] = useState(EMPTY_FORM);
-
-  const existingKeys = useMemo(() => new Set(items.map((item) => item.key)), [items]);
-
-  const missingRecommendedKeys = useMemo(
-    () => RECOMMENDED_CONTENT_KEYS.filter((item) => !existingKeys.has(item.key)),
-    [existingKeys],
-  );
 
   const groupCounts = useMemo(() => {
     const counts: Record<ContentGroupKey, number> = {
@@ -307,34 +152,6 @@ export function ContentManager({ initialContent }: { initialContent: ContentItem
     setNotice(`Created ${data.item.key}.`);
   }
 
-  async function createRecommendedItem(seed: (typeof RECOMMENDED_CONTENT_KEYS)[number]) {
-    setNotice(null);
-    setError(null);
-
-    const response = await fetch('/api/admin/content', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        key: seed.key,
-        title: seed.title,
-        subtitle: seed.subtitle,
-        body: seed.body,
-        ctaLabel: seed.ctaLabel,
-        ctaHref: seed.ctaHref,
-      }),
-    });
-
-    const data = await response.json();
-    if (!response.ok) {
-      setError(data.error || `Unable to create ${seed.key}.`);
-      return;
-    }
-
-    setItems((current) => [data.item, ...current].sort((left, right) => left.key.localeCompare(right.key)));
-    setActiveGroup(getContentGroup(data.item.key));
-    setNotice(`Created recommended key ${data.item.key}.`);
-  }
-
   return (
     <div className="content-cms-shell">
       <section className="card content-cms-hero">
@@ -359,38 +176,6 @@ export function ContentManager({ initialContent }: { initialContent: ContentItem
             </button>
           ))}
         </div>
-      </section>
-
-      <section className="card content-cms-recommended-card">
-        <div className="content-cms-card-header">
-          <div>
-            <div className="section-kicker">Recommended Keys</div>
-            <h3>Public CMS setup checklist</h3>
-            <p className="helper">
-              Quickly create missing CMS records for home discovery cards, events, partnerships, and support pages.
-            </p>
-          </div>
-          <strong>{missingRecommendedKeys.length} missing</strong>
-        </div>
-
-        {missingRecommendedKeys.length ? (
-          <div className="content-cms-recommended-grid">
-            {missingRecommendedKeys.map((seed) => (
-              <button
-                className="content-cms-recommended-item"
-                key={seed.key}
-                type="button"
-                onClick={() => createRecommendedItem(seed)}
-              >
-                <span>{seed.group}</span>
-                <strong>{seed.key}</strong>
-                <small>{seed.title}</small>
-              </button>
-            ))}
-          </div>
-        ) : (
-          <div className="content-cms-complete-state">All recommended public CMS keys already exist.</div>
-        )}
       </section>
 
       <section className="card content-cms-create-card">
@@ -535,8 +320,6 @@ function EditableContentCard({
 }) {
   const [local, setLocal] = useState(item);
   const group = getContentGroup(local.key);
-  const ctaHrefType = getCtaHrefType(local.ctaHref);
-  const health = getContentHealth(local);
 
   return (
     <section className="card content-cms-entry-card">
@@ -545,39 +328,21 @@ function EditableContentCard({
           <div className="section-kicker">Entry {String(index + 1).padStart(2, '0')}</div>
           <h3>{local.key || 'Untitled key'}</h3>
         </div>
-
-        <div className="content-cms-entry-badges">
-          <span className={`content-cms-group-pill content-cms-group-${group}`}>{getGroupLabel(local.key)}</span>
-          <span className={`content-cms-status-pill content-cms-status-${health.status}`}>{health.label}</span>
-        </div>
+        <span className={`content-cms-group-pill content-cms-group-${group}`}>
+          {GROUPS.find((entry) => entry.key === group)?.label ?? 'Other'}
+        </span>
       </div>
 
       <div className="content-cms-preview">
         <strong>{local.title || 'Untitled section'}</strong>
         {local.subtitle ? <span>{local.subtitle}</span> : null}
         <p>{local.body || 'No body copy yet.'}</p>
-        <div className="content-cms-cta-preview">
+        {local.ctaLabel || local.ctaHref ? (
           <small>
-            CTA: {local.ctaLabel || 'Untitled'} → {local.ctaHref || '#'}
+            CTA: {local.ctaLabel || 'Untitled'} - {local.ctaHref || '#'}
           </small>
-          <span className={`content-cms-cta-type content-cms-cta-${ctaHrefType.status}`}>
-            {ctaHrefType.label}
-          </span>
-          {ctaHrefType.isOpenable && local.ctaHref ? (
-            <a href={local.ctaHref} target="_blank" rel="noreferrer">
-              Open CTA
-            </a>
-          ) : null}
-        </div>
+        ) : null}
       </div>
-
-      {health.issues.length ? (
-        <div className="content-cms-issue-list">
-          {health.issues.map((issue) => (
-            <span key={issue}>{issue}</span>
-          ))}
-        </div>
-      ) : null}
 
       <div className="form-grid content-cms-edit-grid">
         <label className="content-cms-field">
