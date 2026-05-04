@@ -536,6 +536,7 @@ model SponsorSubmission {
   id                String                  @id @default(cuid())
   sponsorProfileId  String?
   sponsorProfile    SponsorProfile?         @relation(fields: [sponsorProfileId], references: [id], onDelete: SetNull)
+  eventSlug         String                  @default("dayo-series-ofw-all-star")
   companyName       String
   contactName       String
   email             String
@@ -552,6 +553,7 @@ model SponsorSubmission {
   createdAt         DateTime                @default(now())
   updatedAt         DateTime                @updatedAt
 
+  @@index([eventSlug, status, createdAt])
   @@index([status, createdAt])
   @@index([email])
   @@index([companyName])

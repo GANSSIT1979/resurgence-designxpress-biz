@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum SponsorSubmissionStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  NEEDS_REVISION
+  APPROVED
+  REJECTED
+  CONVERTED_TO_ACTIVE_SPONSOR
+}
+
+// Minimal accurate patch schema section for the sponsorship multi-event update.
+// Merge the eventSlug field and index below into your full existing schema.prisma.
+model SponsorSubmission {
+  id                String                  @id @default(cuid())
+  sponsorProfileId  String?
+  sponsorProfile    SponsorProfile?         @relation(fields: [sponsorProfileId], references: [id], onDelete: SetNull)
+  eventSlug         String                  @default("dayo-series-ofw-all-star")
+  companyName       String
+  contactName       String
+  email             String
+  phone             String?
+  websiteUrl        String?
+  category          String
+  interestedPackage String
+  budgetRange       String
+  timeline          String?
+  message           String
+  status            SponsorSubmissionStatus @default(SUBMITTED)
+  internalNotes     String?
+  staffTasks        StaffTask[]
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+
+  @@index([eventSlug, status, createdAt])
+  @@index([status, createdAt])
+  @@index([email])
+  @@index([companyName])
+  @@index([sponsorProfileId, createdAt])
+}
+
+// Existing related models are represented here only to keep this patch file parseable in isolation.
+// Do not replace your full schema with this file unless you restore all other models.
+model SponsorProfile {
+  id          String              @id @default(cuid())
+  submissions SponsorSubmission[]
+}
+
+model StaffTask {
+  id                  String             @id @default(cuid())
+  sponsorSubmissionId String?
+  sponsorSubmission   SponsorSubmission? @relation(fields: [sponsorSubmissionId], references: [id], onDelete: SetNull)
+}

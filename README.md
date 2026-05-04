@@ -1,118 +1,36 @@
-# RESURGENCE Powered by DesignXpress
+# RESURGENCE Prisma Multi-Event Patch
 
-Production-ready full-stack platform for RESURGENCE Powered by DesignXpress.
+This ZIP contains the safe Prisma update for the multi-event sponsorship system.
 
-The system supports public pages, creator/community content, sponsorship workflows, partner operations, shop/checkout, cashiering, admin management, creator analytics, creator earnings, payout requests, AI support/chat workflows, and mobile-ready APIs.
+## Files
 
-## Production
+- `prisma/schema.eventSlug.patch.prisma` - parseable patch/reference showing the updated SponsorSubmission model. Do not blindly replace your full schema with this minimal patch unless you merge it into the full schema.
+- `prisma/migrations/20260504_add_event_slug/migration.sql` - SQL migration to add `eventSlug` and index safely.
 
-- Website: https://www.resurgence-dx.biz
-- Health: https://www.resurgence-dx.biz/api/health
-- Platform: Vercel
-- Region: `sin1`
-- Database: PostgreSQL / Supabase
-- ORM: Prisma
-- Framework: Next.js 15 App Router
+## Required merge into existing prisma/schema.prisma
 
-## Current production status
+Inside `model SponsorSubmission`, add:
 
-Latest confirmed health response:
-
-```json
-{
-  "ok": true,
-  "status": "ok",
-  "database": "connected",
-  "aiConfigured": true,
-  "schema": {
-    "status": "ok",
-    "issues": []
-  }
-}
+```prisma
+eventSlug String @default("dayo-series-ofw-all-star")
 ```
 
-## Stack
+Add this index inside the same model:
 
-- Next.js 15 App Router
-- React 19
-- Prisma 6
-- PostgreSQL / Supabase
-- Vercel
-- JWT / role-based access control
-- OpenAI / ChatKit support workflows
-- TypeScript
-- Tailwind CSS
-- Expo mobile app under `apps/mobile`
+```prisma
+@@index([eventSlug, status, createdAt])
+```
 
-## Key modules
-
-- Public marketing pages
-- Creator profiles and creator feed
-- Creator analytics
-- Creator earnings and payout requests
-- Admin payout approval and mark-paid workflows
-- Sponsor applications, packages, placements, billing, deliverables
-- Partner campaigns, agreements, referrals
-- Shop products, cart, checkout, orders
-- Cashier invoices, transactions, receipts, reports
-- Staff tasks, inquiries, schedule, announcements
-- AI support and ChatKit endpoints
-- Health and runtime verification
-
-## Important commands
+## Apply
 
 ```bash
-npm install
-npm run prisma:prepare
-npm run prisma:generate
-npm run docs:check
-npm run local:preflight
-npm run vercel-build
+npx prisma migrate dev --name add_event_slug
+npx prisma generate
 ```
 
-Deploy:
+For production after committing migration:
 
 ```bash
-npx vercel --prod
-```
-
-Production smoke test:
-
-```bash
-curl -I https://www.resurgence-dx.biz
-curl https://www.resurgence-dx.biz/api/health
-```
-
-## Prisma workflow
-
-Use this for the current production database:
-
-```bash
-npm run db:push
-npm run prisma:generate
-```
-
-Do not use `prisma migrate dev` against the current production Supabase database. The historical migration chain has a shadow database replay issue from an older migration. See:
-
-```txt
-docs/DATABASE_MIGRATION_RUNBOOK.md
-```
-
-## Documentation
-
-Start here:
-
-```txt
-docs/README.md
-```
-
-Core runbooks:
-
-```txt
-docs/INSTALL.md
-docs/DEPLOYMENT.md
-docs/DATABASE_MIGRATION_RUNBOOK.md
-docs/TROUBLESHOOTING.md
-docs/CREATOR_EARNINGS_PAYOUT_SYSTEM.md
-docs/PRODUCTION_STATUS.md
+npx prisma migrate deploy
+npx prisma generate
 ```
