@@ -18,29 +18,27 @@ export default async function FeedPage() {
 
   return (
     <main className="feed-route-shell">
-      <section className="feed-route-hero">
-        <div>
-          <p className="section-kicker">RESURGENCE For You</p>
-          <h1>Creator commerce, sponsor moments, and basketball culture in one vertical feed.</h1>
-          <p>
-            Swipe through creator stories, shoppable drops, event highlights, and sponsor activations.
-            Likes, comments, shares, saves, follows, cart actions, and analytics stay connected to the
-            existing RESURGENCE feed system.
-          </p>
-        </div>
+      <section className="feed-route-hero feed-route-hero-compact">
+  <div>
+    <p className="section-kicker">RESURGENCE For You</p>
+    <h1>Creator commerce in one vertical feed.</h1>
+    <p>
+      Swipe creator stories, merch drops, sponsor moments, and basketball activations.
+    </p>
+  </div>
 
-        <div className="feed-route-hero-actions">
-          <Link href="/creator/posts/new" className="button-link">
-            Create Post
-          </Link>
-          <Link href="/shop" className="button-link btn-secondary">
-            Shop Drops
-          </Link>
-          <Link href="/events" className="button-link btn-secondary">
-            Events
-          </Link>
-        </div>
-      </section>
+  <div className="feed-route-hero-actions">
+    <Link href="/creator/posts/new" className="button-link">
+      Create Post
+    </Link>
+    <Link href="/shop" className="button-link btn-secondary">
+      Shop Drops
+    </Link>
+    <Link href="/events" className="button-link btn-secondary">
+      Events
+    </Link>
+  </div>
+</section>
 
       <CreatorCommerceFeed
         initialItems={feed.items}
