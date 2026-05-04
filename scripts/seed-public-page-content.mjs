@@ -99,6 +99,38 @@ const pageContentSeeds = [
     ctaLabel: 'Open Support',
     ctaHref: '/support',
   },
+  {
+    key: 'home.discovery.resurgence',
+    title: 'Creator commerce, sponsor activations, and basketball culture in one feed.',
+    body:
+      'A mobile-first RESURGENCE experience for creators, merch drops, sponsors, basketball events, and community stories.',
+    ctaLabel: 'Open Feed',
+    ctaHref: '/feed',
+  },
+  {
+    key: 'home.discovery.event',
+    title: 'DAYO Series OFW All-Star 2026',
+    body:
+      'Sponsor-ready basketball activation connecting OFW communities, brand partners, creator media, and event-day visibility.',
+    ctaLabel: 'Open Event',
+    ctaHref: '/events/dayo-series-ofw-all-star',
+  },
+  {
+    key: 'home.discovery.creator',
+    title: 'Creator-led commerce built for real community reach.',
+    body:
+      'Feature athletes, creators, coaches, sponsors, and community storytellers in one mobile-first discovery feed.',
+    ctaLabel: 'View Creators',
+    ctaHref: '/creators',
+  },
+  {
+    key: 'home.discovery.shop',
+    title: 'Merch, uniforms, apparel, and branded team gear.',
+    body:
+      'Browse official drops and route custom apparel needs into DesignXpress production workflows.',
+    ctaLabel: 'Open Shop',
+    ctaHref: '/shop',
+  },
 ];
 
 async function main() {

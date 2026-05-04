@@ -1,5 +1,23 @@
 import Link from 'next/link';
 
+export type TikTokDiscoveryCmsItem = {
+  id: string;
+  eyebrow: string;
+  title: string;
+  caption: string;
+  creator: string;
+  role: string;
+  imageUrl: string;
+  primaryCtaLabel: string;
+  primaryCtaHref: string;
+  secondaryCtaLabel: string;
+  secondaryCtaHref: string;
+  likes: string;
+  comments: string;
+  shares: string;
+  tags: string[];
+};
+
 type DiscoveryItem = {
   id: string;
   eyebrow: string;
@@ -82,6 +100,7 @@ export function TikTokStyleDiscoveryShell({
   shoppableFeedCount,
   sponsorMomentCount,
   trendingHashtags,
+  discoveryItems = fallbackDiscoveryItems,
 }: {
   brandName: string;
   feedCount: number;
@@ -89,6 +108,7 @@ export function TikTokStyleDiscoveryShell({
   shoppableFeedCount: number;
   sponsorMomentCount: number;
   trendingHashtags: string[];
+  discoveryItems?: TikTokDiscoveryCmsItem[];
 }) {
   return (
     <section className="tiktok-discovery-shell" aria-label={`${brandName} discovery feed`}>
@@ -122,7 +142,7 @@ export function TikTokStyleDiscoveryShell({
 
       <div className="tiktok-reel-frame">
         <div className="tiktok-reel-track">
-          {fallbackDiscoveryItems.map((item) => (
+          {discoveryItems.map((item) => (
             <article className="tiktok-reel-card" key={item.id}>
               <div
                 className="tiktok-reel-bg"

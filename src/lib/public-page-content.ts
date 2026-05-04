@@ -8,6 +8,11 @@ export const PUBLIC_PAGE_CONTENT_KEYS = {
   supportHero: 'support.hero',
   supportRouting: 'support.routing',
   supportRules: 'support.rules',
+
+  homeDiscoveryResurgence: 'home.discovery.resurgence',
+  homeDiscoveryEvent: 'home.discovery.event',
+  homeDiscoveryCreator: 'home.discovery.creator',
+  homeDiscoveryShop: 'home.discovery.shop',
 } as const;
 
 export type PublicPageContentKey =

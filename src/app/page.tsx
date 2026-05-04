@@ -10,6 +10,9 @@ import { VerticalMediaFeed } from '@/components/vertical-media-feed';
 import { CreatorCommerceFeed } from '@/components/feed/creator-commerce-feed';
 import { getPublicFeed } from '@/lib/feed/queries';
 import { TikTokStyleDiscoveryShell } from '@/components/tiktok-style-discovery-shell';
+import { getPublicPageContent, getPublicPageContentMap, PUBLIC_PAGE_CONTENT_KEYS, } from '@/lib/public-page-content';
+
+import type { TikTokDiscoveryCmsItem } from '@/components/tiktok-style-discovery-shell';
 
 export const dynamic = 'force-dynamic';
 
@@ -77,6 +80,12 @@ function safeLines(value?: string | null) {
 }
 
 export default async function HomePage() {
+const contentMap = await getPublicPageContentMap([
+  PUBLIC_PAGE_CONTENT_KEYS.homeDiscoveryResurgence,
+  PUBLIC_PAGE_CONTENT_KEYS.homeDiscoveryEvent,
+  PUBLIC_PAGE_CONTENT_KEYS.homeDiscoveryCreator,
+  PUBLIC_PAGE_CONTENT_KEYS.homeDiscoveryShop,
+]);
   const user = await getCurrentUser();
   const results = await Promise.allSettled([
     getHomeData(),
@@ -91,7 +100,124 @@ export default async function HomePage() {
   const settings = getValue(results[2], fallbackSettings);
   const shopProducts = getValue(results[3], []);
   const feed = getValue(results[4], fallbackFeed);
+const homeDiscoveryResurgence = getPublicPageContent(
+  contentMap,
+  PUBLIC_PAGE_CONTENT_KEYS.homeDiscoveryResurgence,
+  {
+    title: 'Creator commerce, sponsor activations, and basketball culture in one feed.',
+    body:
+      'A mobile-first RESURGENCE experience for creators, merch drops, sponsors, basketball events, and community stories.',
+    ctaLabel: 'Open Feed',
+    ctaHref: '/feed',
+  },
+);
 
+const homeDiscoveryEvent = getPublicPageContent(
+  contentMap,
+  PUBLIC_PAGE_CONTENT_KEYS.homeDiscoveryEvent,
+  {
+    title: 'DAYO Series OFW All-Star 2026',
+    body:
+      'Sponsor-ready basketball activation connecting OFW communities, brand partners, creator media, and event-day visibility.',
+    ctaLabel: 'Open Event',
+    ctaHref: '/events/dayo-series-ofw-all-star',
+  },
+);
+
+const homeDiscoveryCreator = getPublicPageContent(
+  contentMap,
+  PUBLIC_PAGE_CONTENT_KEYS.homeDiscoveryCreator,
+  {
+    title: 'Creator-led commerce built for real community reach.',
+    body:
+      'Feature athletes, creators, coaches, sponsors, and community storytellers in one mobile-first discovery feed.',
+    ctaLabel: 'View Creators',
+    ctaHref: '/creators',
+  },
+);
+
+const homeDiscoveryShop = getPublicPageContent(
+  contentMap,
+  PUBLIC_PAGE_CONTENT_KEYS.homeDiscoveryShop,
+  {
+    title: 'Merch, uniforms, apparel, and branded team gear.',
+    body:
+      'Browse official drops and route custom apparel needs into DesignXpress production workflows.',
+    ctaLabel: 'Open Shop',
+    ctaHref: '/shop',
+  },
+);
+
+const discoveryItems: TikTokDiscoveryCmsItem[] = [
+  {
+    id: 'resurgence-main',
+    eyebrow: 'FOR YOU',
+    title: homeDiscoveryResurgence.title,
+    caption: homeDiscoveryResurgence.body,
+    creator: 'RESURGENCE',
+    role: 'Powered by DesignXpress',
+    imageUrl: '/branding/resurgence-shop-mockup.png',
+    primaryCtaLabel: homeDiscoveryResurgence.ctaLabel || 'Open Feed',
+    primaryCtaHref: homeDiscoveryResurgence.ctaHref || '/feed',
+    secondaryCtaLabel: 'Shop Drops',
+    secondaryCtaHref: '/shop',
+    likes: '18.4K',
+    comments: '842',
+    shares: '1.9K',
+    tags: ['#ResurgenceDX', '#CreatorCommerce', '#BasketballCulture'],
+  },
+  {
+    id: 'dayo-series',
+    eyebrow: 'EVENT DROP',
+    title: homeDiscoveryEvent.title,
+    caption: homeDiscoveryEvent.body,
+    creator: 'AMMOS 2014 Hong Kong',
+    role: 'Event Organizer',
+    imageUrl: '/branding/resurgence-shop-mockup.png',
+    primaryCtaLabel: homeDiscoveryEvent.ctaLabel || 'Open Event',
+    primaryCtaHref: homeDiscoveryEvent.ctaHref || '/events/dayo-series-ofw-all-star',
+    secondaryCtaLabel: 'Apply as Sponsor',
+    secondaryCtaHref: '/events/dayo-series-ofw-all-star/apply',
+    likes: '12.7K',
+    comments: '390',
+    shares: '920',
+    tags: ['#DAYOSeries', '#OFWAllStar', '#SponsorActivation'],
+  },
+  {
+    id: 'creator-network',
+    eyebrow: 'CREATOR NETWORK',
+    title: homeDiscoveryCreator.title,
+    caption: homeDiscoveryCreator.body,
+    creator: 'RESURGENCE Creators',
+    role: 'Creator Network',
+    imageUrl: '/branding/resurgence-shop-mockup.png',
+    primaryCtaLabel: homeDiscoveryCreator.ctaLabel || 'View Creators',
+    primaryCtaHref: homeDiscoveryCreator.ctaHref || '/creators',
+    secondaryCtaLabel: 'Creator Dashboard',
+    secondaryCtaHref: '/creator/dashboard',
+    likes: '9.6K',
+    comments: '511',
+    shares: '740',
+    tags: ['#CreatorNetwork', '#AffiliateCommerce', '#SportsCreators'],
+  },
+  {
+    id: 'shop-drop',
+    eyebrow: 'SHOP DROP',
+    title: homeDiscoveryShop.title,
+    caption: homeDiscoveryShop.body,
+    creator: 'DesignXpress Merch',
+    role: 'Official Shop',
+    imageUrl: '/branding/resurgence-shop-mockup.png',
+    primaryCtaLabel: homeDiscoveryShop.ctaLabel || 'Open Shop',
+    primaryCtaHref: homeDiscoveryShop.ctaHref || '/shop',
+    secondaryCtaLabel: 'Custom Inquiry',
+    secondaryCtaHref: '/contact',
+    likes: '7.2K',
+    comments: '284',
+    shares: '531',
+    tags: ['#ShopDrop', '#CustomApparel', '#TeamGear'],
+  },
+];
   const {
     contentMap = {},
     sponsors = [],
@@ -136,14 +262,15 @@ export default async function HomePage() {
         viewer={user ? { id: user.id, role: user.role, displayName: user.displayName } : null}
       />
 
-       <TikTokStyleDiscoveryShell
- 	 brandName={brandName}
- 	 feedCount={feed.items.length}
-  	creatorLaneCount={creatorLaneCount}
-  	shoppableFeedCount={shoppableFeedCount}
-  	sponsorMomentCount={sponsorMomentCount}
-  	trendingHashtags={trendingHashtags}
-	/>
+      <TikTokStyleDiscoveryShell
+  brandName={brandName}
+  feedCount={feed.items.length}
+  creatorLaneCount={creatorLaneCount}
+  shoppableFeedCount={shoppableFeedCount}
+  sponsorMomentCount={sponsorMomentCount}
+  trendingHashtags={trendingHashtags}
+  discoveryItems={discoveryItems}
+/>
 
       <section className="hero">
         <div className="container hero-grid">
