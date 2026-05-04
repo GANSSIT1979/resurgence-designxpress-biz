@@ -1,22 +1,26 @@
-# RESURGENCE Route Files Patch
+# RESURGENCE Subdomain Middleware Patch
 
-Included files:
+Copy these files into the repo root.
 
-- `src/app/login/page.tsx` from the uploaded production login gateway.
-- `src/app/events/[slug]/page.tsx` updated with schedule fallback support:
-  - `getEventScheduleLabel(event)`
-  - filters blank highlights
-  - renders optional multi-date `event.schedule` cards
+## Included
 
-Copy these files into the same paths in your repository, then run:
+- `src/app/crm/leads/page.tsx`
+- `src/app/support/tickets/page.tsx`
+- `src/middleware.ts`
+- `middleware.ts`
+
+## Required env vars
+
+```env
+NEXT_PUBLIC_ROOT_DOMAIN=resurgence-dx.biz
+FORCE_HTTPS=true
+```
+
+## Verify
 
 ```bash
 npm run build
+git add src/middleware.ts middleware.ts src/app/crm/leads/page.tsx src/app/support/tickets/page.tsx
+git commit -m "Add production subdomain middleware and nested module routes"
+git push origin main
 ```
-
-If build fails, confirm these dependencies exist:
-
-- `@/components/filter-chip-row`
-- `@/components/profile-completion-meter`
-- `@/lib/signup-roles`
-- `@/lib/sponsorship-events` exports `getEventScheduleLabel`
