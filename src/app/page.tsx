@@ -10,7 +10,11 @@ import { VerticalMediaFeed } from '@/components/vertical-media-feed';
 import { CreatorCommerceFeed } from '@/components/feed/creator-commerce-feed';
 import { getPublicFeed } from '@/lib/feed/queries';
 import { TikTokStyleDiscoveryShell } from '@/components/tiktok-style-discovery-shell';
-import { getPublicPageContent, getPublicPageContentMap, PUBLIC_PAGE_CONTENT_KEYS, } from '@/lib/public-page-content';
+import {
+  getPublicPageContent,
+  getPublicPageContentMap,
+  PUBLIC_PAGE_CONTENT_KEYS,
+} from '@/lib/public-page-content';
 
 import type { TikTokDiscoveryCmsItem } from '@/components/tiktok-style-discovery-shell';
 
