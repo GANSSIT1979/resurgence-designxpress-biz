@@ -3,26 +3,9 @@ import { notFound } from 'next/navigation';
 
 import { prisma } from '@/lib/prisma';
 import { getDefaultSponsorshipEvent, getSponsorshipEvent } from '@/lib/sponsorship-events';
+import { EventCrmKanban } from '@/components/event-crm-kanban';
 
 export const dynamic = 'force-dynamic';
-
-const statuses = [
-  'SUBMITTED',
-  'UNDER_REVIEW',
-  'NEEDS_REVISION',
-  'APPROVED',
-  'REJECTED',
-  'CONVERTED_TO_ACTIVE_SPONSOR',
-] as const;
-
-const labels: Record<string, string> = {
-  SUBMITTED: 'Submitted',
-  UNDER_REVIEW: 'Under Review',
-  NEEDS_REVISION: 'Needs Revision',
-  APPROVED: 'Approved',
-  REJECTED: 'Rejected',
-  CONVERTED_TO_ACTIVE_SPONSOR: 'Converted',
-};
 
 function normalizeEventSlug(submission: any) {
   return submission.eventSlug || getDefaultSponsorshipEvent().slug;
@@ -38,7 +21,17 @@ export default async function EventCrmPage({ params }: { params: Promise<{ slug:
     take: 500,
   });
 
-  const submissions = allSubmissions.filter((submission: any) => normalizeEventSlug(submission) === slug);
+  const submissions = allSubmissions
+    .filter((submission: any) => normalizeEventSlug(submission) === slug)
+    .map((item) => ({
+      id: item.id,
+      companyName: item.companyName,
+      contactName: item.contactName,
+      email: item.email,
+      interestedPackage: item.interestedPackage,
+      status: item.status,
+    }));
+
   const stats = {
     total: submissions.length,
     approved: submissions.filter((item) => item.status === 'APPROVED').length,
@@ -69,34 +62,7 @@ export default async function EventCrmPage({ params }: { params: Promise<{ slug:
           <Stat label="Converted" value={stats.converted} />
         </div>
 
-        <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16, marginTop: 28, alignItems: 'start' }}>
-          {statuses.map((status) => {
-            const items = submissions.filter((submission) => submission.status === status);
-            return (
-              <div key={status} style={{ background: '#111827', border: '1px solid rgba(212,175,55,0.22)', borderRadius: 18, padding: 16 }}>
-                <h2 style={{ marginTop: 0 }}>{labels[status]}</h2>
-                <p style={{ color: '#D4AF37', fontWeight: 900 }}>{items.length} lead(s)</p>
-                <div style={{ display: 'grid', gap: 12 }}>
-                  {items.map((item) => (
-                    <article key={item.id} style={{ background: '#0F172A', borderRadius: 16, padding: 14 }}>
-                      <strong>{item.companyName}</strong>
-                      <p style={{ margin: '6px 0' }}>{item.contactName}</p>
-                      <p style={{ color: '#94A3B8', margin: '6px 0' }}>{item.email}</p>
-                      <p style={{ color: '#D4AF37', margin: '6px 0' }}>{item.interestedPackage}</p>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
-                        <Action href={`/admin/sponsor-crm/proposal/${item.id}`} label="Proposal" small />
-                        <Action href={`/api/admin/sponsor-crm/${item.id}/status?status=UNDER_REVIEW`} label="Review" small />
-                        <Action href={`/api/admin/sponsor-crm/${item.id}/status?status=APPROVED`} label="Approve" small />
-                        <Action href={`/api/admin/sponsor-crm/${item.id}/status?status=CONVERTED_TO_ACTIVE_SPONSOR`} label="Convert" small />
-                      </div>
-                    </article>
-                  ))}
-                  {items.length === 0 ? <p style={{ color: '#94A3B8' }}>No leads in this stage.</p> : null}
-                </div>
-              </div>
-            );
-          })}
-        </section>
+        <EventCrmKanban initialLeads={submissions} />
       </section>
     </main>
   );
@@ -111,9 +77,9 @@ function Stat({ label, value }: { label: string; value: number }) {
   );
 }
 
-function Action({ href, label, small = false }: { href: string; label: string; small?: boolean }) {
+function Action({ href, label }: { href: string; label: string }) {
   return (
-    <Link href={href} style={{ color: '#0B0E14', background: '#D4AF37', borderRadius: 999, padding: small ? '7px 10px' : '10px 14px', fontWeight: 900, textDecoration: 'none', fontSize: small ? 12 : 14 }}>
+    <Link href={href} style={{ color: '#0B0E14', background: '#D4AF37', borderRadius: 999, padding: '10px 14px', fontWeight: 900, textDecoration: 'none' }}>
       {label}
     </Link>
   );
