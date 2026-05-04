@@ -416,9 +416,14 @@ const hasUnsavedChanges =
 >
   {hasUnsavedChanges ? 'Save Changes' : 'Saved'}
 </button>
-          <button className="btn btn-secondary" type="button" onClick={() => setLocal(item)}>
-            Reset
-          </button>
+          <button
+  className="btn btn-secondary"
+  type="button"
+  disabled={!hasUnsavedChanges}
+  onClick={() => setLocal(item)}
+>
+  Reset
+</button>
           <button className="btn btn-secondary" type="button" onClick={() => onDelete(local.id)}>
             Delete
           </button>
