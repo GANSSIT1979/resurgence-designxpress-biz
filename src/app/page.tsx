@@ -9,6 +9,7 @@ import { formatPeso } from '@/lib/shop';
 import { VerticalMediaFeed } from '@/components/vertical-media-feed';
 import { CreatorCommerceFeed } from '@/components/feed/creator-commerce-feed';
 import { getPublicFeed } from '@/lib/feed/queries';
+import { TikTokStyleDiscoveryShell } from '@/components/tiktok-style-discovery-shell';
 
 export const dynamic = 'force-dynamic';
 
@@ -134,6 +135,15 @@ export default async function HomePage() {
         surface="home"
         viewer={user ? { id: user.id, role: user.role, displayName: user.displayName } : null}
       />
+
+       <TikTokStyleDiscoveryShell
+ 	 brandName={brandName}
+ 	 feedCount={feed.items.length}
+  	creatorLaneCount={creatorLaneCount}
+  	shoppableFeedCount={shoppableFeedCount}
+  	sponsorMomentCount={sponsorMomentCount}
+  	trendingHashtags={trendingHashtags}
+	/>
 
       <section className="hero">
         <div className="container hero-grid">
