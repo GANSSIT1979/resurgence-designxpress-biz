@@ -55,35 +55,44 @@ function getCtaHrefValidation(href?: string | null) {
     } as const;
   }
 
-  if (value.startsWith('/')) {
+  function getPublicUsage(key: string) {
+  if (key.startsWith('home.')) {
     return {
-      label: 'Internal route',
-      status: 'valid',
-      isOpenable: true,
-    } as const;
+      label: 'Home',
+      href: '/',
+      description: 'Homepage public sections and TikTok discovery cards',
+    };
   }
 
-  if (value.startsWith('mailto:')) {
+  if (key.startsWith('events.')) {
     return {
-      label: 'Email link',
-      status: 'valid',
-      isOpenable: true,
-    } as const;
+      label: 'Events',
+      href: '/events',
+      description: 'Events listing and sponsor activation pages',
+    };
   }
 
-  if (value.startsWith('https://') || value.startsWith('http://')) {
+  if (key.startsWith('partnerships.')) {
     return {
-      label: 'External URL',
-      status: 'valid',
-      isOpenable: true,
-    } as const;
+      label: 'Partnerships',
+      href: '/partnerships',
+      description: 'Partnership public landing page',
+    };
+  }
+
+  if (key.startsWith('support.')) {
+    return {
+      label: 'Support',
+      href: '/support',
+      description: 'Support desk public route and routing copy',
+    };
   }
 
   return {
-    label: 'Invalid CTA href',
-    status: 'warning',
-    isOpenable: false,
-  } as const;
+    label: 'Custom',
+    href: '',
+    description: 'No public route mapping configured',
+  };
 }
 
 export function ContentManager({ initialContent }: { initialContent: ContentItem[] }) {
@@ -363,6 +372,7 @@ function EditableContentCard({
 const [local, setLocal] = useState(item);
 const group = getContentGroup(local.key);
 const ctaValidation = getCtaHrefValidation(local.ctaHref);
+const usage = getPublicUsage(local.key);
 
   return (
     <section className="card content-cms-entry-card">
@@ -377,6 +387,14 @@ const ctaValidation = getCtaHrefValidation(local.ctaHref);
       </div>
 
       <div className="content-cms-preview">
+<span>Used on: {usage.label}</span>
+  <small>{usage.description}</small>
+  {usage.href ? (
+    <a href={usage.href} target="_blank" rel="noreferrer">
+      Open {usage.label}
+    </a>
+  ) : null}
+</div>
         <strong>{local.title || 'Untitled section'}</strong>
         {local.subtitle ? <span>{local.subtitle}</span> : null}
         <p>{local.body || 'No body copy yet.'}</p>
