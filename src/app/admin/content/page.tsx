@@ -9,7 +9,7 @@ export default async function AdminContentPage() {
 
   return (
     <main>
-      <AdminShell title="Content CMS" description="Edit hero sections, page intros, and calls to action from the dashboard." currentPath="/admin/content">
+      <AdminShell title="Content CMS" description="Manage public page copy, TikTok discovery cards, event sections, support content, and calls to action." currentPath="/admin/content">
         <ContentManager initialContent={content.map((item) => ({
           id: item.id,
           key: item.key,

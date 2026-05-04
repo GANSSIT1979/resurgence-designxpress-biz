@@ -6800,4 +6800,237 @@ th {
     padding-bottom: 22px;
   }
 }
+/* -------------------------------------------------------------------------- */
+/* Admin Content CMS grouped manager */
+/* -------------------------------------------------------------------------- */
+
+.content-cms-shell {
+  display: grid;
+  gap: 20px;
+}
+
+.content-cms-hero {
+  align-items: center;
+  background:
+    radial-gradient(circle at 10% 18%, rgba(77, 192, 255, 0.18), transparent 32%),
+    radial-gradient(circle at 88% 10%, rgba(245, 158, 11, 0.14), transparent 30%),
+    rgba(255, 255, 255, 0.045);
+  display: grid;
+  gap: 22px;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.75fr);
+}
+
+.content-cms-hero h2,
+.content-cms-toolbar h3,
+.content-cms-create-card h3,
+.content-cms-entry-card h3 {
+  margin: 0;
+}
+
+.content-cms-summary-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.content-cms-summary-card,
+.content-cms-filter-chip {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--panel-border);
+  color: white;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.content-cms-summary-card {
+  border-radius: 20px;
+  display: grid;
+  gap: 5px;
+  padding: 16px;
+  text-align: left;
+}
+
+.content-cms-summary-card:hover,
+.content-cms-summary-card.active,
+.content-cms-filter-chip:hover,
+.content-cms-filter-chip.active {
+  background: rgba(77, 192, 255, 0.12);
+  border-color: rgba(77, 192, 255, 0.36);
+  transform: translateY(-1px);
+}
+
+.content-cms-summary-card strong {
+  color: var(--brand);
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.content-cms-summary-card span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.content-cms-create-card,
+.content-cms-toolbar,
+.content-cms-entry-card {
+  display: grid;
+  gap: 18px;
+}
+
+.content-cms-card-header,
+.content-cms-entry-head,
+.content-cms-toolbar {
+  align-items: start;
+  display: grid;
+  gap: 16px;
+}
+
+.content-cms-toolbar {
+  grid-template-columns: minmax(220px, 0.65fr) minmax(260px, 1fr);
+}
+
+.content-cms-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  grid-column: 1 / -1;
+}
+
+.content-cms-filter-chip {
+  align-items: center;
+  border-radius: 999px;
+  display: inline-flex;
+  font-weight: 900;
+  gap: 8px;
+  padding: 10px 13px;
+}
+
+.content-cms-filter-chip span {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  color: var(--brand);
+  font-size: 0.76rem;
+  padding: 4px 8px;
+}
+
+.content-cms-form-grid,
+.content-cms-edit-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.content-cms-field {
+  display: grid;
+  gap: 8px;
+}
+
+.content-cms-field span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.content-cms-span-all {
+  grid-column: 1 / -1;
+}
+
+.content-cms-entry-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.content-cms-entry-head {
+  align-items: center;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.content-cms-entry-head h3 {
+  font-size: 1.15rem;
+  overflow-wrap: anywhere;
+}
+
+.content-cms-group-pill {
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 950;
+  padding: 8px 10px;
+  text-transform: uppercase;
+}
+
+.content-cms-group-home {
+  background: rgba(77, 192, 255, 0.14);
+  color: #bdeeff;
+}
+
+.content-cms-group-events {
+  background: rgba(245, 158, 11, 0.16);
+  color: #ffe0a3;
+}
+
+.content-cms-group-partnerships {
+  background: rgba(168, 85, 247, 0.16);
+  color: #e9d5ff;
+}
+
+.content-cms-group-support {
+  background: rgba(34, 197, 94, 0.16);
+  color: #bbf7d0;
+}
+
+.content-cms-group-other {
+  background: rgba(148, 163, 184, 0.16);
+  color: #e2e8f0;
+}
+
+.content-cms-preview {
+  background: rgba(7, 17, 31, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+}
+
+.content-cms-preview strong {
+  color: white;
+  line-height: 1.25;
+}
+
+.content-cms-preview span {
+  color: var(--brand);
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.content-cms-preview p {
+  color: var(--muted);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.content-cms-preview small,
+.content-cms-create-card code {
+  color: #cfeeff;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 980px) {
+  .content-cms-hero,
+  .content-cms-toolbar,
+  .content-cms-entry-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .content-cms-summary-grid,
+  .content-cms-form-grid,
+  .content-cms-edit-grid,
+  .content-cms-entry-head {
+    grid-template-columns: 1fr;
+  }
+}
 }
