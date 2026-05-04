@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { NextRequest, NextResponse } from 'next/server';
 
 const ROOT_DOMAINS = new Set(['resurgence-dx.biz', 'www.resurgence-dx.biz']);
@@ -137,3 +138,6 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: ['/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)'],
 };
+=======
+export { middleware, config } from './src/middleware';
+>>>>>>> 1102e95 (Add subdomain modules and multi-event route support)

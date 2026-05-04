@@ -1,36 +1,22 @@
-# RESURGENCE Prisma Multi-Event Patch
+# RESURGENCE Route Files Patch
 
-This ZIP contains the safe Prisma update for the multi-event sponsorship system.
+Included files:
 
-## Files
+- `src/app/login/page.tsx` from the uploaded production login gateway.
+- `src/app/events/[slug]/page.tsx` updated with schedule fallback support:
+  - `getEventScheduleLabel(event)`
+  - filters blank highlights
+  - renders optional multi-date `event.schedule` cards
 
-- `prisma/schema.eventSlug.patch.prisma` - parseable patch/reference showing the updated SponsorSubmission model. Do not blindly replace your full schema with this minimal patch unless you merge it into the full schema.
-- `prisma/migrations/20260504_add_event_slug/migration.sql` - SQL migration to add `eventSlug` and index safely.
-
-## Required merge into existing prisma/schema.prisma
-
-Inside `model SponsorSubmission`, add:
-
-```prisma
-eventSlug String @default("dayo-series-ofw-all-star")
-```
-
-Add this index inside the same model:
-
-```prisma
-@@index([eventSlug, status, createdAt])
-```
-
-## Apply
+Copy these files into the same paths in your repository, then run:
 
 ```bash
-npx prisma migrate dev --name add_event_slug
-npx prisma generate
+npm run build
 ```
 
-For production after committing migration:
+If build fails, confirm these dependencies exist:
 
-```bash
-npx prisma migrate deploy
-npx prisma generate
-```
+- `@/components/filter-chip-row`
+- `@/components/profile-completion-meter`
+- `@/lib/signup-roles`
+- `@/lib/sponsorship-events` exports `getEventScheduleLabel`

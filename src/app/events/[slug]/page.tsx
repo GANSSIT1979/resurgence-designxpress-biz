@@ -3,7 +3,10 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 import { prisma } from '@/lib/prisma';
-import { getSponsorshipEvent } from '@/lib/sponsorship-events';
+import {
+  getEventScheduleLabel,
+  getSponsorshipEvent,
+} from '@/lib/sponsorship-events';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,10 +33,10 @@ export default async function EventLandingPage({ params }: EventPageProps) {
   });
 
   const highlights = [
-    { label: 'Event Date', value: event.eventDate },
+    { label: 'Schedule', value: getEventScheduleLabel(event) },
     { label: 'Market', value: event.market },
     { label: 'Organizer', value: event.organizer },
-  ];
+  ].filter((item) => item.value);
 
   return (
     <main style={{ background: '#0B0E14', color: '#F8FAFC', minHeight: '100vh' }}>
@@ -75,6 +78,20 @@ export default async function EventLandingPage({ params }: EventPageProps) {
           </article>
         </div>
       </section>
+
+      {event.schedule.length > 0 ? (
+        <section style={{ maxWidth: 1180, margin: '0 auto', padding: '24px 24px 56px' }}>
+          <h2 style={{ color: '#D4AF37', fontSize: 44, textTransform: 'uppercase' }}>Event Schedule</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20 }}>
+            {event.schedule.map((item) => (
+              <article key={item.label} style={{ background: '#1A1F2B', borderRadius: 16, border: '1px solid rgba(212,175,55,0.25)', padding: 24 }}>
+                <h3 style={{ color: '#D4AF37', marginTop: 0 }}>{item.label}</h3>
+                <p style={{ lineHeight: 1.7 }}>{[item.date, item.time, item.location].filter(Boolean).join(' · ')}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <section id="packages" style={{ maxWidth: 1180, margin: '0 auto', padding: '24px 24px 72px' }}>
         <h2 style={{ color: '#D4AF37', fontSize: 44, textTransform: 'uppercase' }}>Sponsorship Packages</h2>
