@@ -80,12 +80,13 @@ function safeLines(value?: string | null) {
 }
 
 export default async function HomePage() {
-const contentMap = await getPublicPageContentMap([
-  PUBLIC_PAGE_CONTENT_KEYS.homeDiscoveryResurgence,
-  PUBLIC_PAGE_CONTENT_KEYS.homeDiscoveryEvent,
-  PUBLIC_PAGE_CONTENT_KEYS.homeDiscoveryCreator,
-  PUBLIC_PAGE_CONTENT_KEYS.homeDiscoveryShop,
-]);
+  const discoveryContentMap = await getPublicPageContentMap([
+    PUBLIC_PAGE_CONTENT_KEYS.homeDiscoveryResurgence,
+    PUBLIC_PAGE_CONTENT_KEYS.homeDiscoveryEvent,
+    PUBLIC_PAGE_CONTENT_KEYS.homeDiscoveryCreator,
+    PUBLIC_PAGE_CONTENT_KEYS.homeDiscoveryShop,
+  ]);
+
   const user = await getCurrentUser();
   const results = await Promise.allSettled([
     getHomeData(),
@@ -100,53 +101,53 @@ const contentMap = await getPublicPageContentMap([
   const settings = getValue(results[2], fallbackSettings);
   const shopProducts = getValue(results[3], []);
   const feed = getValue(results[4], fallbackFeed);
-const homeDiscoveryResurgence = getPublicPageContent(
-  contentMap,
-  PUBLIC_PAGE_CONTENT_KEYS.homeDiscoveryResurgence,
-  {
-    title: 'Creator commerce, sponsor activations, and basketball culture in one feed.',
-    body:
-      'A mobile-first RESURGENCE experience for creators, merch drops, sponsors, basketball events, and community stories.',
-    ctaLabel: 'Open Feed',
-    ctaHref: '/feed',
-  },
-);
+  const homeDiscoveryResurgence = getPublicPageContent(
+    discoveryContentMap,
+    PUBLIC_PAGE_CONTENT_KEYS.homeDiscoveryResurgence,
+    {
+      title: 'Creator commerce, sponsor activations, and basketball culture in one feed.',
+      body:
+        'A mobile-first RESURGENCE experience for creators, merch drops, sponsors, basketball events, and community stories.',
+      ctaLabel: 'Open Feed',
+      ctaHref: '/feed',
+    },
+  );
 
-const homeDiscoveryEvent = getPublicPageContent(
-  contentMap,
-  PUBLIC_PAGE_CONTENT_KEYS.homeDiscoveryEvent,
-  {
-    title: 'DAYO Series OFW All-Star 2026',
-    body:
-      'Sponsor-ready basketball activation connecting OFW communities, brand partners, creator media, and event-day visibility.',
-    ctaLabel: 'Open Event',
-    ctaHref: '/events/dayo-series-ofw-all-star',
-  },
-);
+  const homeDiscoveryEvent = getPublicPageContent(
+    discoveryContentMap,
+    PUBLIC_PAGE_CONTENT_KEYS.homeDiscoveryEvent,
+    {
+      title: 'DAYO Series OFW All-Star 2026',
+      body:
+        'Sponsor-ready basketball activation connecting OFW communities, brand partners, creator media, and event-day visibility.',
+      ctaLabel: 'Open Event',
+      ctaHref: '/events/dayo-series-ofw-all-star',
+    },
+  );
 
-const homeDiscoveryCreator = getPublicPageContent(
-  contentMap,
-  PUBLIC_PAGE_CONTENT_KEYS.homeDiscoveryCreator,
-  {
-    title: 'Creator-led commerce built for real community reach.',
-    body:
-      'Feature athletes, creators, coaches, sponsors, and community storytellers in one mobile-first discovery feed.',
-    ctaLabel: 'View Creators',
-    ctaHref: '/creators',
-  },
-);
+  const homeDiscoveryCreator = getPublicPageContent(
+    discoveryContentMap,
+    PUBLIC_PAGE_CONTENT_KEYS.homeDiscoveryCreator,
+    {
+      title: 'Creator-led commerce built for real community reach.',
+      body:
+        'Feature athletes, creators, coaches, sponsors, and community storytellers in one mobile-first discovery feed.',
+      ctaLabel: 'View Creators',
+      ctaHref: '/creators',
+    },
+  );
 
-const homeDiscoveryShop = getPublicPageContent(
-  contentMap,
-  PUBLIC_PAGE_CONTENT_KEYS.homeDiscoveryShop,
-  {
-    title: 'Merch, uniforms, apparel, and branded team gear.',
-    body:
-      'Browse official drops and route custom apparel needs into DesignXpress production workflows.',
-    ctaLabel: 'Open Shop',
-    ctaHref: '/shop',
-  },
-);
+  const homeDiscoveryShop = getPublicPageContent(
+    discoveryContentMap,
+    PUBLIC_PAGE_CONTENT_KEYS.homeDiscoveryShop,
+    {
+      title: 'Merch, uniforms, apparel, and branded team gear.',
+      body:
+        'Browse official drops and route custom apparel needs into DesignXpress production workflows.',
+      ctaLabel: 'Open Shop',
+      ctaHref: '/shop',
+    },
+  );
 
 const discoveryItems: TikTokDiscoveryCmsItem[] = [
   {
