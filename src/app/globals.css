@@ -7315,4 +7315,40 @@ th {
 .content-cms-usage-preview a:hover {
   background: rgba(77, 192, 255, 0.12);
 }
+/* -------------------------------------------------------------------------- */
+/* Admin Content CMS publish safety badges */
+/* -------------------------------------------------------------------------- */
+
+.content-cms-entry-badges {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.content-cms-publish-pill {
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 950;
+  padding: 8px 10px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.content-cms-publish-ready {
+  background: rgba(34, 197, 94, 0.14);
+  color: #bbf7d0;
+}
+
+.content-cms-publish-warning {
+  background: rgba(245, 158, 11, 0.16);
+  color: #ffe0a3;
+}
+
+@media (max-width: 640px) {
+  .content-cms-entry-badges {
+    justify-content: flex-start;
+  }
+}
 }

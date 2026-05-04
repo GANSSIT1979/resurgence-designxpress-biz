@@ -404,18 +404,54 @@ const [local, setLocal] = useState(item);
 const group = getContentGroup(local.key);
 const ctaValidation = getCtaHrefValidation(local.ctaHref);
 const usage = getPublicUsage(local.key);
+const publishSafety = getPublishSafety(local);
+function getPublishSafety(item: ContentItem) {
+  const hasTitle = Boolean(item.title.trim());
+  const hasBody = Boolean(item.body.trim());
+  const ctaValidation = getCtaHrefValidation(item.ctaHref);
 
+  if (!hasTitle || !hasBody) {
+    return {
+      label: 'Needs copy',
+      status: 'warning',
+      detail: 'Title and body are required for polished public rendering.',
+    } as const;
+  }
+
+  if (ctaValidation.status === 'warning') {
+    return {
+      label: 'CTA warning',
+      status: 'warning',
+      detail: 'CTA href should start with /, mailto:, http://, or https://.',
+    } as const;
+  }
+
+  return {
+    label: 'Ready',
+    status: 'ready',
+    detail: 'This CMS record has usable title, body, and CTA formatting.',
+  } as const;
+}
   return (
     <section className="card content-cms-entry-card">
       <div className="content-cms-entry-head">
-        <div>
-          <div className="section-kicker">Entry {String(index + 1).padStart(2, '0')}</div>
-          <h3>{local.key || 'Untitled key'}</h3>
-        </div>
-        <span className={`content-cms-group-pill content-cms-group-${group}`}>
-          {GROUPS.find((entry) => entry.key === group)?.label ?? 'Other'}
-        </span>
-      </div>
+  <div>
+    <div className="section-kicker">Entry {String(index + 1).padStart(2, '0')}</div>
+    <h3>{local.key || 'Untitled key'}</h3>
+  </div>
+
+  <div className="content-cms-entry-badges">
+    <span className={`content-cms-group-pill content-cms-group-${group}`}>
+      {GROUPS.find((entry) => entry.key === group)?.label ?? 'Other'}
+    </span>
+    <span
+      className={`content-cms-publish-pill content-cms-publish-${publishSafety.status}`}
+      title={publishSafety.detail}
+    >
+      {publishSafety.label}
+    </span>
+  </div>
+</div>
 
       <div className="content-cms-preview">
         <strong>{local.title || 'Untitled section'}</strong>
