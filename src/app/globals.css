@@ -6568,5 +6568,57 @@ th {
   max-width: 680px;
 }
 }
+/* -------------------------------------------------------------------------- */
+/* Feed TikTok layout refinement */
+/* -------------------------------------------------------------------------- */
 
+@media (min-width: 1181px) {
+  .creator-commerce-grid {
+    grid-template-columns: minmax(180px, 0.5fr) minmax(380px, 540px) minmax(180px, 0.5fr);
+    align-items: start;
+  }
+
+  .feed-story-card {
+    grid-template-columns: minmax(0, 1fr) 78px;
+  }
+
+  .feed-phone-frame {
+    min-height: min(76svh, 720px);
+  }
+
+  .feed-action-rail {
+    align-self: center;
+    position: sticky;
+    top: 180px;
+  }
+}
+
+@media (max-width: 720px) {
+  .creator-commerce-feed-shell {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .feed-center-column {
+    gap: 18px;
+  }
+
+  .feed-phone-frame {
+    border-left: 0;
+    border-right: 0;
+    border-radius: 0;
+    min-height: calc(100svh - 156px);
+  }
+
+  .feed-story-overlay {
+    padding-bottom: 28px;
+  }
+
+  .feed-action-rail {
+    background: rgba(2, 7, 18, 0.58);
+    border-radius: 24px;
+    margin: 0 12px;
+    padding: 8px;
+  }
+}
 }
