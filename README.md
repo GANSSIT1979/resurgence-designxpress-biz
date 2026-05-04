@@ -1,26 +1,29 @@
-# RESURGENCE Subdomain Middleware Patch
+# RESURGENCE Sponsor Submit Compatibility Patch
 
-Copy these files into the repo root.
+This patch adds a compatibility route for sponsor application forms that submit as HTML form data, while preserving JSON API support.
 
-## Included
+## Files
 
-- `src/app/crm/leads/page.tsx`
-- `src/app/support/tickets/page.tsx`
-- `src/middleware.ts`
-- `middleware.ts`
+- `src/app/api/sponsor/submit/route.ts`
+- `src/app/sponsors/thank-you/page.tsx`
 
-## Required env vars
+## Install
 
-```env
-NEXT_PUBLIC_ROOT_DOMAIN=resurgence-dx.biz
-FORCE_HTTPS=true
-```
-
-## Verify
+Copy the `src` folder into the root of `resurgence-designxpress-biz`, then run:
 
 ```bash
 npm run build
-git add src/middleware.ts middleware.ts src/app/crm/leads/page.tsx src/app/support/tickets/page.tsx
-git commit -m "Add production subdomain middleware and nested module routes"
+git add src/app/api/sponsor/submit/route.ts src/app/sponsors/thank-you/page.tsx
+git commit -m "Add sponsor submit compatibility route"
 git push origin main
 ```
+
+## Behavior
+
+- Accepts `application/json`
+- Accepts HTML form submissions via `request.formData()`
+- Creates `SponsorSubmission`
+- Triggers workflow notifications and automated emails
+- Redirects successful form submissions to `/sponsors/thank-you?id=<submissionId>`
+
+Source request: uploaded compatibility route instructions.
