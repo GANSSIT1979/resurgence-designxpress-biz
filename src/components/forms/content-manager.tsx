@@ -408,9 +408,14 @@ const hasUnsavedChanges =
         </label>
 
         <div className="btn-row content-cms-span-all">
-          <button className="btn" type="button" onClick={() => onSave(local)}>
-            Save Changes
-          </button>
+          <button
+  className="btn"
+  type="button"
+  disabled={!hasUnsavedChanges}
+  onClick={() => onSave(local)}
+>
+  {hasUnsavedChanges ? 'Save Changes' : 'Saved'}
+</button>
           <button className="btn btn-secondary" type="button" onClick={() => setLocal(item)}>
             Reset
           </button>

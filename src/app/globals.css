@@ -7431,4 +7431,18 @@ th {
     justify-content: flex-start;
   }
 }
+/* -------------------------------------------------------------------------- */
+/* Admin Content CMS disabled save state */
+/* -------------------------------------------------------------------------- */
+
+.content-cms-entry-card .btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+  transform: none;
+}
+
+.content-cms-entry-card .btn:disabled:hover {
+  filter: none;
+  transform: none;
+}
 }
