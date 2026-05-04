@@ -1,23 +1,21 @@
-# RESURGENCE Creator Dashboard Enhanced Verification Bundle
+# RESURGENCE UI Routing Repair Patch
 
-This package documents the current live Creator Dashboard render and adds QA/audit notes for safe production tracking.
+This patch repairs production subdomain routing and auth-loop behavior.
 
 ## Included
 
-- `docs/live-snapshots/creator-jake-anilao-dashboard-rendered.html`
-- `docs/deployment/creator-dashboard-audit.md`
-- `docs/deployment/creator-dashboard-checklist.md`
-- `src/app/creators/[slug]/README.md`
-
-## Important
-
-The uploaded file is rendered production HTML, not editable source code. Do not replace Next.js source files with this HTML.
+- middleware.ts
+- src/middleware.ts
+- src/config/subdomain-routes.ts
+- docs/deployment/ui-routing-repair.md
 
 ## Apply
 
 ```bash
+cp -R resurgence-ui-routing-repair/* .
 npm run build
-git add docs/live-snapshots/creator-jake-anilao-dashboard-rendered.html docs/deployment/creator-dashboard-audit.md docs/deployment/creator-dashboard-checklist.md src/app/creators/[slug]/README.md
-git commit -m "Add creator dashboard verification audit"
+npx prisma migrate status
+git add middleware.ts src/middleware.ts src/config/subdomain-routes.ts docs/deployment/ui-routing-repair.md
+git commit -m "Repair subdomain routing and public module access"
 git push origin main
 ```
