@@ -19,7 +19,7 @@ const dayoEvent: SponsorshipEventConfig = {
   shortTitle: 'DAYO Series',
   organizer: 'AMMOS 2014 Hong Kong',
   market: 'Hong Kong & Macau',
-  eventDate: 'April 30, 2026',
+  eventDate: '',
   category: 'DAYO Series',
   heroKicker: 'AMMOS 2014 Hong Kong Presents',
   heroSubtitle: 'Comprehensive sponsorship and team presentation for one court, one dream, and one champion.',
