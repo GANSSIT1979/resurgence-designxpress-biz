@@ -44,86 +44,9 @@ function normalizeSearch(value: string) {
   return value.trim().toLowerCase();
 }
 
-function getCtaHrefValidation(href?: string | null) {
-  const value = href?.trim();
-
-  if (!value) {
-    return {
-      label: 'No CTA',
-      status: 'empty',
-      isOpenable: false,
-    } as const;
-  }
-
-  if (value.startsWith('/')) {
-    return {
-      label: 'Internal route',
-      status: 'valid',
-      isOpenable: true,
-    } as const;
-  }
-
-  if (value.startsWith('mailto:')) {
-    return {
-      label: 'Email link',
-      status: 'valid',
-      isOpenable: true,
-    } as const;
-  }
-
-  if (value.startsWith('https://') || value.startsWith('http://')) {
-    return {
-      label: 'External URL',
-      status: 'valid',
-      isOpenable: true,
-    } as const;
-  }
-
-  return {
-    label: 'Invalid CTA href',
-    status: 'warning',
-    isOpenable: false,
-  } as const;
-}
-
-function getPublicUsage(key: string) {
-  if (key.startsWith('home.')) {
-    return {
-      label: 'Home',
-      href: '/',
-      description: 'Homepage public sections and TikTok discovery cards',
-    };
-  }
-
-  if (key.startsWith('events.')) {
-    return {
-      label: 'Events',
-      href: '/events',
-      description: 'Events listing and sponsor activation pages',
-    };
-  }
-
-  if (key.startsWith('partnerships.')) {
-    return {
-      label: 'Partnerships',
-      href: '/partnerships',
-      description: 'Partnership public landing page',
-    };
-  }
-
-  if (key.startsWith('support.')) {
-    return {
-      label: 'Support',
-      href: '/support',
-      description: 'Support desk public route and routing copy',
-    };
-  }
-
-  return {
-    label: 'Custom',
-    href: '',
-    description: 'No public route mapping configured',
-  };
+function getGroupLabel(key: string) {
+  const group = getContentGroup(key);
+  return GROUPS.find((entry) => entry.key === group)?.label ?? 'Other';
 }
 
 export function ContentManager({ initialContent }: { initialContent: ContentItem[] }) {
@@ -400,98 +323,28 @@ function EditableContentCard({
   onSave: (item: ContentItem) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
 }) {
-const [local, setLocal] = useState(item);
-const group = getContentGroup(local.key);
-const ctaValidation = getCtaHrefValidation(local.ctaHref);
-const usage = getPublicUsage(local.key);
-const publishSafety = getPublishSafety(local);
-const hasUnsavedChanges =
-  local.key !== item.key ||
-  local.title !== item.title ||
-  (local.subtitle ?? '') !== (item.subtitle ?? '') ||
-  local.body !== item.body ||
-  (local.ctaLabel ?? '') !== (item.ctaLabel ?? '') ||
-  (local.ctaHref ?? '') !== (item.ctaHref ?? '');
-function getPublishSafety(item: ContentItem) {
-  const hasTitle = Boolean(item.title.trim());
-  const hasBody = Boolean(item.body.trim());
-  const ctaValidation = getCtaHrefValidation(item.ctaHref);
+  const [local, setLocal] = useState(item);
+  const group = getContentGroup(local.key);
 
-  if (!hasTitle || !hasBody) {
-    return {
-      label: 'Needs copy',
-      status: 'warning',
-      detail: 'Title and body are required for polished public rendering.',
-    } as const;
-  }
-
-  if (ctaValidation.status === 'warning') {
-    return {
-      label: 'CTA warning',
-      status: 'warning',
-      detail: 'CTA href should start with /, mailto:, http://, or https://.',
-    } as const;
-  }
-
-  return {
-    label: 'Ready',
-    status: 'ready',
-    detail: 'This CMS record has usable title, body, and CTA formatting.',
-  } as const;
-}
   return (
     <section className="card content-cms-entry-card">
       <div className="content-cms-entry-head">
-  <div>
-    <div className="section-kicker">Entry {String(index + 1).padStart(2, '0')}</div>
-    <h3>{local.key || 'Untitled key'}</h3>
-  </div>
-
-  <div className="content-cms-entry-badges">
-    <span className={`content-cms-group-pill content-cms-group-${group}`}>
-<span className={`content-cms-dirty-pill ${hasUnsavedChanges ? 'is-dirty' : 'is-saved'}`}>
-  {hasUnsavedChanges ? 'Unsaved changes' : 'Saved'}
-</span>
-      {GROUPS.find((entry) => entry.key === group)?.label ?? 'Other'}
-    </span>
-    <span className={`content-cms-publish-pill content-cms-publish-${publishSafety.status}`}
-      title={publishSafety.detail}
-    >
-      {publishSafety.label}
-    </span>
-  </div>
-</div>
+        <div>
+          <div className="section-kicker">Entry {String(index + 1).padStart(2, '0')}</div>
+          <h3>{local.key || 'Untitled key'}</h3>
+        </div>
+        <span className={`content-cms-group-pill content-cms-group-${group}`}>{getGroupLabel(local.key)}</span>
+      </div>
 
       <div className="content-cms-preview">
         <strong>{local.title || 'Untitled section'}</strong>
         {local.subtitle ? <span>{local.subtitle}</span> : null}
         <p>{local.body || 'No body copy yet.'}</p>
-
-        <div className="content-cms-cta-validation-row">
+        {local.ctaLabel || local.ctaHref ? (
           <small>
             CTA: {local.ctaLabel || 'Untitled'} - {local.ctaHref || '#'}
           </small>
-
-          <span className={`content-cms-cta-validation content-cms-cta-${ctaValidation.status}`}>
-            {ctaValidation.label}
-          </span>
-
-          {ctaValidation.isOpenable && local.ctaHref ? (
-            <a href={local.ctaHref} target="_blank" rel="noreferrer">
-              Open CTA
-            </a>
-          ) : null}
-        </div>
-
-        <div className="content-cms-usage-preview">
-          <span>Used on: {usage.label}</span>
-          <small>{usage.description}</small>
-          {usage.href ? (
-            <a href={usage.href} target="_blank" rel="noreferrer">
-              Open {usage.label}
-            </a>
-          ) : null}
-        </div>
+        ) : null}
       </div>
 
       <div className="form-grid content-cms-edit-grid">

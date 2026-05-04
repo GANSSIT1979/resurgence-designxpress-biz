@@ -7373,4 +7373,26 @@ th {
   background: rgba(77, 192, 255, 0.14);
   color: #cfeeff;
 }
+/* -------------------------------------------------------------------------- */
+/* Admin Content CMS dirty state badges */
+/* -------------------------------------------------------------------------- */
+
+.content-cms-dirty-pill {
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 950;
+  padding: 8px 10px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.content-cms-dirty-pill.is-saved {
+  background: rgba(148, 163, 184, 0.14);
+  color: #e2e8f0;
+}
+
+.content-cms-dirty-pill.is-dirty {
+  background: rgba(77, 192, 255, 0.14);
+  color: #cfeeff;
+}
 }
