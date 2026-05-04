@@ -1,47 +1,23 @@
-# RESURGENCE Components Update Batch 2
+# RESURGENCE Creator Dashboard Enhanced Verification Bundle
 
-This package contains uploaded React/Next.js UI components for admin moderation, creator earnings, creator-commerce feed, CMS managers, gallery manager, creator profile manager, and inquiry form.
+This package documents the current live Creator Dashboard render and adds QA/audit notes for safe production tracking.
 
-## Included files
+## Included
 
-- src/components/admin/feed-moderation-manager.tsx
-- src/components/admin/admin-reports-manager.tsx
-- src/components/admin/content-manager.tsx
-- src/components/admin/gallery-event-manager.tsx
-- src/components/admin/creator-profile-manager.tsx
-- src/components/creator/earnings/EarningsCards.tsx
-- src/components/creator/earnings/EarningsCharts.tsx
-- src/components/creator/earnings/PayoutRequestForm.tsx
-- src/components/feed/creator-commerce-feed.tsx
-- src/components/inquiry-form.tsx
+- `docs/live-snapshots/creator-jake-anilao-dashboard-rendered.html`
+- `docs/deployment/creator-dashboard-audit.md`
+- `docs/deployment/creator-dashboard-checklist.md`
+- `src/app/creators/[slug]/README.md`
+
+## Important
+
+The uploaded file is rendered production HTML, not editable source code. Do not replace Next.js source files with this HTML.
 
 ## Apply
 
-Copy this package content into the repo root, then run:
-
 ```bash
 npm run build
-```
-
-If build succeeds:
-
-```bash
-git add src/components/admin/feed-moderation-manager.tsx src/components/admin/admin-reports-manager.tsx src/components/admin/content-manager.tsx src/components/admin/gallery-event-manager.tsx src/components/admin/creator-profile-manager.tsx src/components/creator/earnings/EarningsCards.tsx src/components/creator/earnings/EarningsCharts.tsx src/components/creator/earnings/PayoutRequestForm.tsx src/components/feed/creator-commerce-feed.tsx src/components/inquiry-form.tsx
-git commit -m "Update admin creator feed and earnings components"
+git add docs/live-snapshots/creator-jake-anilao-dashboard-rendered.html docs/deployment/creator-dashboard-audit.md docs/deployment/creator-dashboard-checklist.md src/app/creators/[slug]/README.md
+git commit -m "Add creator dashboard verification audit"
 git push origin main
 ```
-
-## Notes
-
-Some files depend on existing project modules/components such as:
-
-- @/components/resurgence/*
-- @/components/image-upload-field
-- @/components/filter-chip-row
-- @/components/metric-bar-chart
-- @/components/kpi-stat-card
-- @/lib/feed/*
-- @/lib/shop/cart-storage
-- recharts
-
-If build reports missing imports, add those modules before deployment.
