@@ -7,7 +7,7 @@ const pageContentSeeds = [
     key: 'events.hero',
     title: 'Sponsorship-ready events, community activations, and creator moments.',
     body:
-      'Explore official RESURGENCE event pages, review sponsorship opportunities, and apply for packages connected to each activation.',
+      'Explore official RESURGENCE event pages, review sponsorship opportunities, and apply for packages connected to each activation. Built for basketball communities, brand partners, creators, and event organizers who need one premium activation hub.',
     ctaLabel: 'View Sponsor Packages',
     ctaHref: '/sponsors',
   },
@@ -15,32 +15,55 @@ const pageContentSeeds = [
     key: 'events.overview',
     title: 'Choose an event to open its sponsor landing page.',
     body:
-      'Official RESURGENCE event pages connect sponsors, creators, basketball communities, and activation opportunities.',
+      'Official RESURGENCE event pages connect sponsors, creators, basketball communities, team operations, media visibility, and activation opportunities. Each event can carry its own schedule, package offers, CRM pipeline, and sponsor application route.',
     ctaLabel: 'Open Events',
     ctaHref: '/events',
   },
   {
-    key: 'partnerships.hero',
-    title:
-      'A clean business landing page for collaborations, affiliates, and brand conversations.',
+    key: 'events.sponsorCta',
+    title: 'Sponsor the next RESURGENCE activation.',
     body:
-      'Resurgence Powered by DesignXpress keeps customer support, storefront activity, and business development on separate paths. Use this page when the conversation is about sponsorships, partnerships, referrals, branded programs, or custom commercial collaboration.',
-    ctaLabel: 'Open contact intake',
+      'Put your brand in front of engaged basketball communities, creator audiences, and event-day participants through structured sponsor packages and activation deliverables.',
+    ctaLabel: 'Apply as Sponsor',
+    ctaHref: '/events/dayo-series-ofw-all-star/apply',
+  },
+  {
+    key: 'events.emptyState',
+    title: 'More events are coming soon.',
+    body:
+      'New RESURGENCE event pages will appear here when schedules, packages, and sponsor application links are ready.',
+    ctaLabel: 'Contact Events Team',
+    ctaHref: '/contact',
+  },
+  {
+    key: 'partnerships.hero',
+    title: 'Build partnerships that connect brands, creators, merch, and community sports.',
+    body:
+      'RESURGENCE Powered by DesignXpress gives sponsors, partners, affiliates, creators, merchants, and community organizers a structured business entry point for collaborations. Use this page for sponsorships, co-branded campaigns, referral programs, custom apparel, event activations, and long-term commercial opportunities.',
+    ctaLabel: 'Start Partnership Inquiry',
     ctaHref: '/contact',
   },
   {
     key: 'partnerships.paths',
-    title: 'Choose the route that fits the conversation.',
+    title: 'Choose the partnership route that fits your business goal.',
     body:
-      'Route sponsorships, referrals, apparel programs, and larger commercial opportunities into the right business workflow.',
+      'Route sponsorships, referrals, branded apparel programs, creator collaborations, media partnerships, and larger commercial opportunities into the right workflow. Every inquiry is designed to separate customer support from business development so the right team can respond faster.',
     ctaLabel: 'View Sponsor Packages',
     ctaHref: '/sponsors',
   },
   {
-    key: 'support.hero',
-    title: 'Live Support Desk for RESURGENCE Customer Service.',
+    key: 'partnerships.businessContact',
+    title: 'Official partnership routing.',
     body:
-      'A comprehensive customer service hub for sponsorships, shop orders, payments, basketball events, custom apparel, partnerships, and human follow-up.',
+      'Partnership conversations are routed through the business team for sponsorships, affiliates, referrals, co-branded programs, media collaboration, and custom commercial opportunities.',
+    ctaLabel: 'Email Partnerships',
+    ctaHref: 'mailto:partnerships@resurgence-dx.biz',
+  },
+  {
+    key: 'support.hero',
+    title: 'Live support desk for RESURGENCE customers, sponsors, creators, and partners.',
+    body:
+      'Get help with sponsorships, shop orders, payments, basketball events, custom apparel, creator activity, partnerships, and human follow-up. The support desk uses official business details and routes approval-sensitive requests to the right team.',
     ctaLabel: 'Email Support',
     ctaHref: 'mailto:support@resurgence-dx.biz',
   },
@@ -48,17 +71,33 @@ const pageContentSeeds = [
     key: 'support.routing',
     title: 'Comprehensive help topics with accurate handoff rules.',
     body:
-      'Support routes visitors into sponsorship, shop, payment, event, apparel, or partnership workflows.',
+      'Support routes visitors into the right workflow for sponsorships, shop orders, payments, events, custom apparel, creator questions, partnership inquiries, and general platform help. Requests that need pricing, inventory, delivery, approval, or contract confirmation are escalated to human follow-up.',
     ctaLabel: 'Open Support Desk',
     ctaHref: '/support',
   },
   {
     key: 'support.rules',
-    title: 'Accurate answers, safe routing, clear next steps.',
+    title: 'Accurate answers, safe routing, and clear next steps.',
     body:
-      'Support answers should use official business details and route approval-sensitive requests to human follow-up.',
+      'RESURGENCE support should use only confirmed business information, avoid inventing prices or commitments, protect payment privacy, and collect complete contact details when a request needs review. Human follow-up should confirm custom pricing, delivery timelines, sponsorship terms, stock availability, and approvals.',
     ctaLabel: 'Contact Support',
     ctaHref: '/contact',
+  },
+  {
+    key: 'support.formIntro',
+    title: 'Need a proposal, quotation, order follow-up, or callback?',
+    body:
+      'Submit your details when your request needs admin review, pricing confirmation, order support, production planning, or scheduled human response.',
+    ctaLabel: 'Submit Inquiry',
+    ctaHref: '/contact',
+  },
+  {
+    key: 'support.aiPromptIntro',
+    title: 'Official support assistant workflow.',
+    body:
+      'The RESURGENCE support assistant should answer with confirmed business facts, route complex requests to human follow-up, and avoid making unapproved promises.',
+    ctaLabel: 'Open Support',
+    ctaHref: '/support',
   },
 ];
 
