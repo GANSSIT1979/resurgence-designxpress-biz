@@ -29,6 +29,11 @@ export async function getPublicPageContentMap(
   if (!keys.length) return {};
 
   try {
+    if (!process.env.DATABASE_URL) {
+      console.warn('[public-page-content] DATABASE_URL is missing; using fallback content.');
+      return {};
+    }
+
     const rows = await prisma.pageContent.findMany({
       where: {
         key: {
@@ -45,10 +50,12 @@ export async function getPublicPageContentMap(
     });
 
     return rows.reduce<PublicPageContentMap>((map, row) => {
+      if (!row?.key) return map;
+
       map[row.key] = {
         key: row.key,
-        title: row.title,
-        body: row.body,
+        title: row.title || '',
+        body: row.body || '',
         ctaLabel: row.ctaLabel,
         ctaHref: row.ctaHref,
       };
@@ -56,7 +63,7 @@ export async function getPublicPageContentMap(
       return map;
     }, {});
   } catch (error) {
-    console.error('[public-page-content] Failed to load CMS content', error);
+    console.error('[public-page-content] Failed to load CMS content; using fallback content.', error);
     return {};
   }
 }
