@@ -6551,6 +6551,22 @@ th {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+.feed-route-hero-compact {
+  align-items: center;
+  padding-bottom: 18px;
+  padding-top: 26px;
+}
+
+.feed-route-hero-compact h1 {
+  font-size: clamp(1.9rem, 4.6vw, 4.4rem);
+  max-width: 880px;
+}
+
+.feed-route-hero-compact p:not(.section-kicker) {
+  font-size: 0.96rem;
+  line-height: 1.55;
+  max-width: 680px;
+}
 }
 
 }
