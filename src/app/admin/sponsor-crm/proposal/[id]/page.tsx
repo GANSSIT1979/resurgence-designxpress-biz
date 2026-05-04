@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 import { prisma } from '@/lib/prisma';
+import { SponsorProposalPaymentActions } from '@/components/sponsor-proposal-payment-actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -80,7 +81,6 @@ export default async function SponsorProposalPage({ params }: ProposalPageProps)
           <Link href="/admin/sponsor-crm" style={{ color: '#D4AF37', textDecoration: 'none', fontWeight: 800 }}>
             ← Back to Sponsor CRM
           </Link>
-          <button onClick={undefined as never} style={{ display: 'none' }} aria-hidden="true" />
           <a href="javascript:window.print()" style={{ color: '#0B0E14', background: '#D4AF37', padding: '10px 16px', borderRadius: 999, fontWeight: 900, textDecoration: 'none' }}>
             Print / Save PDF
           </a>
@@ -144,6 +144,8 @@ export default async function SponsorProposalPage({ params }: ProposalPageProps)
             Recommended action: approve proposal, confirm payment, and begin sponsor onboarding.
           </p>
         </Section>
+
+        <SponsorProposalPaymentActions submissionId={submission.id} />
       </div>
     </main>
   );
