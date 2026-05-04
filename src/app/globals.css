@@ -6111,13 +6111,27 @@ th {
 @media (max-width: 720px) {
   .creator-dashboard-kpis,
   .creator-dashboard-product-grid,
-  .creator-post-card-grid,
-  .merch-content-grid,
-  .order-status-timeline,
-  .creator-dashboard-fact-row {
+  .creator-dashboard-grid,
+  .creator-dashboard-two-col,
+  .creator-dashboard-actions {
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .creator-dashboard-hero,
+  .creator-dashboard-card,
+  .creator-dashboard-panel {
+    border-radius: 24px;
+  }
+
+  .creator-dashboard-hero {
+    padding: 22px;
+  }
+
+  .creator-dashboard-actions {
+    display: grid;
+    gap: 10px;
+  }
+  
   .cart-mobile-stack {
     display: grid;
     gap: 12px;
@@ -6455,4 +6469,5 @@ th {
   .tiktok-reel-card {
     min-height: 680px;
   }
+}
 }
