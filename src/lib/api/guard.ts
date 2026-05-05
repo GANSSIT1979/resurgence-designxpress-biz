@@ -4,11 +4,22 @@ import { isPathAllowedForRole } from '@/lib/auth';
 import { AppRole } from '@/lib/resurgence';
 import { forbiddenError, unauthorizedError } from './response';
 
-export type Role = AppRole;
+type LegacyRole = 'ADMIN' | 'SYSTEM' | 'PUBLIC';
+export type Role = AppRole | LegacyRole;
 
 export type ApiGuardUser = Awaited<ReturnType<typeof getApiUser>>;
 
-export async function getRoleFromRequest(req: NextRequest): Promise<Role | null> {
+function normalizeRole(role: Role): AppRole | null {
+  if (role === 'ADMIN' || role === 'SYSTEM') return 'SYSTEM_ADMIN';
+  if (role === 'PUBLIC') return null;
+  return role;
+}
+
+function normalizeAllowedRoles(roles: Role[]) {
+  return roles.map(normalizeRole).filter(Boolean) as AppRole[];
+}
+
+export async function getRoleFromRequest(req: NextRequest): Promise<AppRole | null> {
   const user = await getApiUser(req);
   return user?.role ?? null;
 }
@@ -29,7 +40,8 @@ export async function requireRole(req: NextRequest, allowed: Role[], options: { 
   const adminOverride = options.adminOverride ?? true;
   if (adminOverride && user.role === 'SYSTEM_ADMIN') return null;
 
-  if (!allowed.includes(user.role)) {
+  const allowedRoles = normalizeAllowedRoles(allowed);
+  if (!allowedRoles.includes(user.role)) {
     return forbiddenError();
   }
 
