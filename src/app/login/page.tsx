@@ -179,7 +179,7 @@ function LoginGatewayShell({
       cancelled = true;
       script.removeEventListener("load", renderGoogleButton);
     };
-  }, [mode, loginMethod, signupMethod]);
+  }, [mode, loginMethod, signupMethod, continueWithGoogle]);
 
   function selectDemoAccount(account: DemoAccount) {
     setIdentifier(account.email);

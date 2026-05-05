@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import type { MutableRefObject } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 type FeedMediaItem = {
   id: string;
@@ -127,6 +128,31 @@ export function VerticalMediaFeed({ events }: { events: FeedEvent[] }) {
     setPaused(false);
   }, [safeEvents.length]);
 
+  const scrollToCard = useCallback((nextIndex: number) => {
+    const boundedIndex = Math.max(0, Math.min(nextIndex, safeEvents.length - 1));
+    cardRefs.current[boundedIndex]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [safeEvents.length]);
+
+  const setMediaIndexForEvent = useCallback((eventId: string, nextIndex: number) => {
+    setMediaIndexes((current) => ({ ...current, [eventId]: nextIndex }));
+  }, []);
+
+  const shiftActiveMedia = useCallback((direction: 1 | -1) => {
+    const event = safeEvents[activeIndex];
+    if (!event) return;
+
+    const total = event.mediaItems.filter((item) => item.url).length;
+    if (total <= 1) return;
+
+    const currentIndex = mediaIndexes[event.id] ?? 0;
+    const nextIndex = direction === 1
+      ? (currentIndex + 1) % total
+      : currentIndex === 0 ? total - 1 : currentIndex - 1;
+
+    setMediaIndexForEvent(event.id, nextIndex);
+    setPaused(false);
+  }, [activeIndex, mediaIndexes, safeEvents, setMediaIndexForEvent]);
+
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -183,32 +209,7 @@ export function VerticalMediaFeed({ events }: { events: FeedEvent[] }) {
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [activeIndex, safeEvents, mediaIndexes]);
-
-  function scrollToCard(nextIndex: number) {
-    const boundedIndex = Math.max(0, Math.min(nextIndex, safeEvents.length - 1));
-    cardRefs.current[boundedIndex]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }
-
-  function setMediaIndexForEvent(eventId: string, nextIndex: number) {
-    setMediaIndexes((current) => ({ ...current, [eventId]: nextIndex }));
-  }
-
-  function shiftActiveMedia(direction: 1 | -1) {
-    const event = safeEvents[activeIndex];
-    if (!event) return;
-
-    const total = event.mediaItems.filter((item) => item.url).length;
-    if (total <= 1) return;
-
-    const currentIndex = mediaIndexes[event.id] ?? 0;
-    const nextIndex = direction === 1
-      ? (currentIndex + 1) % total
-      : currentIndex === 0 ? total - 1 : currentIndex - 1;
-
-    setMediaIndexForEvent(event.id, nextIndex);
-    setPaused(false);
-  }
+  }, [activeIndex, safeEvents, mediaIndexes, scrollToCard, shiftActiveMedia]);
 
   if (!safeEvents.length) {
     return (
@@ -318,6 +319,21 @@ function FeedCard({
     }
   }, [active, current, muted, paused, setPaused]);
 
+  const goPreviousMedia = useCallback(() => {
+    if (mediaItems.length <= 1) return;
+    onMediaIndexChange(mediaIndex === 0 ? mediaItems.length - 1 : mediaIndex - 1);
+    setPaused(false);
+  }, [mediaIndex, mediaItems.length, onMediaIndexChange, setPaused]);
+
+  const goNextMedia = useCallback(() => {
+    if (mediaItems.length <= 1) {
+      onNextCard();
+      return;
+    }
+    onMediaIndexChange(mediaIndex === mediaItems.length - 1 ? 0 : mediaIndex + 1);
+    setPaused(false);
+  }, [mediaIndex, mediaItems.length, onMediaIndexChange, onNextCard, setPaused]);
+
   useEffect(() => {
     if (!active || !current || isNativeVideo(current) || isExternalVideo(current) || paused) return;
 
@@ -333,22 +349,7 @@ function FeedCard({
     }, 80);
 
     return () => window.clearInterval(timer);
-  }, [active, current, mediaIndex, paused]);
-
-  function goPreviousMedia() {
-    if (mediaItems.length <= 1) return;
-    onMediaIndexChange(mediaIndex === 0 ? mediaItems.length - 1 : mediaIndex - 1);
-    setPaused(false);
-  }
-
-  function goNextMedia() {
-    if (mediaItems.length <= 1) {
-      onNextCard();
-      return;
-    }
-    onMediaIndexChange(mediaIndex === mediaItems.length - 1 ? 0 : mediaIndex + 1);
-    setPaused(false);
-  }
+  }, [active, current, mediaIndex, paused, goNextMedia]);
 
   function onVideoTimeUpdate() {
     const video = videoRef.current;
@@ -472,11 +473,13 @@ function renderFeedMedia(
 ) {
   if (item.mediaType === 'IMAGE') {
     return (
-      <img
+      <Image
         className="vertical-feed-media"
         src={item.url}
         alt={item.caption || eventTitle}
-        loading={active ? 'eager' : 'lazy'}
+        fill
+        sizes="(max-width: 768px) 100vw, 500px"
+        priority={active}
       />
     );
   }
@@ -517,11 +520,13 @@ function renderFeedMedia(
   }
 
   return (
-    <img
+    <Image
       className="vertical-feed-media"
       src={item.thumbnailUrl || item.url}
       alt={item.caption || eventTitle}
-      loading={active ? 'eager' : 'lazy'}
+      fill
+      sizes="(max-width: 768px) 100vw, 500px"
+      priority={active}
     />
   );
 }

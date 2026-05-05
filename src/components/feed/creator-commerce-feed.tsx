@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { Fragment, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FeedCommentsModal } from '@/components/resurgence/FeedCommentsModal';
 import {FeedToastViewport,type FeedToastItem,type FeedToastTone,} from '@/components/resurgence/FeedToastViewport';
@@ -140,7 +141,7 @@ export function CreatorCommerceFeed({
     },
   });
 
-  function pushToast(message: string, tone: FeedToastTone = 'info') {
+  const pushToast = useCallback((message: string, tone: FeedToastTone = 'info') => {
     setToasts((current) => [
       ...current.slice(-2),
       {
@@ -149,7 +150,7 @@ export function CreatorCommerceFeed({
         tone,
       },
     ]);
-  }
+  }, []);
 
   function dismissToast(id: string) {
     setToasts((current) => current.filter((toast) => toast.id !== id));
@@ -195,6 +196,45 @@ export function CreatorCommerceFeed({
     return () => loadAbortRef.current?.abort();
   }, []);
 
+  const loadMore = useCallback(async () => {
+    if (!nextCursor || isLoadingMore) return;
+    loadAbortRef.current?.abort();
+    const controller = new AbortController();
+    loadAbortRef.current = controller;
+    setIsLoadingMore(true);
+    setLoadError(null);
+
+    try {
+      const response = await fetch(`/api/feed?cursor=${encodeURIComponent(nextCursor)}&limit=${FEED_PAGE_SIZE}`, {
+        headers: { Accept: 'application/json' },
+        signal: controller.signal,
+      });
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok || !data?.items) {
+        const message = data?.error || 'Unable to load more feed posts.';
+        setLoadError(message);
+        pushToast(message, 'error');
+        return;
+      }
+
+      startTransition(() => {
+        setItems((current) => [...current, ...data.items]);
+        setNextCursor(data.nextCursor || null);
+      });
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return;
+      const message = 'Feed connection interrupted. Please try again.';
+      setLoadError(message);
+      pushToast(message, 'error');
+    } finally {
+      if (loadAbortRef.current === controller) {
+        loadAbortRef.current = null;
+        setIsLoadingMore(false);
+      }
+    }
+  }, [nextCursor, isLoadingMore, pushToast]);
+
   useEffect(() => {
     const sentinel = sentinelRef.current;
     if (!sentinel || !nextCursor || isLoadingMore) return;
@@ -210,7 +250,7 @@ export function CreatorCommerceFeed({
 
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [nextCursor, isLoadingMore]);
+  }, [nextCursor, isLoadingMore, loadMore]);
 
   const trendingHashtags = useMemo(() => {
     const counts = new Map<string, { label: string; count: number }>();
@@ -303,45 +343,6 @@ export function CreatorCommerceFeed({
     () => items.flatMap((item) => item.sponsorPlacements.map((placement) => ({ ...placement, postId: item.id }))).slice(0, 4),
     [items],
   );
-
-  async function loadMore() {
-    if (!nextCursor || isLoadingMore) return;
-    loadAbortRef.current?.abort();
-    const controller = new AbortController();
-    loadAbortRef.current = controller;
-    setIsLoadingMore(true);
-    setLoadError(null);
-
-    try {
-      const response = await fetch(`/api/feed?cursor=${encodeURIComponent(nextCursor)}&limit=${FEED_PAGE_SIZE}`, {
-        headers: { Accept: 'application/json' },
-        signal: controller.signal,
-      });
-      const data = await response.json().catch(() => null);
-
-      if (!response.ok || !data?.items) {
-        const message = data?.error || 'Unable to load more feed posts.';
-        setLoadError(message);
-        pushToast(message, 'error');
-        return;
-      }
-
-      startTransition(() => {
-        setItems((current) => [...current, ...data.items]);
-        setNextCursor(data.nextCursor || null);
-      });
-    } catch (error) {
-      if (error instanceof DOMException && error.name === 'AbortError') return;
-      const message = 'Feed connection interrupted. Please try again.';
-      setLoadError(message);
-      pushToast(message, 'error');
-    } finally {
-      if (loadAbortRef.current === controller) {
-        loadAbortRef.current = null;
-        setIsLoadingMore(false);
-      }
-    }
-  }
 
   if (!items.length) {
     return (
@@ -532,7 +533,12 @@ export function CreatorCommerceFeed({
               {creatorLanes.length ? (
                 creatorLanes.slice(0, 4).map((creator) => (
                   <Link href={`/creators/${creator.slug}`} key={creator.id}>
-                    <img src={creator.imageUrl || '/assets/resurgence-logo.jpg'} alt={creator.name} />
+                    <Image 
+                      src={creator.imageUrl || '/assets/resurgence-logo.jpg'} 
+                      alt={creator.name} 
+                      width={40} 
+                      height={40} 
+                    />
                     <div>
                       <strong>{creator.name}</strong>
                       <span>{creator.roleLabel} | {compactNumber(creator.totalViews)} views</span>
@@ -618,6 +624,7 @@ function FeedCard({
     durationSeconds: post.mediaAssets[0]?.durationSeconds ?? null,
   });
   const lastPlaybackUpdateRef = useRef(0);
+  
   const handlePlaybackProgress = useCallback(
     (playback: { currentTimeSeconds: number; durationSeconds: number | null }) => {
       const now = Date.now();
@@ -658,6 +665,7 @@ function FeedCard({
       }),
     [post.meta, post.metrics.comments, post.metrics.likes, post.metrics.saves, post.metrics.shares, post.metrics.views],
   );
+  
   const {
     analytics,
     registerView,
@@ -669,6 +677,7 @@ function FeedCard({
     source: surface,
     enabled: isActionablePost,
   });
+  
   const commentTotal = commentCount ?? metrics.comments;
   const shareTotal = shareCount ?? metrics.shares;
   const viewTotal = analytics.viewCount ?? metrics.views;
@@ -830,7 +839,12 @@ function FeedCard({
         <div className="feed-story-overlay">
           <div className="feed-creator-row">
             <Link className="feed-avatar" href={post.creator ? `/creators/${post.creator.slug}` : '/creators'}>
-              <img src={post.creator?.imageUrl || '/assets/resurgence-logo.jpg'} alt={post.creator?.name || 'Resurgence'} />
+              <Image 
+                src={post.creator?.imageUrl || '/assets/resurgence-logo.jpg'} 
+                alt={post.creator?.name || 'Resurgence'} 
+                width={44} 
+                height={44} 
+              />
             </Link>
             <div>
               <div className="feed-creator-name-row">
@@ -896,7 +910,14 @@ function FeedCard({
 
                 return (
                   <div className="feed-product-chip" key={product.id}>
-                    <img src={product.imageUrl || '/assets/resurgence-poster.jpg'} alt={product.name} loading="lazy" decoding="async" />
+                    <Image 
+                      src={product.imageUrl || '/assets/resurgence-poster.jpg'} 
+                      alt={product.name} 
+                      width={48} 
+                      height={48} 
+                      loading="lazy" 
+                      decoding="async" 
+                    />
                     <div>
                       <strong>{product.name}</strong>
                       <span>{product.price ? formatPeso(product.price) : 'View merch'} {product.stock !== null && product.stock !== undefined ? `- ${isSoldOut ? 'Sold out' : `${product.stock} left`}` : ''}</span>
@@ -1070,7 +1091,12 @@ function FeedDiscoveryCluster({
             {creatorLanes.length ? (
               creatorLanes.slice(creatorOffset, creatorOffset + 2).map((creator) => (
                 <Link href={`/creators/${creator.slug}`} key={creator.id}>
-                  <img src={creator.imageUrl || '/assets/resurgence-logo.jpg'} alt={creator.name} />
+                  <Image 
+                    src={creator.imageUrl || '/assets/resurgence-logo.jpg'} 
+                    alt={creator.name} 
+                    width={40} 
+                    height={40} 
+                  />
                   <div>
                     <strong>{creator.name}</strong>
                     <span>{creator.roleLabel} | {creator.postCount} post{creator.postCount === 1 ? '' : 's'}</span>
@@ -1156,7 +1182,7 @@ function FeedMedia({
     }
     video.muted = true;
     video.playsInline = true;
-    if (active) video.play().catch(() => null);
+    if (active) void video.play().catch(() => null);
     else video.pause();
   }, [active, media, shouldLoad]);
 
@@ -1192,7 +1218,17 @@ function FeedMedia({
   }
 
   if (media.mediaType === 'IMAGE') {
-    return <img className="feed-media" src={media.url} alt={media.altText || media.caption || caption} loading={active ? 'eager' : 'lazy'} decoding="async" />;
+    return (
+      <Image 
+        className="feed-media" 
+        src={media.url} 
+        alt={media.altText || media.caption || caption} 
+        loading={active ? 'eager' : 'lazy'} 
+        fill
+        sizes="(max-width: 768px) 100vw, 600px"
+        priority={active} 
+      />
+    );
   }
 
   if (media.mediaType === 'VIDEO') {
@@ -1252,7 +1288,7 @@ function FeedMediaPlaceholder({ media, caption }: { media: FeedPost['mediaAssets
 
   return (
     <div className="feed-media-placeholder" aria-label={`${label}: ${media.altText || media.caption || caption}`}>
-      {previewUrl ? <img src={previewUrl} alt="" loading="lazy" decoding="async" /> : null}
+      {previewUrl ? <Image src={previewUrl} alt="" width={60} height={60} loading="lazy" decoding="async" /> : null}
       <div>
         <span>{label}</span>
         <small>Loads as this post enters view.</small>
