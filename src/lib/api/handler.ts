@@ -44,8 +44,8 @@ export function withApiHandler<TInput = unknown, TOutput = unknown>(options: Api
       return response;
     };
 
-    const guard = options.roles?.length ? requireRole(req, options.roles) : null;
-    if (guard) return finish(guard, 'api.request.forbidden');
+    const guard = options.roles?.length ? await requireRole(req, options.roles) : null;
+    if (guard) return finish(guard, guard.status === 401 ? 'api.request.unauthorized' : 'api.request.forbidden');
 
     try {
       let input: unknown = undefined;
@@ -70,7 +70,7 @@ export function withApiHandler<TInput = unknown, TOutput = unknown>(options: Api
       return finish(apiSuccess(output));
     } catch (error) {
       logApiEvent({ event: 'api.request.error', level: 'error', requestId, route, method, durationMs: Date.now() - startedAt, metadata: { error } });
-      return finish(internalError('Request failed'), 'api.request.error_response');
+      return finish(internalError('Request failed', error), 'api.request.error_response');
     }
   };
 }
