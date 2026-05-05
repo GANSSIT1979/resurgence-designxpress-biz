@@ -353,7 +353,7 @@ export function SupportChatWidget({ settings }: { settings: SupportWidgetSetting
     }
   }
 
-  function useQuickAction(action: (typeof quickActions)[number]) {
+  function selectQuickAction(action: (typeof quickActions)[number]) {
     setRouteLabel(action.label);
     setInput(action.starterPrompt);
   }
@@ -446,7 +446,7 @@ export function SupportChatWidget({ settings }: { settings: SupportWidgetSetting
             key={category.key}
             className="support-route-card"
             type="button"
-            onClick={() => useQuickAction(category)}
+            onClick={() => selectQuickAction(category)}
             disabled={loading || booting}
           >
             <span>{category.badge}</span>

@@ -181,7 +181,7 @@ function LoginGatewayShell({
     };
   }, [mode, loginMethod, signupMethod]);
 
-  function useDemoAccount(account: DemoAccount) {
+  function selectDemoAccount(account: DemoAccount) {
     setIdentifier(account.email);
   }
 
@@ -668,7 +668,7 @@ function LoginGatewayShell({
                         </div>
                         <div className="login-demo-grid">
                           {demoAccounts.map((account) => (
-                            <button className="login-demo-button" key={account.email} type="button" onClick={() => useDemoAccount(account)}>
+                            <button className="login-demo-button" key={account.email} type="button" onClick={() => selectDemoAccount(account)}>
                               <strong>{account.role}</strong>
                               <span>{account.area}</span>
                             </button>

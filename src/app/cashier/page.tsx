@@ -34,7 +34,7 @@ export default async function CashierDashboardPage() {
         currentPath="/cashier"
       >
         <div className="card-grid grid-4">
-          <div className="panel"><strong>{formatCurrency(todayCollections)}</strong><div className="helper">Today's collections</div></div>
+          <div className="panel"><strong>{formatCurrency(todayCollections)}</strong><div className="helper">Today&apos;s collections</div></div>
           <div className="panel"><strong>{formatCurrency(pendingReceivables)}</strong><div className="helper">Outstanding receivables</div></div>
           <div className="panel"><strong>{paidInvoices}</strong><div className="helper">Paid invoices</div></div>
           <div className="panel"><strong>{overdueInvoices}</strong><div className="helper">Overdue invoices</div></div>

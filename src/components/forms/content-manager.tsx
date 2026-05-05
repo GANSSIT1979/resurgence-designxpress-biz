@@ -114,34 +114,41 @@ export function ContentManager({ initialContent }: { initialContent: ContentItem
   }
 
   async function deleteItem(id: string) {
-    const target = items.find((item) => item.id === id);
+  const target = items.find((item) => item.id === id);
 
-    if (!target) {
-      setError('Content entry not found.');
-      return;
-    }
-
-    const typedKey = window.prompt(`Type the CMS key to delete this entry:\n\n${target.key}`, '');
-
-    if (typedKey !== target.key) {
-      setNotice(null);
-      setError('Delete cancelled. The typed CMS key did not match.');
-      return;
-    }
-
-    setNotice(null);
-    setError(null);
-
-    const response = await fetch(`/api/admin/content/${id}`, { method: 'DELETE' });
-    const data = await response.json();
-    if (!response.ok) {
-      setError(data.error || 'Unable to delete content.');
-      return;
-    }
-
-    setItems((current) => current.filter((entry) => entry.id !== id));
-    setNotice(`Deleted ${target.key}.`);
+  if (!target) {
+    setError('Content entry not found.');
+    return;
   }
+
+  const typedKey = window.prompt(
+    `Type the CMS key to delete this entry:\n\n${target.key}`,
+    '',
+  );
+
+  if (typedKey !== target.key) {
+    setNotice(null);
+    setError('Delete cancelled. The typed CMS key did not match.');
+    return;
+  }
+
+  setNotice(null);
+  setError(null);
+
+  const response = await fetch(`/api/admin/content/${id}`, {
+    method: 'DELETE',
+  });
+
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    setError(data?.error || 'Unable to delete content entry.');
+    return;
+  }
+
+  setItems((current) => current.filter((entry) => entry.id !== id));
+  setNotice(`Deleted ${target.key}.`);
+}
 
   async function createItem(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
