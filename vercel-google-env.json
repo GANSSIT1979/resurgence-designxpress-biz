@@ -1,6 +1,6 @@
 {
-  "NEXT_PUBLIC_GOOGLE_CLIENT_ID": "your-google-oauth-client-id.apps.googleusercontent.com",
-  "GOOGLE_CLIENT_ID": "your-google-oauth-client-id.apps.googleusercontent.com",
+  "NEXT_PUBLIC_GOOGLE_CLIENT_ID": "853880719261-5kkq8d7vb0300jrta0mieljc36u4l3mq.apps.googleusercontent.com",
+  "GOOGLE_CLIENT_ID": "853880719261-5kkq8d7vb0300jrta0mieljc36u4l3mq.apps.googleusercontent.com",
   "NEXT_PUBLIC_SITE_URL": "https://resurgence-dx.biz",
   "FORCE_HTTPS": "true"
 }
