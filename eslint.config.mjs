@@ -5,6 +5,11 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
+  {
+    linterOptions: {
+      reportUnusedDisableDirectives: false
+    }
+  },
   ...compat.extends('next/core-web-vitals'),
   {
     rules: {
