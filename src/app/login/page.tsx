@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { FilterChipRow } from "@/components/filter-chip-row";
 import { ProfileCompletionMeter } from "@/components/profile-completion-meter";
@@ -233,7 +233,7 @@ function LoginGatewayShell({
     }
   }
 
-  async function continueWithGoogle(credential: string, intent: "login" | "signup") {
+  const continueWithGoogle = useCallback(async (credential: string, intent: "login" | "signup") => {
     if (intent === "signup" && !termsAccepted) {
       setError("Please accept the terms and privacy notice before continuing.");
       return;
@@ -279,7 +279,16 @@ function LoginGatewayShell({
     } finally {
       setLoading(false);
     }
-  }
+    }, [
+    displayName,
+    interests,
+    nextTarget,
+    onRedirect,
+    profileImageUrl,
+    referralCode,
+    selectedRole,
+    termsAccepted,
+  ]);
 
   async function requestMobileOtp(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
