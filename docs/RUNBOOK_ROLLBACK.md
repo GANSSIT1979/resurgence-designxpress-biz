@@ -1,23 +1,12 @@
 # Rollback Runbook
 
-## When to rollback
+Updated: 2026-05-05
 
-Rollback when production health fails repeatedly, schema breaks, or a critical route regresses.
-
-## CLI rollback
-
-```bash
-npx vercel alias set <deployment-url> www.resurgence-dx.biz --scope resurgence-designxpress-projects
-```
+Rollback when Production health, auth, billing, feed, or schema safety fails. Prefer Vercel deployment rollback for code-only regressions and forward additive migrations for schema issues whenever safe.
 
 ## Verify
 
 ```bash
+curl -I https://www.resurgence-dx.biz
 curl https://www.resurgence-dx.biz/api/health
 ```
-
-Expected:
-
-- ok: true
-- database: connected
-- schema.status: ok

@@ -1,390 +1,208 @@
 # Vercel Deployment Checklist
 
-Updated: 2026-04-24
+Updated: 2026-05-05
+
 ## Purpose
 
-This checklist is tailored to the current RESURGENCE Powered by DesignXpress application and its active upgrade path:
+This checklist is the production deployment gate for RESURGENCE Powered by DesignXpress on Vercel.
 
-- `Next.js 15` App Router
-- route handlers under `src/app/api`
-- Prisma-backed relational data
-- creator-commerce feed on `/` and `/feed`
-- auth flows for password login, Google sign-in/signup, mobile OTP signup, and mobile OTP login
-- protected dashboards for admin, member, creator, sponsor, staff, cashier, coach, referee, and partner
-- serverless-safe upload delivery through `/api/uploads/image/[id]` or `/api/uploads/r2/[...key]`
+## Current Deployment Assumptions
 
-This document is written for Vercel production deployment, not local development.
+- Next.js 15 App Router
+- Route handlers under `src/app/api`
+- Prisma-backed PostgreSQL
+- Supabase PostgreSQL in hosted environments
+- Vercel production branch: `main`
+- Auth cookie: `resurgence_admin_session`
+- Google Auth and mobile OTP where configured
+- PayPal-first sponsor/invoice billing
+- Cloudflare Stream for creator video uploads where configured
 
-## Current Repo Anchors
+## Pre-Deploy Local Checks
 
-These files and scripts are part of the live deployment surface and should be checked before every rollout:
+```bash
+npm run type-check
+npm run lint
+npm run build
+npx prisma migrate status
+```
 
-- `vercel.json`
-- `vercel.production.env.example`
-- `package.json`
-- `scripts/prepare-prisma-schema.mjs`
-- `scripts/push-prisma-schema.mjs`
-- `src/lib/auth.ts`
-- `src/app/api/auth/google/route.ts`
-- `src/app/api/auth/mobile/request-otp/route.ts`
-- `src/app/api/auth/mobile/verify-otp/route.ts`
-- `src/app/api/auth/mobile/login/request-otp/route.ts`
-- `src/app/api/auth/mobile/login/verify-otp/route.ts`
+Optional docs and runtime checks when scripts exist:
 
-## 1. Deployment Assumptions To Lock In
+```bash
+npm run docs:check
+npm run local:preflight
+```
 
-Confirm these platform assumptions before every production rollout:
+## Environment Variables
 
-- Production runtime is `Vercel`.
-- App framework remains `Next.js 15` App Router.
-- Production database is `PostgreSQL`, not SQLite.
-- Prisma schema is synchronized before traffic reaches new UI code.
-- Persistent media is not stored in local filesystem paths such as `public/uploads`.
-- Public media is served by one of these production-safe layers:
-  - external hosted video such as Cloudflare Stream or other embed-safe providers
-  - `/api/uploads/image/[id]` for database-backed image delivery
-  - `/api/uploads/r2/[...key]` for R2/object storage delivery
+Required:
 
-## 2. Environment Variables
+```txt
+DATABASE_URL
+PRISMA_DB_PROVIDER=postgresql
+JWT_SECRET
+NEXT_PUBLIC_SITE_URL
+FORCE_HTTPS=true
+```
 
-### Required
+Google Auth when enabled:
 
-Confirm these are present in the correct Vercel environment scopes:
+```txt
+NEXT_PUBLIC_GOOGLE_CLIENT_ID
+GOOGLE_CLIENT_ID
+GOOGLE_CLIENT_SECRET
+```
 
-- `DATABASE_URL`
-- `PRISMA_DB_PROVIDER=postgresql`
-- `JWT_SECRET`
-- `NEXT_PUBLIC_SITE_URL`
-- `FORCE_HTTPS=true`
-- `NEXT_PUBLIC_GOOGLE_CLIENT_ID`
-- `GOOGLE_CLIENT_ID`
+PayPal billing when enabled:
 
-Accuracy note:
+```txt
+PAYPAL_CLIENT_ID
+PAYPAL_CLIENT_SECRET
+PAYPAL_ENV
+PAYPAL_CURRENCY
+PAYPAL_SPONSOR_AMOUNT
+PAYPAL_WEBHOOK_ID
+NEXT_PUBLIC_BASE_URL
+```
 
-- `DATABASE_URL` is the actual Prisma/runtime connection string in this repo
-- platform helper variables such as `POSTGRES_URL`, `POSTGRES_PRISMA_URL`, `POSTGRES_URL_NON_POOLING`, and `POSTGRES_PASSWORD` are optional but do not replace `DATABASE_URL`
+Cloudflare Stream when enabled:
 
-### Required When The Related Feature Is Enabled
+```txt
+CLOUDFLARE_ACCOUNT_ID
+CLOUDFLARE_STREAM_TOKEN
+CLOUDFLARE_STREAM_CUSTOMER_CODE
+CLOUDFLARE_STREAM_ALLOWED_ORIGINS
+CLOUDFLARE_STREAM_MAX_DURATION_SECONDS
+CLOUDFLARE_REQUIRE_SIGNED_URLS
+```
 
-- `OTP_DELIVERY_MODE`
-- `SMS_WEBHOOK_URL`
-- `SMS_WEBHOOK_SECRET`
-- `EMAIL_WEBHOOK_URL`
-- `EMAIL_WEBHOOK_SECRET`
-- `OPENAI_API_KEY`
-- `OPENAI_WORKFLOW_ID`
-- `OPENAI_WORKFLOW_VERSION`
-- `OPENAI_WEBHOOK_SECRET`
-- `OPENAI_DEFAULT_MODEL`
-- `CLOUDFLARE_ACCOUNT_ID`
-- `CLOUDFLARE_STREAM_TOKEN`
-- `CLOUDFLARE_STREAM_CUSTOMER_CODE`
-- `CLOUDFLARE_STREAM_ALLOWED_ORIGINS`
-- `CLOUDFLARE_STREAM_MAX_DURATION_SECONDS`
-- `CLOUDFLARE_REQUIRE_SIGNED_URLS`
-- `R2_ACCOUNT_ID`
-- `R2_ACCESS_KEY_ID`
-- `R2_SECRET_ACCESS_KEY`
-- `R2_BUCKET`
-- `R2_PUBLIC_BASE_URL`
+Support when enabled:
 
-### Optional Platform Helper Variables
+```txt
+OPENAI_API_KEY
+OPENAI_WORKFLOW_ID
+OPENAI_WORKFLOW_VERSION
+OPENAI_WEBHOOK_SECRET
+OPENAI_DEFAULT_MODEL
+```
 
-- `POSTGRES_URL`
-- `POSTGRES_PRISMA_URL`
-- `POSTGRES_URL_NON_POOLING`
-- `POSTGRES_PASSWORD`
+## Database Readiness
 
-### Unused In The Current Codebase
+Before deploying code that queries new Prisma fields:
 
-- `SUPABASE_SECRET_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
-- `SUPABASE_JWT_SECRET`
-
-### Environment Scope Check
-
-Set and verify values in all environments you actively use:
-
-- local development
-- Vercel Preview
-- Vercel Production
-
-Do not assume Preview and Production share identical values.
-
-Use these checked-in helpers as the baseline:
-
-- `vercel.production.env.example`
-- `docs/VERCEL.md`
-
-## 3. Database Readiness Before Deployment
-
-This remains the highest-risk release area in the current project.
-
-### Pre-Deploy Schema Checklist
-
-Before promoting a new commit to production:
-
-1. run `npm run prisma:prepare`
-2. run `npm run prisma:generate`
-3. decide which schema deployment path you are using
-4. apply schema changes to the target PostgreSQL database before Vercel serves the new code
-5. smoke test routes that query the new schema
-
-### Important Repo Reality
-
-This repository exposes two database release paths:
-
-- `npm run db:deploy`
-  - runs `scripts/push-prisma-schema.mjs`
-  - uses `prisma db push` plus checked-in PostgreSQL SQL hardening scripts
-- `npm run db:migrate:deploy`
-  - runs Prisma migration deployment against `prisma/schema.generated.prisma`
-
-Do not mix these casually in one release. Pick the intended path and run it deliberately.
-
-### Historical Drift Symptoms To Treat As Release Blockers
-
-Examples recorded during real rollout checks and the April 23, 2026 production log exports include:
-
-- `The column ContentPost.title does not exist in the current database`
-- homepage `/` falling back to the gallery feed after a `prisma.contentPost.findMany()` failure
-- `/creators/[slug]` throwing Prisma `P2022` because additive `ContentPost` columns were deployed in code before PostgreSQL was updated
-- `PlatformNotification.actorUserId does not exist`
-
-Any missing-table or missing-column error means application code reached Vercel before the target database matched the expected schema.
-
-### Safe Release Order
-
-For the current repo, the safe sequence is:
-
-1. merge code
-2. run `npm run prisma:prepare`
-3. run `npm run prisma:generate`
-4. apply schema changes to Preview database
-5. validate Preview deployment
+1. prepare Prisma schema
+2. generate Prisma Client
+3. apply schema changes to Preview database
+4. deploy Preview
+5. smoke-test Preview
 6. apply schema changes to Production database
-7. promote Production deployment
-8. run post-deploy smoke tests
+7. deploy Production
 
-If Preview and Production use different PostgreSQL databases, repeat the schema step for each target.
+Current safe Supabase sync path:
 
-## 4. Build And Prisma Execution Flow
+```bash
+npm run db:push
+npm run prisma:generate
+```
 
-### Recommended Build Checks
+Migration-first releases should use reviewed migrations and deploy them intentionally. Do not mix `db:push` and migration deployment casually in the same release.
 
-Make sure the release path confirms all of these:
+## Media And Storage
 
-- Prisma client generation succeeds
-- the prepared schema reflects PostgreSQL
-- route handlers compile without Edge/runtime conflicts
-- the app does not depend on durable local filesystem writes
+Do not rely on Vercel local filesystem persistence for uploads. Use:
 
-### Recommended Deployment Sequence
+- Cloudflare Stream for creator video
+- database-backed image delivery through `/api/uploads/image/[id]`
+- R2/object storage through `/api/uploads/r2/[...key]`
 
-The practical repo-aligned sequence is:
+## Required Smoke Tests
 
-1. install dependencies with `npm install`
-2. run `npm run prisma:prepare`
-3. run `npm run prisma:generate`
-4. apply schema changes with `npm run db:deploy` or `npm run db:migrate:deploy`
-5. run `npm run build`
-6. deploy to Vercel
+Public routes:
 
-`npm run build` runs `npm run prisma:generate`, but that does not replace actual database deployment.
+```txt
+/
+/feed
+/creators
+/creators/[slug]
+/shop
+/shop/product/[slug]
+/cart
+/checkout
+/account/orders
+/support
+/login
+/api/health
+```
 
-## 5. Storage And Media Checklist
+Protected routes:
 
-### Do Not Rely On Local Disk On Vercel
+```txt
+/member
+/creator/dashboard
+/creator/posts
+/admin
+/admin/invoices
+/admin/revenue
+/admin/observability
+/cashier
+/staff
+/partner
+/sponsor/dashboard
+```
 
-Avoid treating these as durable production storage:
-
-- `public/uploads`
-- temporary filesystem writes inside route handlers
-- any generated media path that must survive across invocations
-
-### Production-Safe Media Plan
-
-Use this split:
-
-- video: hosted video embeds or a durable provider such as Cloudflare Stream
-- images/assets: database-backed upload records or R2/object storage
-- cart state: browser local storage is acceptable for the current merch cart design
-
-### Feed And Media Rollout Check
-
-Before releasing a new feed card, creator page, or merch surface:
-
-- confirm every media source resolves in Preview
-- confirm fallback media or empty states exist
-- confirm the UI does not crash when video is absent
-- confirm tagged product deep links still resolve to `/shop/product/[slug]`
-
-## 6. Route-By-Route Smoke Test List
-
-After every Preview and Production deployment, manually test at least these:
-
-### Public Routes
-
-- `/`
-- `/feed`
-- `/creators`
-- `/creator/[slug]`
-- `/creators/[slug]`
-- `/shop`
-- `/shop/product/[slug]`
-- `/cart`
-- `/checkout`
-- `/account/orders`
-- `/support`
-- `/login`
-
-### Protected Routes
-
-- `/member`
-- `/creator/dashboard`
-- `/creator/posts`
-- `/admin`
-- `/cashier`
-- `/staff`
-- `/partner`
-- `/sponsor/dashboard`
-
-### Flow Tests
+Flow checks:
 
 - password login
-- Google sign-in/signup
-- mobile OTP signup request and verification
-- mobile OTP login request and verification
-- follow, like, save, and comment actions
-- product-tag to product-page flow
-- cart add, update, and remove
+- Google login/signup
+- mobile OTP if enabled
+- role redirect
+- feed read
+- like/save/comment guard behavior
+- product to cart
 - checkout creation
-- support widget session and message flow
-- role redirect after auth
+- support message
+- PayPal sandbox sponsor/invoice flow when billing changes
+- Cloudflare upload/save/playback when media changes
 
-### Health Endpoints
+## Health Checks
 
-- `/api/health`
-- `/api/auth/me`
+```bash
+curl -I https://www.resurgence-dx.biz
+curl https://www.resurgence-dx.biz/api/health
+```
 
-The health probe should verify additive content-post columns such as `title` and `slug`, Cloudflare-related media columns such as `originalFileName` and `storageKey`, and notification actor columns such as `actorUserId`.
+Expected:
 
-## 7. Serverless And Runtime Checks
+```txt
+HTTP/1.1 200 OK
+```
 
-### Keep Route Handlers Serverless-Safe
+Health JSON should show database connected and no unexpected schema issues.
 
-Review route handlers for:
+## Go / No-Go
 
-- long-running blocking work
-- assumptions about writable local disk
-- assumptions about in-memory state persistence across requests
-- oversized payload handling without safe limits
+Do not promote if any of these occur:
 
-### Keep Client And Server Boundaries Clean
-
-For the current TikTok-style upgrade:
-
-- keep server components as the default
-- use client components only where interactivity is required
-- keep heavy media lazy-loaded
-- avoid turning full pages into client components without a clear reason
-
-## 8. Auth And Session Checks
-
-Before each release:
-
-- confirm the `resurgence_admin_session` cookie is set and cleared correctly
-- verify middleware still protects role-restricted routes
-- confirm role redirect mapping still sends users to the correct dashboard after login or signup
-- confirm auth flows work on both desktop and mobile browsers
-- confirm OTP expiration and error states remain user-friendly
-
-### Vercel-Specific Auth Reliability
-
-- confirm cookie behavior under HTTPS
-- confirm secure-cookie behavior in production
-- verify Google Identity Services configuration matches the active production and preview origins
-- verify `NEXT_PUBLIC_GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_ID` are aligned
-- verify OTP delivery mode and webhook credentials are correct per environment
-
-Note:
-
-- the current Google flow verifies the ID token audience server-side in `/api/auth/google`
-- this app does not rely on a traditional OAuth callback route for the current Google sign-in UX
-
-## 9. Observability And Rollback Readiness
-
-### Monitor Immediately After Deploy
-
-Watch for:
-
-- Prisma errors
 - missing table or missing column errors
-- upload or media delivery failures
-- Google sign-in failures
-- OTP delivery or verification failures
-- dashboard 500s
-- support flow failures
+- failed Google Auth on production domain
+- failed PayPal capture or webhook route after billing changes
+- creator upload works but save fails
+- save works but public playback fails after publish
+- protected routes are publicly accessible
+- `/api/health` reports blocking drift
 
-### Keep Rollback Simple
+## Rollback
 
-Before large UI changes:
+If app code is bad but schema is additive and harmless, roll back the Vercel deployment and keep the schema. Prefer forward fixes for additive schema issues when possible.
 
-- keep deploys small and route-focused
-- release Phase 1 incrementally
-- avoid combining schema, feed, auth, and dashboard rewrites in one large production push when possible
-- keep feed and dashboard fallback states in place
+## Final Commit/Deploy Flow
 
-## 10. Phase 1 Rollout Order
+```bash
+git status
+git add -A
+git commit -m "Describe production-safe change"
+git push origin main
+```
 
-Release Phase 1 in this sequence:
-
-1. shared primitives and app shell
-2. `/login` refresh
-3. homepage `/` feed preview refresh
-4. `/feed` flagship viewport upgrade
-5. `/member` dashboard refresh
-6. `/creators/[slug]` creator profile refresh
-
-At each step:
-
-- deploy to Preview
-- verify schema compatibility
-- verify auth compatibility
-- test mobile first
-- test desktop fallback
-- then promote to Production
-
-## 11. Pre-Launch Go / No-Go Checklist
-
-Do not promote the deployment unless all are true:
-
-- PostgreSQL is active in the target hosted environment
-- Prisma schema changes are applied before the app code goes live
-- no missing table or missing column errors remain
-- media delivery works without local filesystem dependency
-- password login, Google auth, and mobile OTP all pass smoke tests
-- `/feed`, `/member`, and `/creator/dashboard` load cleanly
-- support widget flow works end-to-end
-- cart and checkout complete successfully
-- rollback path is known
-
-## 12. Post-Launch Acceptance Checklist
-
-A deployment is considered healthy when:
-
-- homepage feed loads without schema fallback errors
-- creator dashboard loads without notification or post query failures
-- member dashboard loads successfully
-- images and video render correctly on Vercel
-- auth redirect and protected route behavior remain intact
-- core engagement actions continue to work
-- no new serverless storage issues appear in logs
-
-## 13. Related Artifact
-
-The next rollout-planning document after this checklist is:
-
-- `docs/PHASE1_ROUTE_INTEGRATION_PLAN.md`
-
-Use that document to map the Phase 1 component layer into the actual route files and data loaders active in this repository.
+Confirm Vercel deploys the expected commit SHA.

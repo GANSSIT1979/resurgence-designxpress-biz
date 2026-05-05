@@ -1,247 +1,212 @@
-# USER GUIDE
+# User Guide
 
-Updated: 2026-05-01
+Updated: 2026-05-05
 
 ## What This Platform Is
 
-RESURGENCE Powered by DesignXpress is a basketball-focused creator, commerce, sponsorship, and billing platform that combines:
-
-- public brand and service pages
-- creators and community content
-- support and contact flows
-- sponsorship and partnership inquiry paths
-- DAYO Series and event sponsorship packages
-- Official Resurgence Merch commerce
-- PayPal-first sponsor payments and invoice billing
-- free public role registration
-- protected role-based workspaces
-- admin dashboards for invoices, sponsor activity, and revenue visibility
+RESURGENCE Powered by DesignXpress is a basketball-focused creator, commerce, sponsorship, support, and billing platform. It combines public discovery, creator content, official merch, sponsor workflows, PayPal-first billing, and protected role dashboards.
 
 ## Public Visitors
 
-Without signing in, you can:
+Without signing in, visitors can:
 
-- browse the homepage, services, sponsors, partnerships, and creator pages
-- explore the public community feed on `/feed`
-- browse Official Resurgence Merch on `/shop`
+- browse the homepage
+- explore `/feed`
+- browse creators on `/creators` and creator profile pages
+- browse official merch on `/shop`
 - add items to `/cart` and complete `/checkout`
-- look up orders on `/account/orders` using the checkout email
+- look up orders on `/account/orders` using checkout email
 - submit sponsor applications on `/sponsor/apply`
-- review DAYO Series OFW All-Star sponsorship packages on `/dayo-series-ofw-all-star`
-- apply for DAYO sponsorship through `/dayo-series-ofw-all-star/apply`
-- reach out through `/contact`, `/support`, or `/quotation`
+- access support on `/support`
+- submit quotation or contact requests
 
-## Create A Free Account
+## Account Creation
 
 Open `/login` to:
 
 - sign in with an existing account
-- create a new free account with Google
-- create a new free account with mobile OTP verification
+- create an account with Google when configured
+- create an account with mobile OTP when configured
 
-Public signup roles are:
+Public signup roles include:
 
-- Regular Member
+- Member
 - Creator
 - Coach
 - Referee
 - Sponsor
 - Partner
 
-After signup or login, the platform redirects you to the dashboard that matches your role.
+After signup or login, the platform redirects users to the dashboard matching their role.
 
-## Role Experiences
-
-### Regular Member
+## Member Experience
 
 Members use `/member` as their community home base.
 
-The member dashboard can show:
+The dashboard may show:
 
-- merch order summary and quick lookup links
+- merch order summary and lookup links
 - followed creators
-- saved feed posts
-- notifications and workflow inbox items
+- saved posts
+- notifications
 - uploaded content tied to the account
 - community highlights
 - featured merch recommendations
 
-### Creator
+Merch order history remains tied to the checkout email, not a full server-owned cart/account-order model.
 
-Creator users can access:
+## Creator Experience
 
-- `/creator/dashboard`
-- `/creator/analytics`
-- `/creator/posts`
-- `/creator/posts/new`
-- `/creator/posts/[postId]`
+Creators can access:
 
-What to expect:
+```txt
+/creator/dashboard
+/creator/analytics
+/creator/posts
+/creator/posts/new
+/creator/posts/[postId]
+```
 
-- creator dashboards work best when the signed-in account is linked to a `CreatorProfile`
-- creator analytics shows live rollup data when the analytics migration is active and clearly labels preview/demo fallback when it is not
-- creators can upload video through the Cloudflare-backed composer flow
-- creators can draft, submit for review, edit, duplicate, archive, and delete their own posts
-- creator self-publish still respects the moderation model
+Creators can:
 
-### Coach And Referee
+- upload video through Cloudflare Stream when configured
+- draft content
+- submit posts for review
+- edit posts
+- duplicate posts
+- archive posts
+- delete owned posts
+- review analytics where data is available
 
-Coach and referee accounts provide lighter dashboard shells at:
+Creator dashboards work best when the signed-in account is linked to a `CreatorProfile`.
 
-- `/coach`
-- `/referee`
+## Coach And Referee Experience
 
-These roles are positioned for profile completion, future coordination, and community access rather than deep workflow management today.
+Coach and referee users can access:
 
-### Sponsor
+```txt
+/coach
+/referee
+```
 
-Sponsor users can access:
+These roles currently provide lighter community/workspace shells and can be expanded later.
 
-- `/sponsor/dashboard`
-- `/sponsor/applications`
-- `/sponsor/packages`
-- `/sponsor/placements`
-- `/sponsor/deliverables`
-- `/sponsor/billing`
-- `/sponsor/profile`
+## Sponsor Experience
 
-Sponsors can also use the DAYO sponsorship funnel:
+Sponsors can access:
 
-- open `/dayo-series-ofw-all-star`
-- select a package
-- submit the sponsor application form
-- pay online with PayPal when enabled
-- submit a GCash reference for manual verification when using manual payment
+```txt
+/sponsor/dashboard
+/sponsor/applications
+/sponsor/packages
+/sponsor/placements
+/sponsor/deliverables
+/sponsor/billing
+/sponsor/profile
+```
 
-Current DAYO sponsorship packages include:
+Sponsors can apply through public sponsor flows and pay online through PayPal when enabled. Manual GCash/reference payment remains review-based.
 
-- Supporting Sponsor: PHP 15,000-50,000
-- Official Brand Partner: PHP 75,000-95,000
-- Major Partner: PHP 120,000-150,000
-- Event Presenting: custom proposal
+## Partner Experience
 
-### Partner
+Partners can access:
 
-Partner users can access:
+```txt
+/partner
+/partner/campaigns
+/partner/referrals
+/partner/agreements
+/partner/profile
+```
 
-- `/partner`
-- `/partner/campaigns`
-- `/partner/referrals`
-- `/partner/agreements`
-- `/partner/profile`
+## Staff, Cashier, And Admin
 
-### Staff, Cashier, And Admin
+Internal areas include:
 
-These internal roles are provisioned by the platform team and are not part of the public self-signup flow.
+```txt
+/staff
+/cashier
+/admin
+/admin/invoices
+/admin/revenue
+/admin/observability
+/admin/sponsor-funnel
+```
 
-Internal role areas include:
-
-- `/staff`
-- `/cashier`
-- `/admin`
-
-Admin billing and revenue areas include:
-
-- `/admin/invoices` for invoice listing, invoice totals, customer visibility, paid revenue, and outstanding balances
-- `/admin/revenue` for PayPal revenue analytics, invoice conversion, sponsor conversion, unpaid invoice alerts, and recent paid invoice visibility
+Admins can manage users, content, creators, feed moderation, sponsors, products, orders, invoices, revenue visibility, and settings depending on permission configuration.
 
 ## Community Feed
 
-The feed is available on `/feed` and also appears on the homepage.
+The feed is available on `/feed` and appears on the homepage.
 
-What signed-in users can do depends on role and permissions, but the platform supports:
+Signed-in users may be able to:
 
-- reading public creator and community posts
-- following creators
-- liking posts
-- saving posts
-- commenting on posts
-- sharing posts and opening deep links
-- opening merch linked from product tags or sponsor placements
+- follow creators
+- like posts
+- save posts
+- comment on posts
+- share posts
+- open merch linked from tags or placements
 
-Important note:
-
-- view counts and watch-time tracking are active, but the current analytics layer is lightweight and intended for product feedback rather than fraud-resistant reporting
+View counts and watch-time tracking are product analytics, not fraud-resistant measurement.
 
 ## Official Merch
 
 The merch flow supports:
 
-- product browsing on `/shop`
-- product detail pages with stock, material, fit, care, size, and color options
-- cart lines that preserve selected variants
-- checkout payment choices for COD, GCash, Maya, bank transfer, PayPal, card where enabled, and cash
-- email-based order lookup on `/account/orders`
+- `/shop` browsing
+- product detail pages
+- selected size/color variants
+- `/cart`
+- `/checkout`
+- email-based `/account/orders` lookup
 
-Even if you are signed in as a member, merch order lookup is still keyed to the checkout email, not a separate customer-account order system.
+Checkout payment options may include COD, GCash manual, Maya manual, bank transfer, card manual, and cash depending on configuration.
 
 ## PayPal Payments And Invoices
 
-The platform is PayPal-first for online sponsor payments and invoice billing.
+The platform is PayPal-first for sponsor payments and invoice billing.
 
-Main PayPal-supported flows:
+PayPal flows include:
 
-- sponsor checkout creates a PayPal order and redirects the sponsor to PayPal
-- PayPal return flow captures approved sponsor payments through `/payment/success`
-- saved invoices can be sent through PayPal invoicing
-- PayPal webhook events update local invoice payment status when payment is completed
-- admin revenue dashboards use local invoice and sponsor data to show paid revenue, outstanding balances, and conversion metrics
+- sponsor checkout
+- server-side PayPal capture
+- PayPal invoice creation
+- PayPal invoice sending
+- PayPal webhook sync
+- admin invoice and revenue dashboards
 
-Useful billing paths:
+Payment status should only be trusted after server-side capture, verified webhook processing, or reviewed manual payment action.
 
-- `/admin/invoices`
-- `/admin/revenue`
-- `/payment/success`
-- `/payment/cancel`
+## Support
 
-Payment status behavior:
-
-- sponsor PayPal payment capture can approve a sponsor submission
-- GCash payment references are manual and usually require review
-- PayPal invoice payment webhooks can mark local invoices as `PAID`
-- invoices may appear as `DRAFT`, `SENT`, `PAID`, or another operational status depending on workflow state
-
-## Support And Quotation Help
-
-Use `/support` for guided help with:
+Use `/support` for:
 
 - sponsorships
 - orders
 - payments
-- PayPal invoices
 - events
 - custom apparel
 - partnerships
 
-Use `/quotation` or the support/contact flows when you have serious business intent such as custom uniforms, large apparel orders, sponsorships, invoice requests, or partnership requests.
+If OpenAI workflow credentials are unavailable, support should degrade to local routing/fallback behavior instead of crashing.
 
 ## If Something Looks Missing
 
-This usually means one of these:
+Common reasons:
 
-- your account is not linked to the right role or related record
-- required data has not been created yet
-- your role has a lightweight shell today and a deeper workflow is planned later
-- the current environment is behind on additive Prisma migrations
-- PayPal or webhook environment variables are not configured for the current deployment
-- invoice or sponsor records exist in another environment such as Preview instead of Production
-- the relevant feature needs a human team member to confirm next steps
+- account is not linked to the expected role record
+- feature is available only to another role
+- data exists in Preview but not Production
+- environment variables are missing
+- schema migration has not reached the target database
+- payment or webhook flow requires admin review
 
-When in doubt, contact the admin or support team.
+Contact the admin/support team when access or payment state is unclear.
 
-## Compatibility Notes
+## Security Reminders
 
-Some older URLs remain as compatibility redirects:
-
-- `/partner/dashboard` redirects to `/partner`
-- `/admin/revenue-monitoring` redirects to `/admin/reports`
-- `/cashier/revenue-monitoring` redirects to `/cashier/reports`
-- nested sponsor dashboard subpages redirect to the top-level sponsor routes
-
-## Operational Notes For Admins
-
-- Treat PayPal as the primary online billing provider unless a multi-provider strategy is deliberately reintroduced.
-- Keep GCash as manual/reference-based unless automated verification is added later.
-- Do not paste real secrets into tickets, markdown, screenshots, or chat logs.
-- After payment, Prisma, or environment-variable updates, redeploy on Vercel with Build Cache OFF.
-- Use the PayPal sandbox until sponsor checkout, invoice send, invoice payment, webhook sync, and dashboards are verified end to end.
+- Never paste secrets into chat, screenshots, tickets, or Markdown.
+- Treat PayPal and database credentials as server-only.
+- Use PayPal sandbox until the full flow is verified.
+- Rotate any exposed secret immediately.

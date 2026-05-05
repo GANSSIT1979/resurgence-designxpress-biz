@@ -1,122 +1,100 @@
-# Vercel + Cloudflare Stream Merge
+# Vercel And Cloudflare Stream Merge
 
-Updated: 2026-04-24
+Updated: 2026-05-05
 
-## Status
+## Purpose
 
-Historical rollout note. Use [VERCEL.md](./VERCEL.md), [VERCEL_DEPLOYMENT_CHECKLIST.md](./VERCEL_DEPLOYMENT_CHECKLIST.md), and [PREVIEW_RELEASE_SMOKE_TEST.md](./PREVIEW_RELEASE_SMOKE_TEST.md) for the current deployment source of truth.
+This document explains the Cloudflare Stream direct upload integration for RESURGENCE on Vercel.
 
-## Goal
+## Current Status
 
-Merge Cloudflare Stream direct uploads into the existing Resurgence DX Next.js 15 + Prisma app deployed on Vercel, without reintroducing local filesystem video storage or splitting the feed into a second media system.
+Cloudflare Stream is the production-safe path for creator video uploads. It avoids writing video files to Vercel local filesystem storage.
 
-## Files Added In This Repo
+## Files
 
-- `src/app/api/media/cloudflare/direct-upload/route.ts`
-- `src/components/resurgence/CloudflareDirectUploadForm.tsx`
-- `src/components/resurgence/CloudflareStreamEmbed.tsx`
-- `src/lib/cloudflare-stream.ts`
+```txt
+src/app/api/media/cloudflare/direct-upload/route.ts
+src/components/resurgence/CloudflareDirectUploadForm.tsx
+src/components/resurgence/CloudflareStreamEmbed.tsx
+src/lib/cloudflare-stream.ts
+```
 
-## Why This Fits The Current App
+## Data Model
 
-- The app already uses Next.js App Router and route handlers under `src/app/api`.
-- Hosted deployments already target PostgreSQL.
-- Feed posts already persist media through `ContentPost` and `MediaAsset`.
-- `MediaAsset` already has `storageProvider`, `storageKey`, `contentType`, `size`, `durationSeconds`, and `metadataJson`, so the first rollout does not need a Prisma migration.
+Cloudflare media is stored through the existing feed media model:
 
-## Current Persistence Strategy
+```txt
+MediaAsset.mediaType = VIDEO
+MediaAsset.storageProvider = cloudflare-stream
+MediaAsset.storageKey = Cloudflare video UID
+MediaAsset.url = playback URL where stored
+MediaAsset.thumbnailUrl = thumbnail URL where stored
+MediaAsset.metadataJson.cloudflareVideoId = Cloudflare video UID
+```
 
-Cloudflare uploads are stored in the existing feed media record:
+## Required Vercel Variables
 
-- `mediaType`: `VIDEO`
-- `storageProvider`: `cloudflare-stream`
-- `storageKey`: Cloudflare video UID
-- `url`: Cloudflare Stream iframe playback URL
-- `thumbnailUrl`: Cloudflare Stream thumbnail URL
-- `metadataJson`: provider details such as `cloudflareVideoId`, `customerCode`, and original file name
+```env
+CLOUDFLARE_ACCOUNT_ID=
+CLOUDFLARE_STREAM_TOKEN=
+CLOUDFLARE_STREAM_CUSTOMER_CODE=
+CLOUDFLARE_STREAM_ALLOWED_ORIGINS=https://www.resurgence-dx.biz,https://resurgence-dx.biz
+CLOUDFLARE_STREAM_MAX_DURATION_SECONDS=180
+CLOUDFLARE_REQUIRE_SIGNED_URLS=false
+```
 
-This keeps the rollout migration-safe while still allowing `/feed` playback to recognize Cloudflare-backed videos.
+## Auth Rule
 
-## Required Vercel Environment Variables
+The direct upload route must remain protected. Allowed roles:
 
-Set these in both Preview and Production:
+```txt
+CREATOR
+STAFF
+SYSTEM_ADMIN
+```
 
-- `CLOUDFLARE_ACCOUNT_ID`
-- `CLOUDFLARE_STREAM_TOKEN`
-- `CLOUDFLARE_STREAM_CUSTOMER_CODE`
-- `CLOUDFLARE_STREAM_ALLOWED_ORIGINS`
-- `CLOUDFLARE_STREAM_MAX_DURATION_SECONDS`
-- `CLOUDFLARE_REQUIRE_SIGNED_URLS=false`
+The route should use the same session and permission boundary used by creator post creation.
 
-Use the repo example in [`../vercel.production.env.example`](../vercel.production.env.example).
+## Creator Flow
 
-## Important Auth Rule
+1. Creator opens `/creator/posts/new` or the active creator post composer.
+2. Creator selects direct video upload.
+3. App requests a Cloudflare direct upload URL.
+4. Browser uploads directly to Cloudflare.
+5. App receives Cloudflare video UID.
+6. Creator saves draft or submits for review.
+7. App persists `ContentPost` and `MediaAsset`.
+8. Published/public content renders through `/feed`.
 
-The direct-upload route is now closed behind the current feed permission boundary:
+## Signed Playback Limitation
 
-- signed-in users only
-- allowed roles: `CREATOR`, `STAFF`, `SYSTEM_ADMIN`
+Signed Stream playback is not wired into public feed rendering yet. Keep:
 
-That matches the existing `canCreateFeedPost()` gate used by feed publishing.
+```env
+CLOUDFLARE_REQUIRE_SIGNED_URLS=false
+```
 
-## Current Creator Flow
-
-Cloudflare upload UI is wired into `/creator/posts`.
-
-Flow:
-
-1. creator opens the post studio
-2. creator chooses `Direct video`
-3. creator uploads through Cloudflare Stream
-4. the uploader returns:
-   - Cloudflare video UID
-   - iframe playback URL
-   - thumbnail URL
-5. the studio stores that media inside the existing post form
-6. saving draft or submitting for review persists the Cloudflare details to Prisma
-7. `/feed` renders the saved post through the Stream iframe
-
-## Signed URL Limitation
-
-This rollout does **not** implement tokenized signed playback for Stream embeds yet.
-
-Because of that:
-
-- keep `CLOUDFLARE_REQUIRE_SIGNED_URLS=false`
-- do not switch signed playback on in Production for this phase
-
-The route intentionally rejects signed-playback requests so Preview and Production do not drift into an upload-success but playback-fail state.
+Do not enable signed playback until feed embeds can generate and refresh signed tokens.
 
 ## Preview Smoke Test
 
-Test this sequence in Vercel Preview:
+1. Add Cloudflare env vars to Vercel Preview.
+2. Deploy Preview.
+3. Log in as a creator.
+4. Upload a short MP4.
+5. Save as draft or submit for review.
+6. Confirm `MediaAsset.storageProvider = cloudflare-stream`.
+7. Publish through the approved moderation path.
+8. Confirm `/feed` playback works.
+9. Confirm no writes are required under `public/uploads`.
 
-1. log in as a creator
-2. open `/creator/posts`
-3. upload a video with the Cloudflare uploader
-4. save draft or submit for review
-5. confirm the new `MediaAsset` has:
-   - `storageProvider = cloudflare-stream`
-   - `storageKey = <video uid>`
-6. confirm `/feed` renders the uploaded video
-7. confirm no writes go to `public/uploads`
+## Production Rollout
 
-## Production Rollout Order
-
-1. add env vars in Preview
-2. deploy Preview
-3. verify upload, save, and playback
-4. mirror env vars in Production
-5. deploy Production
-6. run the route-by-route Vercel smoke tests
-
-Also use:
-
-- [VERCEL.md](./VERCEL.md)
-- [VERCEL_DEPLOYMENT_CHECKLIST.md](./VERCEL_DEPLOYMENT_CHECKLIST.md)
+1. Verify Preview upload/save/playback.
+2. Mirror env vars to Production.
+3. Redeploy with build cache disabled after env changes.
+4. Smoke-test upload, save, and playback in Production.
 
 ## CSP Note
 
-The current repo does not ship a Content Security Policy header, so no CSP change was required for this merge.
-
-If you later add CSP, Cloudflare's docs say the Stream player and direct uploads need `videodelivery.net` and `*.cloudflarestream.com` added to the relevant directives.
+If a Content Security Policy is added later, include Cloudflare Stream player and upload domains such as `videodelivery.net` and `*.cloudflarestream.com` in the appropriate directives.

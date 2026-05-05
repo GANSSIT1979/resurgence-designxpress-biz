@@ -1,203 +1,135 @@
-# RESURGENCE TikTok-Style Upgrade Plan
+# TikTok-Style Upgrade Plan
 
-Updated: 2026-04-24
+Updated: 2026-05-05
 
-## Status
+## Purpose
 
-Historical planning note. Use [README.md](./README.md), [ROADMAP.md](./ROADMAP.md), [DEPLOYMENT.md](./DEPLOYMENT.md), and the rollout checklists in this folder for the current system state.
+This plan documents the mobile-first creator-commerce direction for RESURGENCE without replacing the existing Next.js, Prisma, auth, admin, sponsor, shop, or billing architecture.
 
-## Goal
+## Current Status
 
-Modernize the current RESURGENCE Next.js 15 + Prisma platform into a more immersive, mobile-first creator-commerce product without replacing the stack, route surface, or role-safe workflows.
+The upgrade is partially implemented. The current system already includes a creator-commerce feed, mobile-oriented discovery, creator pages, member dashboard improvements, shop/cart/checkout, and admin moderation. Future work should remain incremental and production-safe.
 
-## Information Architecture
+## System Constraints
 
-### Public experience
+Keep these intact:
 
-- `/` becomes a feed-first launchpad that points users into creator discovery, merch, sponsorship, and membership.
-- `/feed` remains the flagship public experience and should continue to use the existing creator-commerce data layer.
-- `/creators` and `/creators/[slug]` act as creator channels, not just profile cards.
-- `/shop`, `/cart`, and `/checkout` remain intact but inherit the feed-first visual language.
-- `/login` continues to handle email, mobile, Google, and OTP access with stronger onboarding guidance.
+- Next.js 15 App Router
+- Prisma-backed PostgreSQL through Supabase in hosted environments
+- route handlers under `src/app/api`
+- `resurgence_admin_session` cookie auth
+- role-based dashboards
+- creator-commerce feed data model using `ContentPost` and `MediaAsset`
+- PayPal-first sponsor/invoice billing
+- manual shop payment paths
+- admin moderation and CMS workflows
 
-### Protected experience
+Do not introduce a second feed backend or a parallel media system.
 
-- `/member` becomes a personalized hub for saved content, follows, orders, notifications, streaks, referrals, and recommended creators.
-- `/creator/dashboard` and `/creator/posts` continue to own creator workflow and publishing.
-- `/admin/feed` remains the moderation cockpit for featured posts, sponsor placements, and curation.
+## Product Goal
 
-## UI/UX Plan
+Create a premium, mobile-first experience where users can discover:
 
-### Design system direction
+- creator posts
+- basketball community stories
+- sponsor activations
+- official merch
+- DAYO/event content
+- creators, coaches, members, and partners
 
-- Keep the dark premium palette already used across the app.
-- Push more rounded cards, layered glass panels, and stronger hierarchy into feed, creator, and commerce views.
-- Use fixed mobile navigation for faster route hopping.
-- Keep desktop navigation lighter and more curated than the legacy all-links header.
-
-### Interaction plan
-
-- Preserve vertical autoplay feed behavior.
-- Add better discovery rails, topic chips, suggested clusters, and shoppable surfaces inside the feed.
-- Keep commerce actions close to media instead of separating product discovery from content.
-- Use honest unavailable states when backend support does not yet exist.
-
-## Component Map
-
-### Shared shell
-
-- `src/components/site-header.tsx`
-- `src/components/site-header-account-controls.tsx`
-- `src/components/mobile-bottom-nav.tsx`
-
-### Feed and discovery
-
-- `src/components/feed/creator-commerce-feed.tsx`
-- `src/components/vertical-media-feed.tsx`
-
-### Creator experience
-
-- `src/components/creator/creator-directory.tsx`
-- `src/components/creator/creator-card.tsx`
-- `src/components/creator/creator-profile-header.tsx`
-- `src/components/creator/creator-profile-dashboard.tsx`
-
-### Member experience
-
-- `src/app/member/page.tsx`
-- `src/lib/member.ts`
-
-### Commerce
-
-- `src/components/shop/merch-shop-client.tsx`
-- `src/components/shop/product-card.tsx`
-- `src/components/shop/checkout-client.tsx`
-
-### Admin and moderation
-
-- `src/components/admin/feed-moderation-manager.tsx`
-
-## Route-by-Route Upgrade Plan
+## Public Experience
 
 ### `/`
 
-- Keep homepage data loading intact.
-- Use feed-first framing and social-commerce metrics above marketing sections.
-- Keep creator, merch, sponsor, and contact sections as business-safe conversion paths.
+- Acts as a feed-first launchpad.
+- Points users to `/feed`, `/creators`, `/shop`, sponsor pages, and support.
+- Uses CMS-driven discovery cards where possible.
 
 ### `/feed`
 
-- Keep public feed query and cursor pagination intact.
-- Add discovery launchpad, trending topic chips, creator lane rail, merch rail, share action, and suggested discovery clusters.
-- Preserve fallback behavior when content-post tables are unavailable.
+- Remains the flagship public discovery surface.
+- Uses current creator-commerce feed APIs and serializers.
+- Should continue to support fallback behavior when schema or content is unavailable.
+
+### `/creators` and `/creators/[slug]`
+
+- Present creators as channels.
+- Show profile, analytics-safe highlights, content, merch tags, and sponsor-safe media where available.
+
+### `/shop`, `/cart`, `/checkout`
+
+- Keep existing commerce logic.
+- Align visuals with the feed-first direction.
+- Keep checkout trust cues visible on mobile.
 
 ### `/login`
 
-- Keep standard login, Gmail, and mobile OTP.
-- Continue improving premium layout and smoother onboarding prompts.
-- Avoid schema changes unless onboarding preferences are made durable.
+- Keep password, Google, and mobile OTP flows.
+- Improve onboarding copy and role guidance without requiring schema changes.
+
+## Protected Experience
 
 ### `/member`
 
-- Keep server-rendered live dashboard approach.
-- Add creator suggestions, streak/badge cues, and richer member guidance.
-- Keep unavailable states explicit for subscriptions, wallet, rewards, and commissions until those records exist.
+- Personalized hub for saved content, follows, orders, notifications, referrals, recommendations, and community cues.
 
-### `/creators`
+### `/creator/dashboard` and `/creator/posts`
 
-- Present creators as channels with visible reach and platform readiness.
-
-### `/creators/[slug]`
-
-- Blend profile hero, analytics, channel posts, tagged merch, and gallery media into a channel-like public experience.
-
-### `/shop`
-
-- Keep current Prisma-backed merch listing.
-- Align visuals with feed language and keep feed-to-shop movement obvious.
-
-### `/checkout`
-
-- Preserve the current order creation flow.
-- Add trust and support cues without changing pricing or payment rules.
+- Keep ownership and moderation rules intact.
+- Improve analytics cards, post management, upload flow, and content guidance incrementally.
 
 ### `/admin/feed`
 
-- Preserve moderation APIs.
-- Add faster filtering and search so admins can curate trending and promoted surfaces more confidently.
+- Remains the moderation and curation cockpit.
+- Add filters and fast review UX without bypassing moderation rules.
 
-## Prisma and Data Recommendations
+## Design Direction
 
-The current upgrade can stay migration-safe with no required schema changes. If the next phase needs deeper TikTok-style analytics or onboarding, add these carefully:
+- Dark premium visual system.
+- Rounded cards and layered panels.
+- Strong mobile tap targets.
+- Consistent action rails across feed cards and home discovery cards.
+- Sticky mobile calls to action for cart/checkout and major workflows.
+- Explicit empty and unavailable states.
+
+## Implementation Rules
+
+- Prefer UI/query upgrades before schema changes.
+- Add one feature at a time.
+- Avoid broad JSX rewrites across multiple large components in one patch.
+- Preserve fallback behavior on public pages.
+- Keep server components by default; use client components only where interactivity is required.
+- Keep media lazy-loaded and serverless-safe.
+
+## Future Schema Candidates
+
+Only add these when the product behavior is validated:
 
 - `UserProfilePreference`
-  - interests
-  - preferredTopics
-  - preferredCreatorIds
-  - onboardingCompletedAt
-- `ContentPostView`
-  - postId
-  - userId or anonymous session key
-  - watchedSeconds
-  - completedView
 - `ContentShareEvent`
-  - postId
-  - userId
-  - channel
 - `CreatorHighlight`
-  - creatorProfileId
-  - title
-  - summary
-  - mediaAssetId or externalUrl
-  - sortOrder
 - `SavedProductCollection`
-  - userId
-  - title
-  - productIds relation
-- notification category enum expansion for:
-  - like
-  - follow
-  - comment
-  - mention
-  - order
-  - sponsor
-  - support
+- expanded notification categories
+- durable onboarding preferences
 
-## API Notes
-
-Current API structure under `src/app/api` should stay intact. Future additions, if needed:
-
-- `POST /api/feed/[postId]/share`
-- `POST /api/feed/[postId]/view`
-- `PATCH /api/member/preferences`
-- `PATCH /api/member/profile`
-- `GET /api/discover`
-
-## Migration-Safe Implementation Notes
-
-- Prefer UI and server-query upgrades before schema changes.
-- Reuse existing feed serializers, moderation routes, and Prisma queries where possible.
-- Keep mobile enhancements additive rather than replacing dashboard or shop flows.
-- Do not promise real-time inbox or payout features before backend support exists.
-
-## Mobile-First Styling System
-
-- Fixed bottom navigation for public routes
-- Larger tap targets
-- Near-full-screen content cards
-- Sticky commerce and support CTAs
-- Consistent premium card and panel styling across feed, creator, member, and shop surfaces
+The current analytics path already includes `ContentPostViewSession`, direct `ContentPost` counters, and future rollup tables.
 
 ## Acceptance Checklist
 
-- [x] Next.js 15 App Router preserved
-- [x] Prisma data layer preserved
-- [x] Existing auth flows preserved
-- [x] Existing protected route surface preserved
-- [x] Feed upgraded without replacing core feed APIs
-- [x] Mobile bottom navigation added
-- [x] Creator directory and profile routes upgraded
-- [x] Member dashboard upgraded further with recommendations and streak cues
-- [x] Shop and checkout visually aligned more closely to feed-first UX
-- [x] Admin feed moderation upgraded with curation filters
-- [x] No destructive route or schema rewrite required for this phase
+- [ ] Existing auth flows remain intact.
+- [ ] `/` and `/feed` load without schema errors.
+- [ ] `/member` remains stable for member accounts.
+- [ ] `/creator/dashboard` and `/creator/posts` remain stable for creator accounts.
+- [ ] `/shop`, `/cart`, and `/checkout` continue to create orders correctly.
+- [ ] Admin moderation still controls public publishing.
+- [ ] Mobile viewport behavior is checked before production promotion.
+- [ ] Build and type-check pass.
+
+## Validation Commands
+
+```bash
+npm run type-check
+npm run lint
+npm run build
+npx prisma migrate status
+```

@@ -1,118 +1,125 @@
 # Documentation Index
 
-This folder contains production, deployment, database, security, billing, and feature runbooks for RESURGENCE Powered by DesignXpress.
+This folder contains production, deployment, database, security, billing, authentication, operations, support, API, and feature runbooks for **RESURGENCE Powered by DesignXpress**.
 
-## Core documents
+Updated: 2026-05-02
+
+## Core Documents
 
 | File | Purpose |
 |---|---|
-| `INSTALL.md` | Local setup and development commands |
-| `DEPLOYMENT.md` | Vercel deployment, domain, environment variables, and smoke testing |
-| `DATABASE_MIGRATION_RUNBOOK.md` | Prisma/Supabase schema workflow |
-| `TROUBLESHOOTING.md` | Known errors and exact fixes |
-| `SECURITY.md` | Auth, uploads, webhook, PayPal, admin, and secret-handling guidance |
-| `USER_GUIDE.md` | Public, role-based, sponsor, invoice, and admin user guide |
-| `ROADMAP.md` | Current product, media, PayPal billing, and release-hardening priorities |
-| `PAYPAL_BILLING_SYSTEM.md` | PayPal sponsor checkout, invoice, capture, webhook, and dashboard runbook |
-| `CREATOR_EARNINGS_PAYOUT_SYSTEM.md` | Creator earnings, affiliate, and payout system |
-| `PRODUCTION_STATUS.md` | Current production health snapshot |
+| `ARCHITECTURE.md` | Current Next.js 15 App Router architecture, public/protected route surfaces, auth, data, feed, commerce, sponsor, PayPal, automation, and observability layers. |
+| `ADMIN_GUIDE.md` | Admin dashboard scope, daily operations, users/roles, creator/feed moderation, merch admin, support records, and admin API notes. |
+| `AI_SUPPORT_PRODUCTION.md` | Support desk production checklist, OpenAI workflow setup, ChatKit-style routes, webhook verification, and fallback behavior. |
+| `API.md` | Current route-handler inventory for auth, support, feed, creator, uploads, sponsor, partner, staff, cashier, and admin surfaces. |
+| `CONFIGURATION.md` | Environment variable source of truth, Prisma provider behavior, auth, support, upload, PayPal/manual payment, and hosted/local examples. |
+| `CHANGELOG.md` | Historical release and documentation changes. |
+| `CODEBASE_TASK_PROPOSALS.md` | Historical handoff notes and small task proposals; not the live roadmap. |
+| `INSTALL.md` | Local setup, dependencies, environment preparation, and development commands. |
+| `DEPLOYMENT.md` | Vercel deployment, domains, environment variables, production verification, and smoke testing. |
+| `DATABASE_MIGRATION_RUNBOOK.md` | Prisma/Supabase schema workflow, generated schema behavior, and database safety guidance. |
+| `TROUBLESHOOTING.md` | Known errors, build issues, OAuth problems, deployment failures, and exact fixes. |
+| `SECURITY.md` | Auth, sessions, uploads, webhook validation, PayPal verification, admin access, and secret-handling guidance. |
+| `USER_GUIDE.md` | Public, member, creator, sponsor, partner, cashier, staff, and admin usage guide. |
+| `ROADMAP.md` | Current product, creator-commerce, media, PayPal billing, automation, and release-hardening priorities. |
+| `PAYPAL_BILLING_SYSTEM.md` | PayPal sponsor checkout, invoice preview/create/send, capture, webhook, revenue, and dashboard runbook. |
+| `CREATOR_EARNINGS_PAYOUT_SYSTEM.md` | Creator earnings, affiliate tracking, payout requests, admin approvals, and payout audit workflow. |
+| `GOOGLE_AUTH_DEPLOYMENT_CHECKLIST.md` | Google Identity Services setup, OAuth client config, domains, Vercel env vars, and smoke tests. |
+| `PRODUCTION_STATUS.md` | Current production health snapshot, known warnings, deployment status, and next maintenance priorities. |
+
+## Current Application Stack
+
+- Framework: `Next.js 15` App Router
+- UI: React Server Components and Client Components
+- API: Next.js Route Handlers under `src/app/api`
+- Database: Prisma-backed PostgreSQL
+- Production database target: Supabase PostgreSQL
+- Deployment target: Vercel
+- Auth cookie: `resurgence_admin_session`
+- Online payment provider: PayPal
+- Manual payment options: GCash, Maya, bank transfer, cash
+- Active commerce model: public shop, client-side cart, checkout, order lookup
+- Active creator/community model: creator-commerce feed, comments, likes, saves, follows, watch-time, and sponsor placements
+
+The project is not a WordPress CMS, Laravel/PHP app, or static-only export. The current architecture is a full-stack React/Node application.
 
 ## Production URLs
 
-- Website: https://www.resurgence-dx.biz
-- Health endpoint: https://www.resurgence-dx.biz/api/health
-- Public feed: https://www.resurgence-dx.biz/feed
-- Shop: https://www.resurgence-dx.biz/shop
-- DAYO sponsor page: https://www.resurgence-dx.biz/dayo-series-ofw-all-star
-- PayPal webhook endpoint: https://www.resurgence-dx.biz/api/paypal/webhook
-- Admin invoices: https://www.resurgence-dx.biz/admin/invoices
-- Admin revenue dashboard: https://www.resurgence-dx.biz/admin/revenue
+Primary production URLs:
 
-## Standard verification flow
+- Website: `https://www.resurgence-dx.biz`
+- Root domain: `https://resurgence-dx.biz`
+- Login domain: `https://login.resurgence-dx.biz`
+- Health endpoint: `https://www.resurgence-dx.biz/api/health`
+- Login: `https://www.resurgence-dx.biz/login`
+- Public feed: `https://www.resurgence-dx.biz/feed`
+- Shop: `https://www.resurgence-dx.biz/shop`
+- Cart: `https://www.resurgence-dx.biz/cart`
+- Checkout: `https://www.resurgence-dx.biz/checkout`
+- Order lookup: `https://www.resurgence-dx.biz/account/orders`
+- DAYO sponsor page: `https://www.resurgence-dx.biz/dayo-series-ofw-all-star`
+- Sponsor application: `https://www.resurgence-dx.biz/sponsor/apply`
+- Payment success: `https://www.resurgence-dx.biz/payment/success`
+- PayPal webhook endpoint: `https://www.resurgence-dx.biz/api/paypal/webhook`
+- Admin invoices: `https://www.resurgence-dx.biz/admin/invoices`
+- Admin revenue dashboard: `https://www.resurgence-dx.biz/admin/revenue`
+- Admin observability: `https://www.resurgence-dx.biz/admin/observability`
 
-Run locally:
+## Standard Verification Flow
+
+Run before every commit that touches runtime code:
 
 ```bash
-npm run docs:check
-npm run local:preflight
-npm run vercel-build
+npm run type-check
+npm run lint
+npm run build
+npx prisma migrate status
 ```
 
-Deploy:
+Expected result:
+
+```txt
+type-check passes
+lint has warnings only or passes cleanly
+build passes
+Database schema is up to date
+```
+
+## Standard Deployment Flow
+
+Deploy through Git push to the configured Vercel production branch:
+
+```bash
+git status
+git add -A
+git commit -m "Describe production-safe change"
+git push origin main
+```
+
+Manual Vercel CLI deploy, when needed:
 
 ```bash
 npx vercel --prod
 ```
 
-Verify production:
+## Documentation Integrity
 
-```bash
-curl -I https://www.resurgence-dx.biz
-curl https://www.resurgence-dx.biz/api/health
-```
-
-## PayPal billing verification flow
-
-Use PayPal sandbox until the complete flow is verified.
-
-Required Vercel environment variables:
-
-```env
-PAYPAL_CLIENT_ID=your_client_id
-PAYPAL_CLIENT_SECRET=your_client_secret
-PAYPAL_ENV=sandbox
-PAYPAL_CURRENCY=PHP
-PAYPAL_SPONSOR_AMOUNT=1000.00
-PAYPAL_WEBHOOK_ID=WH_your_webhook_id
-NEXT_PUBLIC_BASE_URL=https://www.resurgence-dx.biz
-```
-
-Verify PayPal capabilities:
-
-1. Create or submit a sponsor application.
-2. Start PayPal checkout through `/api/sponsor/checkout`.
-3. Complete sandbox payment and return to `/payment/success`.
-4. Confirm capture updates sponsor status.
-5. Create a PayPal invoice through `/api/invoice/paypal-create`.
-6. Send it through `/api/invoice/paypal-send`.
-7. Pay it with a sandbox buyer account.
-8. Confirm `/api/paypal/webhook` updates the local invoice status to `PAID`.
-9. Review `/admin/invoices` and `/admin/revenue`.
-
-## Database workflow
-
-For the current existing Supabase/PostgreSQL database, use:
-
-```bash
-npm run db:push
-npm run prisma:generate
-```
-
-Avoid:
-
-```bash
-npx prisma migrate dev --schema prisma/schema.generated.prisma
-```
-
-Reason: historical migrations do not replay cleanly into a shadow database. See `DATABASE_MIGRATION_RUNBOOK.md`.
-
-Recommended Supabase runtime/migration split:
-
-```env
-DATABASE_URL=postgresql://postgres.PROJECT_REF:PASSWORD@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres?sslmode=require&pgbouncer=true
-DIRECT_URL=postgresql://postgres:PASSWORD@db.PROJECT_REF.supabase.co:5432/postgres?sslmode=require
-```
-
-## Documentation integrity
-
-Check Markdown links:
+Check Markdown links when the script is available:
 
 ```bash
 npm run docs:check
 ```
 
-## Security reminder
+Markdown standards:
 
-Tracked docs and examples must stay placeholder-only. Never commit real database passwords, Supabase service role keys, PayPal secrets, OpenAI keys, R2 secrets, admin credentials, bank details, or webhook secrets.
+- Use placeholder secrets only.
+- Keep domains current.
+- Include verification commands and expected output.
+- Separate local, Vercel, Google Cloud, database, and PayPal instructions.
+- Do not mix production secrets into examples.
 
-If a secret is pasted into chat, logs, screenshots, or markdown, rotate it immediately and update Vercel environment variables before redeploying.
+## Security Reminder
+
+Tracked docs and examples must stay placeholder-only. Never commit real database passwords, Supabase service role keys, PayPal secrets, OpenAI keys, Cloudflare R2 secrets, admin credentials, bank details, webhook secrets, private API tokens, or production session secrets.
+
+If a secret is pasted into chat, logs, screenshots, Markdown, or committed history, rotate it immediately, update Vercel environment variables, redeploy, and treat the old secret as compromised.

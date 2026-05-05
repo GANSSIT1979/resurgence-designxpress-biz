@@ -1,117 +1,139 @@
-# VERCEL CONFIGURATION
+# Vercel Configuration
 
-Updated: 2026-04-24
-For the route-by-route release gate and production rollout checks, also use [VERCEL_DEPLOYMENT_CHECKLIST.md](./VERCEL_DEPLOYMENT_CHECKLIST.md).
+Updated: 2026-05-05
 
-For the Cloudflare Stream creator-upload merge, also use [VERCEL_CLOUDFLARE_STREAM_MERGE.md](./VERCEL_CLOUDFLARE_STREAM_MERGE.md).
+## Purpose
 
-For the Preview promotion gate for the current Prisma plus Cloudflare release track, also use [PREVIEW_RELEASE_SMOKE_TEST.md](./PREVIEW_RELEASE_SMOKE_TEST.md).
+This document defines Vercel configuration for RESURGENCE Powered by DesignXpress.
+
+## Project Type
+
+- Framework: Next.js 15 App Router
+- Runtime: React/Node
+- API: Next.js route handlers under `src/app/api`
+- Database: Prisma-backed PostgreSQL
+- Hosted database target: Supabase PostgreSQL
+- Deployment: Vercel
+
+This is not a WordPress, Laravel/PHP, or static-only app.
 
 ## Repository Files
 
-This Vercel setup applies because the repository is a `React/Node` app built with `Next.js`, not a PHP or static-site project.
+Expected deployment files:
 
-This repository includes Vercel-specific deployment files:
+```txt
+vercel.json
+.vercelignore
+vercel.production.env.example
+```
 
-- `vercel.json`
-- `.vercelignore`
-- `vercel.production.env.example`
+Recommended Vercel settings:
 
-`vercel.json` sets:
-
-- framework preset: `nextjs`
-- install command: `npm install`
-- build command: `npm run build`
-- output directory: `.next`
-- preferred function region: `sin1` for lower latency near the Philippines
-
-`.vercelignore` excludes local-only files such as `.env`, `.next`, local SQLite databases, self-signed certificates, logs, and uploaded runtime files.
-
-`vercel.production.env.example` is the checked-in production environment checklist for Vercel.
-
-## Vercel Project Settings
-
-Use these settings in Vercel:
-
-- Framework Preset: `Next.js`
-- Install Command: `npm install`
-- Build Command: `npm run build`
-- Output Directory: `.next`
-- Root Directory: repository root
-- Production Branch: `main`
-
-These values match the checked-in `vercel.json`.
+```txt
+Framework Preset: Next.js
+Install Command: npm install
+Build Command: npm run build
+Output Directory: .next
+Root Directory: repository root
+Production Branch: main
+Function Region: sin1 where configured
+```
 
 ## Production Domains
 
-Configure these domains in Vercel Project Settings:
+Configure these domains in Vercel:
 
-- `resurgence-dx.biz`
-- `www.resurgence-dx.biz`
+```txt
+resurgence-dx.biz
+www.resurgence-dx.biz
+login.resurgence-dx.biz
+```
 
-Vercel manages HTTPS certificates for connected domains automatically. Keep `NEXT_PUBLIC_SITE_URL` set to the canonical production URL:
+Recommended canonical public site URL:
 
 ```env
 NEXT_PUBLIC_SITE_URL=https://resurgence-dx.biz
 FORCE_HTTPS=true
 ```
 
-## Environment Model For This Repo
-
-### Required Runtime Variables
-
-Set these in Vercel under Project Settings > Environment Variables > Production:
+## Required Runtime Environment Variables
 
 ```env
 PRISMA_DB_PROVIDER=postgresql
 DATABASE_URL=postgresql://POOLER_USER:POOLER_PASSWORD@POOLER_HOST:6543/postgres?sslmode=require&pgbouncer=true
-JWT_SECRET=replace-with-a-long-random-production-secret
+JWT_SECRET=replace-with-long-random-production-secret
 FORCE_HTTPS=true
 NEXT_PUBLIC_SITE_URL=https://resurgence-dx.biz
 NEXT_PUBLIC_SITE_NAME=Resurgence Powered by DesignXpress
 COMPANY_NAME=DesignXpress Merchandising OPC
-NEXT_PUBLIC_CONTACT_NAME=Jake Anilao
-NEXT_PUBLIC_CONTACT_ROLE=Sponsorship / Partnerships
-NEXT_PUBLIC_CONTACT_EMAIL=partnerships@resurgence-dx.biz
-NEXT_PUBLIC_CONTACT_PHONE=+639387841636
-NEXT_PUBLIC_SUPPORT_EMAIL=support@resurgence-dx.biz
-NEXT_PUBLIC_SUPPORT_PHONE=+639957558147
-NEXT_PUBLIC_BUSINESS_HOURS=Monday to Saturday, 9:00 AM to 6:00 PM, Asia/Manila
-NEXT_PUBLIC_LOCATION=Philippines
-NEXT_PUBLIC_CURRENCY=PHP
-NEXT_PUBLIC_PAYMENT_METHODS=GCash, Maya, Bank Transfer, Credit/Debit Card, Cash
-NEXT_PUBLIC_SHIPPING_AREA=Philippines nationwide
-NEXT_PUBLIC_CONTACT_ADDRESS=Philippines
-GCASH_NUMBER=replace-with-gcash-number
-MAYA_NUMBER=
-BANK_ACCOUNT_NAME=replace-with-bank-account-name
-BANK_ACCOUNT_NUMBER=replace-with-bank-account-number
-BANK_NAME=replace-with-bank-name
 NEXT_TELEMETRY_DISABLED=1
 PRISMA_HIDE_UPDATE_MESSAGE=1
 ```
 
-### Required When The Related Feature Is Enabled
+## Google Auth Variables
+
+Required when Google login/signup is enabled:
 
 ```env
 NEXT_PUBLIC_GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_ID=
-OTP_DELIVERY_MODE=demo
-SMS_WEBHOOK_URL=
-SMS_WEBHOOK_SECRET=
-EMAIL_WEBHOOK_URL=
-EMAIL_WEBHOOK_SECRET=
+GOOGLE_CLIENT_SECRET=
+```
+
+`NEXT_PUBLIC_GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_ID` should use the same Google OAuth client ID. The secret stays server-side only.
+
+## Support Variables
+
+```env
 OPENAI_API_KEY=
 OPENAI_WORKFLOW_ID=
 OPENAI_WORKFLOW_VERSION=1
 OPENAI_WEBHOOK_SECRET=
 OPENAI_DEFAULT_MODEL=gpt-4.1-mini
+EMAIL_WEBHOOK_URL=
+EMAIL_WEBHOOK_SECRET=
+```
+
+## OTP Variables
+
+```env
+OTP_DELIVERY_MODE=demo
+SMS_WEBHOOK_URL=
+SMS_WEBHOOK_SECRET=
+```
+
+Use `demo` only for setup/testing. Use webhook delivery for production OTP.
+
+## PayPal Variables
+
+```env
+PAYPAL_CLIENT_ID=
+PAYPAL_CLIENT_SECRET=
+PAYPAL_ENV=sandbox
+PAYPAL_CURRENCY=PHP
+PAYPAL_SPONSOR_AMOUNT=1000.00
+PAYPAL_WEBHOOK_ID=
+NEXT_PUBLIC_BASE_URL=https://www.resurgence-dx.biz
+```
+
+`PAYPAL_ENV` must be exactly `sandbox` or `live`. Do not include inline comments in Vercel env values.
+
+## Cloudflare Stream Variables
+
+```env
 CLOUDFLARE_ACCOUNT_ID=
 CLOUDFLARE_STREAM_TOKEN=
 CLOUDFLARE_STREAM_CUSTOMER_CODE=
 CLOUDFLARE_STREAM_ALLOWED_ORIGINS=https://www.resurgence-dx.biz,https://resurgence-dx.biz
 CLOUDFLARE_STREAM_MAX_DURATION_SECONDS=180
 CLOUDFLARE_REQUIRE_SIGNED_URLS=false
+```
+
+Keep signed playback disabled until signed playback tokens are wired into `/feed`.
+
+## Upload Storage Variables
+
+```env
 UPLOAD_STORAGE=r2
 R2_ACCOUNT_ID=
 R2_ACCESS_KEY_ID=
@@ -120,129 +142,70 @@ R2_BUCKET=
 R2_PUBLIC_BASE_URL=
 ```
 
-### Optional Platform Helper Variables
+Vercel filesystem storage is not durable. Use database-backed upload delivery, Cloudflare R2, or Cloudflare Stream.
 
-These may be created by Vercel or Supabase, but the current app does not read them directly:
-
-- `POSTGRES_URL`
-- `POSTGRES_PRISMA_URL`
-- `POSTGRES_URL_NON_POOLING`
-- `POSTGRES_PASSWORD`
-
-### Unused In The Current Codebase
-
-- `SUPABASE_SECRET_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
-- `SUPABASE_JWT_SECRET`
-
-Environment accuracy rules:
-
-- `DATABASE_URL` is the Prisma/runtime source of truth in this repo
-- `PRISMA_DB_PROVIDER=postgresql` is recommended for every hosted build
-- platform helper variables such as `POSTGRES_URL`, `POSTGRES_PRISMA_URL`, `POSTGRES_URL_NON_POOLING`, and `POSTGRES_PASSWORD` are optional and are not read directly by app code
-- `SUPABASE_SECRET_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_JWT_SECRET` are unused in the current codebase
-
-You can copy the same list from [`../vercel.production.env.example`](../vercel.production.env.example).
-
-Google sign-in note:
-
-- `NEXT_PUBLIC_GOOGLE_CLIENT_ID` is required in Vercel for the client-side Gmail button on `/login`
-- `GOOGLE_CLIENT_ID` should be set to the same value so `/api/auth/google` can verify the credential audience server-side
-
-Cloudflare Stream note:
-
-- `/api/media/cloudflare/direct-upload` expects `CLOUDFLARE_STREAM_CUSTOMER_CODE` so the app can build playback and thumbnail URLs without hardcoding your account-specific Stream host
-- keep `CLOUDFLARE_REQUIRE_SIGNED_URLS=false` for the current rollout, because signed playback tokens are not wired into `/feed` yet
-- the upload route is role-gated to the same creator/staff/admin boundary used by feed post creation
-
-## Important Database Rule
-
-- do not use `localhost`, `127.0.0.1`, or the local PostGIS connection for Vercel
-- keep the runtime `DATABASE_URL` on your managed PostgreSQL pooler host when your provider offers one
-- for Supabase-style setups, that usually means the pooler host on port `6543` for runtime traffic
-- do not replace the runtime `DATABASE_URL` with the direct primary host in Vercel unless you are intentionally doing admin or maintenance work outside the normal app runtime
-- URL-encode special password characters before saving the URL, for example `@` becomes `%40`, `[` becomes `%5B`, and `]` becomes `%5D`
-- tracked docs and examples must use placeholders only; never commit a real project ref, pooler hostname, password fragment, or direct database hostname
-
-Supabase/Vercel mapping for this app:
+## Manual Payment Variables
 
 ```env
-PRISMA_DB_PROVIDER=postgresql
-DATABASE_URL=postgresql://POOLER_USER:POOLER_PASSWORD@POOLER_HOST:6543/postgres?sslmode=require&pgbouncer=true
+GCASH_NUMBER=
+MAYA_NUMBER=
+BANK_ACCOUNT_NAME=
+BANK_ACCOUNT_NUMBER=
+BANK_NAME=
 ```
 
-Admin-only direct connection string:
+Do not commit real bank or wallet details into docs.
 
-```env
-postgresql://DIRECT_USER:DIRECT_PASSWORD@DIRECT_DB_HOST:5432/postgres
+## Optional Platform Helper Variables
+
+These may exist but are not read directly by the app unless mapped into `DATABASE_URL`:
+
+```txt
+POSTGRES_URL
+POSTGRES_PRISMA_URL
+POSTGRES_URL_NON_POOLING
+POSTGRES_PASSWORD
 ```
 
-Use the direct host only for admin or maintenance work from a network that can reach it. On Supabase-style setups, the direct host is often more restrictive than the runtime pooler, so it is not the default runtime choice for this app.
+Unused in current app code:
 
-If Vercel or Supabase inject helper variables such as `POSTGRES_URL*`, keep them only for manual ops convenience unless you intentionally map one of them into `DATABASE_URL`.
-
-Generate a production `JWT_SECRET` locally before pasting it into Vercel:
-
-```bash
-node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
+```txt
+SUPABASE_SECRET_KEY
+SUPABASE_SERVICE_ROLE_KEY
+SUPABASE_JWT_SECRET
 ```
-
-## Preview And Development Environments
-
-For Preview, use a separate PostgreSQL database if you want realistic testing without touching production data.
-
-Recommended Preview values:
-
-```env
-PRISMA_DB_PROVIDER=postgresql
-DATABASE_URL=postgresql://PREVIEW_POOLER_USER:PREVIEW_PASSWORD@PREVIEW_POOLER_HOST:6543/PREVIEW_DATABASE?sslmode=require&pgbouncer=true
-FORCE_HTTPS=true
-NEXT_PUBLIC_SITE_URL=https://resurgence-dx.biz
-```
-
-For Vercel Development environment, use the same values only if you are intentionally connecting local `vercel dev` to remote services. Local development can keep using `.env` and SQLite.
 
 ## Database Deployment
 
-This app uses a provider-switched Prisma schema plus repo-managed PostgreSQL hardening SQL. For a fresh Vercel PostgreSQL database, use the schema sync command below to create the tables and apply the checked-in security scripts.
-
-Before the first production deployment, run schema deployment against the production database:
+For current Supabase/PostgreSQL sync:
 
 ```bash
-PRISMA_DB_PROVIDER=postgresql npm run db:deploy
+npm run db:push
+npm run prisma:generate
 ```
 
-For Windows PowerShell:
-
-```powershell
-$env:PRISMA_DB_PROVIDER="postgresql"
-$env:DATABASE_URL="postgresql://POOLER_USER:POOLER_PASSWORD@POOLER_HOST:6543/postgres?sslmode=require&pgbouncer=true"
-npm run db:deploy
-```
-
-`npm run db:deploy` prepares the Prisma provider, runs `prisma db push`, and then executes the checked-in `prisma/postgres-hardening.sql` and `prisma/postgres-public-read-policies.sql` files when `PRISMA_DB_PROVIDER=postgresql`. If you later add a fully migration-driven Postgres release flow, use `npm run db:migrate:deploy` intentionally instead of mixing both approaches.
-
-After schema deployment succeeds, deploy normally through Vercel. The Vercel build command runs Prisma Client generation through `npm run build`.
+For migration-first releases, generate and review migration SQL locally, deploy to Preview first, then Production.
 
 ## Post-Deployment Checks
 
-After deployment, verify:
-
-- `https://resurgence-dx.biz`
-- `https://resurgence-dx.biz/api/health`
-- login page
-- admin dashboard
-- official merch storefront
-- cart and checkout
-- support page
-- creator directory
-
-If AI support is enabled, run:
-
 ```bash
-npm run support:verify -- --base-url=https://resurgence-dx.biz --webhook-secret=whsec_...
+curl -I https://www.resurgence-dx.biz
+curl https://www.resurgence-dx.biz/api/health
 ```
 
-## Storage Note
+Manual checks:
 
-Vercel filesystem writes are not persistent. For merch and creator uploads, set `UPLOAD_STORAGE=r2` with Cloudflare R2 variables or use `UPLOAD_STORAGE=database` for PostgreSQL-backed upload storage. Cloudflare R2 variables are `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, and optional `R2_PUBLIC_BASE_URL`.
+- `/login`
+- `/feed`
+- `/shop`
+- `/cart`
+- `/checkout`
+- `/support`
+- `/admin` for authorized admin
+- `/admin/invoices`
+- `/admin/revenue`
+- `/admin/observability`
+
+## Deployment Protection
+
+OAuth and webhook callback routes must be publicly reachable on the domains used by Google, PayPal, OpenAI, or external webhook providers. Do not test callbacks on a protected Preview domain unless the provider can access it.
