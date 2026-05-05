@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
@@ -125,22 +126,25 @@ function LoginGatewayShell({
     setIdentifier(account.email);
   }
 
-  function persistOnboardingPreview() {
+  const persistOnboardingPreview = useCallback(() => {
     if (typeof window === "undefined") return;
 
-    window.localStorage.setItem("resurgence-onboarding-preview", JSON.stringify({
-      role: selectedRole,
-      displayName: displayName.trim(),
-      profileImageUrl: profileImageUrl.trim(),
-      interests,
-      updatedAt: Date.now(),
-    }));
-  }
+    window.localStorage.setItem(
+      "resurgence-onboarding-preview",
+      JSON.stringify({
+        role: selectedRole,
+        displayName: displayName.trim(),
+        profileImageUrl: profileImageUrl.trim(),
+        interests,
+        updatedAt: Date.now(),
+      }),
+    );
+  }, [displayName, interests, profileImageUrl, selectedRole]);
 
-  function showSuccess(title: string, message: string, redirectTo: string) {
+  const showSuccess = useCallback((title: string, message: string, redirectTo: string) => {
     setSuccess({ title, message, redirectTo });
     window.setTimeout(() => onRedirect?.(redirectTo), 1200);
-  }
+  }, [onRedirect]);
 
   async function submitLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -219,7 +223,7 @@ function LoginGatewayShell({
     } finally {
       setLoading(false);
     }
-    }, [
+  }, [
     activeRole.title,
     displayName,
     nextTarget,
