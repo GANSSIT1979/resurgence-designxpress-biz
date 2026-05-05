@@ -40,13 +40,13 @@ function getContentGroup(key: string): ContentGroupKey {
   return 'other';
 }
 
-function normalizeSearch(value: string) {
-  return value.trim().toLowerCase();
-}
-
 function getGroupLabel(key: string) {
   const group = getContentGroup(key);
   return GROUPS.find((entry) => entry.key === group)?.label ?? 'Other';
+}
+
+function normalizeSearch(value: string) {
+  return value.trim().toLowerCase();
 }
 
 export function ContentManager({ initialContent }: { initialContent: ContentItem[] }) {
@@ -116,7 +116,16 @@ export function ContentManager({ initialContent }: { initialContent: ContentItem
   async function deleteItem(id: string) {
     const target = items.find((item) => item.id === id);
 
-    if (target && !window.confirm(`Delete CMS entry "${target.key}"?`)) {
+    if (!target) {
+      setError('Content entry not found.');
+      return;
+    }
+
+    const typedKey = window.prompt(`Type the CMS key to delete this entry:\n\n${target.key}`, '');
+
+    if (typedKey !== target.key) {
+      setNotice(null);
+      setError('Delete cancelled. The typed CMS key did not match.');
       return;
     }
 
@@ -131,7 +140,7 @@ export function ContentManager({ initialContent }: { initialContent: ContentItem
     }
 
     setItems((current) => current.filter((entry) => entry.id !== id));
-    setNotice('Content entry deleted.');
+    setNotice(`Deleted ${target.key}.`);
   }
 
   async function createItem(event: React.FormEvent<HTMLFormElement>) {
@@ -324,15 +333,15 @@ function EditableContentCard({
   onDelete: (id: string) => Promise<void>;
 }) {
   const [local, setLocal] = useState(item);
-const group = getContentGroup(local.key);
+  const group = getContentGroup(local.key);
 
-const hasUnsavedChanges =
-  local.key !== item.key ||
-  local.title !== item.title ||
-  (local.subtitle ?? '') !== (item.subtitle ?? '') ||
-  local.body !== item.body ||
-  (local.ctaLabel ?? '') !== (item.ctaLabel ?? '') ||
-  (local.ctaHref ?? '') !== (item.ctaHref ?? '');
+  const hasUnsavedChanges =
+    local.key !== item.key ||
+    local.title !== item.title ||
+    (local.subtitle ?? '') !== (item.subtitle ?? '') ||
+    local.body !== item.body ||
+    (local.ctaLabel ?? '') !== (item.ctaLabel ?? '') ||
+    (local.ctaHref ?? '') !== (item.ctaHref ?? '');
 
   return (
     <section className="card content-cms-entry-card">
@@ -343,10 +352,7 @@ const hasUnsavedChanges =
         </div>
 
         <div className="content-cms-entry-badges">
-          <span className={`content-cms-group-pill content-cms-group-${group}`}>
-            {getGroupLabel(local.key)}
-          </span>
-
+          <span className={`content-cms-group-pill content-cms-group-${group}`}>{getGroupLabel(local.key)}</span>
           <span className={`content-cms-dirty-pill ${hasUnsavedChanges ? 'is-dirty' : 'is-saved'}`}>
             {hasUnsavedChanges ? 'Unsaved changes' : 'Saved'}
           </span>
@@ -408,22 +414,12 @@ const hasUnsavedChanges =
         </label>
 
         <div className="btn-row content-cms-span-all">
-          <button
-  className="btn"
-  type="button"
-  disabled={!hasUnsavedChanges}
-  onClick={() => onSave(local)}
->
-  {hasUnsavedChanges ? 'Save Changes' : 'Saved'}
-</button>
-          <button
-  className="btn btn-secondary"
-  type="button"
-  disabled={!hasUnsavedChanges}
-  onClick={() => setLocal(item)}
->
-  Reset
-</button>
+          <button className="btn" type="button" disabled={!hasUnsavedChanges} onClick={() => onSave(local)}>
+            {hasUnsavedChanges ? 'Save Changes' : 'Saved'}
+          </button>
+          <button className="btn btn-secondary" type="button" disabled={!hasUnsavedChanges} onClick={() => setLocal(item)}>
+            Reset
+          </button>
           <button className="btn btn-secondary" type="button" onClick={() => onDelete(local.id)}>
             Delete
           </button>

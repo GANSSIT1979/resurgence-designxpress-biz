@@ -7445,4 +7445,51 @@ th {
   filter: none;
   transform: none;
 }
+/* -------------------------------------------------------------------------- */
+/* Admin Content CMS dirty state and disabled buttons */
+/* -------------------------------------------------------------------------- */
+
+.content-cms-entry-badges {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.content-cms-dirty-pill {
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 950;
+  padding: 8px 10px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.content-cms-dirty-pill.is-saved {
+  background: rgba(148, 163, 184, 0.14);
+  color: #e2e8f0;
+}
+
+.content-cms-dirty-pill.is-dirty {
+  background: rgba(77, 192, 255, 0.14);
+  color: #cfeeff;
+}
+
+.content-cms-entry-card .btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+  transform: none;
+}
+
+.content-cms-entry-card .btn:disabled:hover {
+  filter: none;
+  transform: none;
+}
+
+@media (max-width: 640px) {
+  .content-cms-entry-badges {
+    justify-content: flex-start;
+  }
+}
 }
