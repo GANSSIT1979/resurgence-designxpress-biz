@@ -121,66 +121,6 @@ function LoginGatewayShell({
   ].filter(Boolean) as string[];
   const signupCompletion = Math.round(((4 - signupMissingItems.length) / 4) * 100);
 
-  useEffect(() => {
-    const shouldRenderGoogleButton =
-      (mode === "login" && loginMethod === "google") ||
-      (mode === "signup" && signupMethod === "google");
-    if (!shouldRenderGoogleButton || !googleClientId || !googleButtonRef.current) return;
-
-    let cancelled = false;
-
-    function renderGoogleButton() {
-      if (cancelled || !window.google || !googleButtonRef.current) return;
-      googleButtonRef.current.innerHTML = "";
-      window.google.accounts.id.initialize({
-        client_id: googleClientId,
-        callback: async (response) => {
-          if (!response.credential) {
-            setError("Google did not return a credential. Please try again.");
-            return;
-          }
-          await continueWithGoogle(response.credential, mode === "login" ? "login" : "signup");
-        },
-      });
-      window.google.accounts.id.renderButton(googleButtonRef.current, {
-        type: "standard",
-        theme: "filled_black",
-        size: "large",
-        shape: "pill",
-        text: "continue_with",
-        width: 340,
-      });
-    }
-
-    if (window.google) {
-      renderGoogleButton();
-      return () => {
-        cancelled = true;
-      };
-    }
-
-    const existing = document.querySelector<HTMLScriptElement>('script[src="https://accounts.google.com/gsi/client"]');
-    if (existing) {
-      existing.addEventListener("load", renderGoogleButton, { once: true });
-      return () => {
-        cancelled = true;
-        existing.removeEventListener("load", renderGoogleButton);
-      };
-    }
-
-    const script = document.createElement("script");
-    script.src = "https://accounts.google.com/gsi/client";
-    script.async = true;
-    script.defer = true;
-    script.addEventListener("load", renderGoogleButton, { once: true });
-    document.head.appendChild(script);
-
-    return () => {
-      cancelled = true;
-      script.removeEventListener("load", renderGoogleButton);
-    };
-  }, [mode, loginMethod, signupMethod, continueWithGoogle]);
-
   function selectDemoAccount(account: DemoAccount) {
     setIdentifier(account.email);
   }
@@ -280,15 +220,79 @@ function LoginGatewayShell({
       setLoading(false);
     }
     }, [
+    activeRole.title,
     displayName,
-    interests,
     nextTarget,
     onRedirect,
+    persistOnboardingPreview,
     profileImageUrl,
     referralCode,
     selectedRole,
+    showSuccess,
     termsAccepted,
   ]);
+
+  useEffect(() => {
+    const shouldRenderGoogleButton =
+      (mode === "login" && loginMethod === "google") ||
+      (mode === "signup" && signupMethod === "google");
+    if (!shouldRenderGoogleButton || !googleClientId || !googleButtonRef.current) return;
+
+    let cancelled = false;
+
+    function renderGoogleButton() {
+      if (cancelled || !window.google || !googleButtonRef.current) return;
+      googleButtonRef.current.innerHTML = "";
+      window.google.accounts.id.initialize({
+        client_id: googleClientId,
+        callback: async (response) => {
+          if (!response.credential) {
+            setError("Google did not return a credential. Please try again.");
+            return;
+          }
+          await continueWithGoogle(response.credential, mode === "login" ? "login" : "signup");
+        },
+      });
+      window.google.accounts.id.renderButton(googleButtonRef.current, {
+        type: "standard",
+        theme: "filled_black",
+        size: "large",
+        shape: "pill",
+        text: "continue_with",
+        width: 340,
+      });
+    }
+
+    if (window.google) {
+      renderGoogleButton();
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    const existing = document.querySelector<HTMLScriptElement>('script[src="https://accounts.google.com/gsi/client"]');
+    if (existing) {
+      existing.addEventListener("load", renderGoogleButton, { once: true });
+      return () => {
+        cancelled = true;
+        existing.removeEventListener("load", renderGoogleButton);
+      };
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://accounts.google.com/gsi/client";
+    script.async = true;
+    script.defer = true;
+    script.addEventListener("load", renderGoogleButton, { once: true });
+    document.head.appendChild(script);
+
+    return () => {
+      cancelled = true;
+      script.removeEventListener("load", renderGoogleButton);
+    };
+  }, [mode, loginMethod, signupMethod, continueWithGoogle]);
+
+
 
   async function requestMobileOtp(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
