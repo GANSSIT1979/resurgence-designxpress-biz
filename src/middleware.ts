@@ -14,7 +14,7 @@ const SUBDOMAIN_PATHS: Record<string, string> = {
 };
 
 const AUTH_SUBDOMAINS = new Set(['admin', 'crm']);
-const AUTH_COOKIE_NAMES = ['resurgence_session', 'session', 'auth_token', 'admin_session'];
+const AUTH_COOKIE_NAMES = ['resurgence_admin_session', 'resurgence_session', 'session', 'auth_token', 'admin_session'];
 
 function normalizeHost(host: string) {
   return host.split(':')[0].toLowerCase();

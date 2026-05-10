@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import { COOKIE_NAME, verifySession } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { type AppRole } from '@/lib/resurgence';
 
 export async function getServerSession() {
   const store = await cookies();
@@ -16,7 +17,14 @@ export async function getCurrentSessionUser() {
     where: { email: session.email },
   });
 
-  if (!user) return null;
-  return { session, user };
-}
+  if (!user || !user.isActive) return null;
 
+  return {
+    session: {
+      ...session,
+      role: user.role as AppRole,
+      displayName: user.displayName,
+    },
+    user,
+  };
+}
