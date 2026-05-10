@@ -1,9 +1,13 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { cashierTransactionSchema } from '@/lib/validation';
 import { buildTransactionPayload, serializeTransaction, syncLinkedInvoice } from '@/lib/cashier-api';
+import { requireApiPermission } from '@/lib/api-utils';
 
-export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireApiPermission(request, 'cashier.finance.manage');
+  if (auth.error) return auth.error;
+
   try {
     const { id } = await params;
     const existing = await prisma.cashierTransaction.findUnique({ where: { id } });
@@ -18,7 +22,10 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   }
 }
 
-export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireApiPermission(request, 'cashier.finance.manage');
+  if (auth.error) return auth.error;
+
   try {
     const { id } = await params;
     const existing = await prisma.cashierTransaction.findUnique({ where: { id } });
