@@ -1,7 +1,8 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { adminUserSchema } from '@/lib/validation';
 import { hashPassword } from '@/lib/passwords';
+import { requireApiPermission } from '@/lib/api-utils';
 
 function serializeUser(item: {
   id: string;
@@ -25,7 +26,10 @@ function serializeUser(item: {
   };
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const auth = await requireApiPermission(request, 'admin.users.manage');
+  if (auth.error) return auth.error;
+
   const body = await request.json().catch(() => null);
   const parsed = adminUserSchema.safeParse(body);
 

@@ -1,7 +1,6 @@
 import { NextRequest } from 'next/server';
-import { UserRole } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
-import { fail, ok, requireApiRole } from '@/lib/api-utils';
+import { fail, ok, requireApiPermission } from '@/lib/api-utils';
 import { generateDocumentNumber } from '@/lib/cashier-server';
 import { receiptSchema } from '@/lib/validation';
 
@@ -16,7 +15,7 @@ function serializeReceipt(item: Awaited<ReturnType<typeof prisma.receipt.findFir
 }
 
 export async function GET(request: NextRequest) {
-  const auth = await requireApiRole(request, [UserRole.CASHIER, UserRole.SYSTEM_ADMIN]);
+  const auth = await requireApiPermission(request, 'cashier.finance.manage');
   if (auth.error) return auth.error;
 
   const items = await prisma.receipt.findMany({ orderBy: [{ issuedAt: 'desc' }, { createdAt: 'desc' }] });
@@ -24,7 +23,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const auth = await requireApiRole(request, [UserRole.CASHIER, UserRole.SYSTEM_ADMIN]);
+  const auth = await requireApiPermission(request, 'cashier.finance.manage');
   if (auth.error) return auth.error;
 
   const body = await request.json().catch(() => null);
