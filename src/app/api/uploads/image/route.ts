@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { requireApiPermission } from '@/lib/api-utils';
 import { getCurrentSessionUser } from '@/lib/session-server';
 import { saveImageUpload, UploadScope } from '@/lib/uploads';
 
@@ -14,7 +15,10 @@ function isUploadScope(value: string): value is UploadScope {
   return value === 'sponsor' || value === 'creator' || value === 'brand-profile' || value === 'merch';
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const auth = await requireApiPermission(request, 'uploads.manage');
+  if (auth.error) return auth.error;
+
   const context = await getCurrentSessionUser();
   if (!context) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
