@@ -1,7 +1,8 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { adminUserUpdateSchema } from '@/lib/validation';
 import { hashPassword } from '@/lib/passwords';
+import { requireApiPermission } from '@/lib/api-utils';
 
 function serializeUser(item: {
   id: string;
@@ -25,7 +26,10 @@ function serializeUser(item: {
   };
 }
 
-export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireApiPermission(request, 'admin.users.manage');
+  if (auth.error) return auth.error;
+
   const { id } = await params;
   const body = await request.json().catch(() => null);
   const parsed = adminUserUpdateSchema.safeParse(body);
@@ -52,7 +56,10 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   }
 }
 
-export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireApiPermission(request, 'admin.users.manage');
+  if (auth.error) return auth.error;
+
   const { id } = await params;
   try {
     await prisma.user.delete({ where: { id } });
