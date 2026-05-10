@@ -17,6 +17,7 @@ jobs:
     env:
       PRISMA_DB_PROVIDER: postgresql
       DATABASE_URL: postgresql://localhost/resurgence_ci
+      DIRECT_URL: postgresql://localhost/resurgence_ci
       JWT_SECRET: local-ci-secret
       OTP_DELIVERY_MODE: demo
       NEXT_TELEMETRY_DISABLED: "1"
