@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { requireApiPermission } from '@/lib/api-utils';
 import { buildSponsorInvoiceWhere, getCurrentSponsorContext } from '@/lib/sponsor-server';
 
 function serializeInvoice(item: Awaited<ReturnType<typeof prisma.invoice.findFirstOrThrow>>) {
@@ -15,7 +16,10 @@ function serializeInvoice(item: Awaited<ReturnType<typeof prisma.invoice.findFir
   };
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const auth = await requireApiPermission(request, 'sponsor.billing.view');
+  if (auth.error) return auth.error;
+
   const context = await getCurrentSponsorContext();
   if (!context) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 

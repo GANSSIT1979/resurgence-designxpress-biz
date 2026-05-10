@@ -1,7 +1,6 @@
 import { NextRequest } from 'next/server';
-import { UserRole } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
-import { fail, ok, requireApiRole } from '@/lib/api-utils';
+import { fail, ok, requireApiPermission } from '@/lib/api-utils';
 import { receiptSchema } from '@/lib/validation';
 
 type Params = { params: Promise<{ id: string }> };
@@ -16,8 +15,12 @@ function serializeReceipt(item: Awaited<ReturnType<typeof prisma.receipt.findFir
   };
 }
 
+async function requireCashierFinance(request: NextRequest) {
+  return requireApiPermission(request, 'cashier.finance.manage');
+}
+
 export async function GET(request: NextRequest, { params }: Params) {
-  const auth = await requireApiRole(request, [UserRole.CASHIER, UserRole.SYSTEM_ADMIN]);
+  const auth = await requireCashierFinance(request);
   if (auth.error) return auth.error;
 
   const { id } = await params;
@@ -28,7 +31,7 @@ export async function GET(request: NextRequest, { params }: Params) {
 }
 
 export async function PUT(request: NextRequest, { params }: Params) {
-  const auth = await requireApiRole(request, [UserRole.CASHIER, UserRole.SYSTEM_ADMIN]);
+  const auth = await requireCashierFinance(request);
   if (auth.error) return auth.error;
 
   const { id } = await params;
@@ -55,7 +58,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
 }
 
 export async function DELETE(request: NextRequest, { params }: Params) {
-  const auth = await requireApiRole(request, [UserRole.CASHIER, UserRole.SYSTEM_ADMIN]);
+  const auth = await requireCashierFinance(request);
   if (auth.error) return auth.error;
 
   const { id } = await params;
