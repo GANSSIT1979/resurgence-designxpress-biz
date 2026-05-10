@@ -32,14 +32,19 @@ function normalizeMarkdownTarget(target) {
   return unwrapped.split('#')[0].trim();
 }
 
+function isIntentionallyUntrackedReference(target) {
+  return /^\.env(?:\.[A-Za-z0-9._-]+)?$/i.test(target);
+}
+
 function isLikelyLocalFileReference(candidate) {
   if (!candidate || candidate.includes('\n')) return false;
   if (candidate.endsWith('/')) return false;
   if (candidate.includes('://')) return false;
   if (candidate.includes('...')) return false;
   if (/^[A-Z0-9_]+=/.test(candidate)) return false;
+  if (isIntentionallyUntrackedReference(candidate)) return false;
 
-  return /^(?:\.{1,2}\/|src\/|docs\/|prisma\/|scripts\/|public\/|package\.json|vercel\.json|vercel\.production\.env\.example|\.vercelignore|README\.md|AGENTS\.md|\.env(?:\.[A-Za-z0-9._-]+)?|contentpost-[^/]+\.sql)[A-Za-z0-9._\/-]*$/i.test(
+  return /^(?:\.{1,2}\/|src\/|docs\/|prisma\/|scripts\/|public\/|package\.json|vercel\.json|vercel\.production\.env\.example|\.vercelignore|README\.md|AGENTS\.md|contentpost-[^/]+\.sql)[A-Za-z0-9._\/-]*$/i.test(
     candidate,
   );
 }
@@ -61,7 +66,7 @@ function checkMarkdownLinks(files) {
       if (isSkippableMarkdownTarget(rawTarget)) continue;
 
       const target = normalizeMarkdownTarget(rawTarget);
-      if (!target) continue;
+      if (!target || isIntentionallyUntrackedReference(target)) continue;
 
       const resolved = resolveFromMarkdown(file, target);
       if (!existsSync(resolved)) {
