@@ -15,9 +15,9 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     env:
-      PRISMA_DB_PROVIDER: sqlite
-      DATABASE_URL: file:./dev.db
-      JWT_SECRET: ci-build-jwt-secret-0123456789abcdef
+      PRISMA_DB_PROVIDER: postgresql
+      DATABASE_URL: postgresql://localhost/resurgence_ci
+      JWT_SECRET: local-ci-secret
       OTP_DELIVERY_MODE: demo
       NEXT_TELEMETRY_DISABLED: "1"
       PRISMA_HIDE_UPDATE_MESSAGE: "1"
@@ -35,10 +35,7 @@ jobs:
         run: npm ci
 
       - name: Validate Prisma schema
-        run: npx prisma validate --schema prisma/schema.generated.prisma
-
-      - name: Sync local SQLite schema
-        run: npm run db:push
+        run: npm run db:validate
 
       - name: Type check
         run: npx tsc --noEmit --pretty false
