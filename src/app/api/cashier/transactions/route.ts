@@ -1,16 +1,23 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { formatCurrency } from '@/lib/cashier';
 import { cashierTransactionSchema } from '@/lib/validation';
 import { buildTransactionPayload, serializeTransaction, syncLinkedInvoice } from '@/lib/cashier-api';
 import { createWorkflowAutomation } from '@/lib/notifications';
+import { requireApiPermission } from '@/lib/api-utils';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const auth = await requireApiPermission(request, 'cashier.finance.manage');
+  if (auth.error) return auth.error;
+
   const items = await prisma.cashierTransaction.findMany({ orderBy: [{ transactionDate: 'desc' }, { createdAt: 'desc' }] });
   return NextResponse.json({ items: items.map(serializeTransaction) });
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const auth = await requireApiPermission(request, 'cashier.finance.manage');
+  if (auth.error) return auth.error;
+
   try {
     const parsed = cashierTransactionSchema.parse(await request.json());
     const payload = await buildTransactionPayload(parsed);
