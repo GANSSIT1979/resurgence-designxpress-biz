@@ -20,5 +20,6 @@ jobs:
       - run: npm run docs:check
       - run: npm run local:preflight
       - run: node scripts/generate-production-status.mjs --check
+        if: github.event_name != 'pull_request'
         env:
           PRODUCTION_SITE_URL: ${{ vars.PRODUCTION_SITE_URL || 'https://www.resurgence-dx.biz' }}

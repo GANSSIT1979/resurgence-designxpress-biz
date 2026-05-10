@@ -1,6 +1,7 @@
 import { UserRole } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { getApiUser } from "@/lib/auth-server";
+import { hasPermission, type PermissionKey } from "@/lib/permissions";
 
 function normalizeValue(value: unknown): unknown {
   if (value instanceof Date) return value.toISOString();
@@ -41,6 +42,20 @@ export async function requireApiRole(request: NextRequest, roles: UserRole[]) {
   }
 
   if (!roles.includes(user.role as UserRole)) {
+    return { error: fail("Forbidden.", 403), user };
+  }
+
+  return { error: null, user };
+}
+
+export async function requireApiPermission(request: NextRequest, permission: PermissionKey) {
+  const user = await getApiUser(request);
+
+  if (!user) {
+    return { error: fail("Unauthorized.", 401), user: null };
+  }
+
+  if (!hasPermission(user.role, permission)) {
     return { error: fail("Forbidden.", 403), user };
   }
 
